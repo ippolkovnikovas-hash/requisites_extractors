@@ -1,0 +1,78 @@
+{
+  "document_id": "6e018e77",
+  "needs_review": true,
+  "fill_rate": 0.94,
+  "data": {
+    "company_name": "Общество с ограниченной ответственностью «РАССВЕТ»",
+    "short_name": "ООО «РАССВЕТ»",
+    "legal_address": "368006, Республика Дагестан, город Хасавт, улица Завокзальная, дом 17А",
+    "postal_address": "368006, Республика Дагестан, город Хасавтов, улица Завокзальная, дом 17А",
+    "ogrn": "1220500007320",
+    "inn": "0544015242",
+    "kpp": null,
+    "bank_name": "Дагестанский РФ АО «Россельхозбанк» г. Махачкала",
+    "checking_account": "40702810804550000401",
+    "correspondent_account": "30101810000000000793",
+    "bik": "0448209793",
+    "ceo_position": "Директор",
+    "ceo_fio_full": "Орузбиев Азамат Артурович",
+    "ceo_fio": "А.А. Орузбиев",
+    "phone": "89604211000",
+    "email": "pot.coin@yandex.ru"
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "Общество с ограниченной ответственностью «РАССВЕТ»",
+    "ORG_NAME": "ООО «РАССВЕТ»",
+    "LEGAL_ADDRES": "368006, Республика Дагестан, город Хасавт, улица Завокзальная, дом 17А",
+    "POST_ADDRES": "368006, Республика Дагестан, город Хасавтов, улица Завокзальная, дом 17А",
+    "OGRN": "1220500007320",
+    "INN": "0544015242",
+    "KPP": "",
+    "BANK_NAME": "Дагестанский РФ АО «Россельхозбанк» г. Махачкала",
+    "RS": "40702810804550000401",
+    "KS": "30101810000000000793",
+    "BIK": "0448209793",
+    "CEO_POSITION": "Директор",
+    "CEO_FIO_FULL": "Орузбиев Азамат Артурович",
+    "CEO_FIO": "А.А. Орузбиев",
+    "TEL": "89604211000",
+    "E-MAIL": "pot.coin@yandex.ru"
+  },
+  "validation": {
+    "inn": {
+      "valid": true,
+      "value": "0544015242",
+      "reason": null
+    },
+    "kpp": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "ogrn": {
+      "valid": true,
+      "value": "1220500007320",
+      "reason": null
+    },
+    "bik": {
+      "valid": false,
+      "value": "0448209793",
+      "reason": "wrong length: 10, expected 9"
+    },
+    "checking_account": {
+      "valid": true,
+      "value": "40702810804550000401",
+      "reason": null
+    },
+    "correspondent_account": {
+      "valid": true,
+      "value": "30101810000000000793",
+      "reason": null
+    },
+    "cross_checks": [],
+    "errors": [
+      "field is null",
+      "wrong length: 10, expected 9"
+    ]
+  }
+}

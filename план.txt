@@ -1,0 +1,530 @@
+Этап 0. Подготовка контракта данных
+Сначала фиксируем, что именно программа должна возвращать: список полей, типы, правила null, формат ошибок, needs_review, warnings, confidence, метаданные документа и метаданные обработки. Такой контракт лучше оформить через Pydantic-схемы, потому что schema-driven extraction удобнее валидировать и использовать как единый интерфейс для LLM-слоя.
+
+Что определить заранее:
+
+список полей реквизитов;
+
+обязательные и необязательные поля;
+
+правила нормализации;
+
+итоговый JSON-формат;
+
+формат Excel-экспорта;
+
+коды ошибок и причины review.
+
+Этап 1. Прием файла
+На этом этапе программа принимает файл, проверяет расширение, MIME, размер, имя, хеш, создает внутренний объект документа и сохраняет исходник во временное хранилище. Для Flask загрузка файлов строится через multipart/form-data, доступ к файлам идет через request.files, а сами файлы надо сохранять только после проверки допустимого типа.
+
+Результат этапа:
+
+файл принят;
+
+создан document_id;
+
+определены filename, extension, mime_type, size;
+
+исходник сохранен в storage/uploads/.
+
+Этап 2. Определение стратегии обработки
+После загрузки выбираем путь обработки: DOCX, цифровой PDF, скан-PDF, изображение, неподдерживаемый формат. Это важный отдельный этап, потому что для разных форматов нужны разные экстракторы, а современные document pipelines обычно строятся именно вокруг выбора parse-path, а не вокруг одного универсального парсера.
+
+Логика маршрутизации:
+
+.docx → python-docx;
+
+.pdf с текстовым слоем → pdfplumber;
+
+.pdf без текста или с очень малым числом символов → OCR;
+
+.jpg/.jpeg/.png/.tiff → OCR;
+
+все прочее → controlled error.
+
+Этап 3. Извлечение текста
+Здесь задача — получить не просто строку, а результат извлечения с метаданными: текст, страницы, примененный экстрактор, признак OCR, предупреждения. Для OCR-пайплайнов полезно закладывать confidence и возможность переключать движок, потому что практичные схемы extraction часто строятся как “OCR → schema prompt → validation”, а не как жестко зашитый один инструмент.
+
+Подэтапы:
+
+DOCX extractor.
+
+PDF text extractor.
+
+OCR image extractor.
+
+OCR scanned PDF extractor.
+
+объединение текста по страницам.
+
+сохранение сырого текста в raw_text.txt.
+
+Результат этапа:
+
+text;
+
+extractor_used;
+
+pages;
+
+ocr_used;
+
+ocr_confidence при наличии;
+
+warnings.
+
+Этап 4. Нормализация текста
+Перед отправкой текста в LLM нужно очистить артефакты: лишние пробелы, переносы, повторяющиеся строки, мусорные символы, развалившиеся таблицы, OCR-шум. Этот этап сильно повышает стабильность извлечения, потому что LLM лучше работает на очищенном и структурно предсказуемом тексте, а schema-driven extraction как раз выигрывает от стабильного входного контракта.
+
+Что делаем:
+
+схлопываем пробелы;
+
+убираем мусорные переносы;
+
+объединяем broken lines;
+
+вычищаем нечитабельные символы;
+
+сохраняем normalized_text.
+
+Этап 5. Извлечение реквизитов через LLM
+На вход LLM подаем нормализованный текст и жесткую схему JSON с нужными полями. Этот подход уже широко используется в extraction-пайплайнах: сначала задается схема, затем модель заполняет структуру, а downstream-код валидирует результат как контракт, а не как произвольный текстовый ответ.
+
+Рекомендуемая логика:
+
+один интерфейс LLMClient;
+
+две реализации: OpenAICompatibleClient и OllamaClient;
+
+строгий режим JSON-only;
+
+если поле не найдено — null;
+
+отдельно хранить raw_llm_response.
+
+Результат этапа:
+
+structured_data;
+
+model_name;
+
+provider;
+
+prompt_version;
+
+raw_response.
+
+Этап 6. Валидация
+После LLM начинается постконтроль: форматная, алгоритмическая и кросс-проверка полей. Для РФ-реквизитов есть формальные ограничения: ИНН бывает 10 или 12 цифр, КПП — 9 цифр, ОГРН имеет контрольный разряд, а БИК — 9 цифр; эти правила надо проверять кодом, а не доверять модели.
+
+Подэтапы:
+
+форматная проверка длины и состава;
+
+алгоритмы контрольных цифр для ИНН и ОГРН;
+
+проверка БИК;
+
+проверка счетов на 20 цифр;
+
+кросс-проверка связок полей;
+
+формирование needs_review.
+
+Результат этапа:
+
+validation_report;
+
+needs_review;
+
+errors;
+
+warnings.
+
+Этап 7. Постобработка
+После валидации полезно привести значения к единому виду и обогатить результат служебными полями. В production-like пайплайнах это отдельный слой между extraction и delivery, чтобы downstream-системы всегда получали стабильный формат.
+
+Что здесь делаем:
+
+нормализуем регистр;
+
+убираем служебные пробелы;
+
+приводим телефоны и email;
+
+вычисляем summary-поле;
+
+прикладываем source metadata.
+
+Этап 8. Сохранение результата
+На этом этапе сохраняем не только JSON, но и сопутствующие файлы, чтобы было удобно проверять кейсы и разбирать ошибки. Практичный минимум — структурированный JSON, Excel и сырой текст; при росте системы можно добавлять ZIP-пакет и журнал обработки.
+
+Что сохраняем:
+
+result.json;
+
+result.xlsx;
+
+raw_text.txt;
+
+meta.json;
+
+при необходимости package.zip.
+
+Этап 9. Интерфейсы запуска
+Лучше не стартовать только с веба, а сразу предусмотреть 3 режима: CLI, API и Web UI. Flask хорошо подходит для безопасной загрузки файлов и простого веб-интерфейса, а CLI сильно упрощает отладку и batch-обработку до появления полноценного UI.
+
+Приоритет интерфейсов:
+
+CLI.
+
+Flask API.
+
+Flask Web UI.
+
+Batch mode для папки.
+
+Этап 10. Логи, тесты, наблюдаемость
+Без логов и тестов pipeline быстро станет трудно поддерживать. Особенно важно логировать маршрут обработки, выбранный экстрактор, время по этапам, ошибки OCR, модель LLM и причину needs_review, потому что в document pipelines это и есть основа отладки.
+
+Минимум:
+
+logging с request/document id;
+
+unit-тесты валидаторов;
+
+интеграционные тесты на 3–5 эталонных документов;
+
+фикстуры с тестовыми файлами.
+
+Предварительная структура проекта
+Ниже структура, которую я бы предложил для старта. Она достаточно простая для MVP и при этом уже разделяет ответственность по слоям.
+
+text
+requisites_extractor/
+├─ app/
+│  ├─ __init__.py
+│  ├─ config.py
+│  ├─ logging_config.py
+│  ├─ main.py
+│  ├─ dependencies.py
+│  │
+│  ├─ api/
+│  │  ├─ __init__.py
+│  │  ├─ routes_upload.py
+│  │  ├─ routes_health.py
+│  │  └─ schemas_http.py
+│  │
+│  ├─ web/
+│  │  ├─ __init__.py
+│  │  ├─ routes.py
+│  │  ├─ forms.py
+│  │  ├─ templates/
+│  │  │  ├─ base.html
+│  │  │  ├─ index.html
+│  │  │  ├─ upload.html
+│  │  │  └─ result.html
+│  │  └─ static/
+│  │     ├─ css/
+│  │     └─ js/
+│  │
+│  ├─ core/
+│  │  ├─ enums.py
+│  │  ├─ exceptions.py
+│  │  ├─ constants.py
+│  │  └─ utils.py
+│  │
+│  ├─ schemas/
+│  │  ├─ document.py
+│  │  ├─ extraction.py
+│  │  ├─ requisites.py
+│  │  ├─ validation.py
+│  │  └─ export.py
+│  │
+│  ├─ services/
+│  │  ├─ ingest_service.py
+│  │  ├─ routing_service.py
+│  │  ├─ text_extraction_service.py
+│  │  ├─ text_normalization_service.py
+│  │  ├─ llm_extraction_service.py
+│  │  ├─ validation_service.py
+│  │  ├─ postprocess_service.py
+│  │  ├─ export_service.py
+│  │  └─ pipeline_service.py
+│  │
+│  ├─ extractors/
+│  │  ├─ __init__.py
+│  │  ├─ base.py
+│  │  ├─ docx_extractor.py
+│  │  ├─ pdf_text_extractor.py
+│  │  ├─ pdf_ocr_extractor.py
+│  │  └─ image_ocr_extractor.py
+│  │
+│  ├─ ocr/
+│  │  ├─ __init__.py
+│  │  ├─ base.py
+│  │  ├─ tesseract_backend.py
+│  │  └─ easyocr_backend.py
+│  │
+│  ├─ llm/
+│  │  ├─ __init__.py
+│  │  ├─ base.py
+│  │  ├─ openai_client.py
+│  │  ├─ ollama_client.py
+│  │  ├─ prompts.py
+│  │  └─ json_schema.py
+│  │
+│  ├─ validators/
+│  │  ├─ __init__.py
+│  │  ├─ inn_validator.py
+│  │  ├─ kpp_validator.py
+│  │  ├─ ogrn_validator.py
+│  │  ├─ bik_validator.py
+│  │  ├─ account_validator.py
+│  │  └─ cross_field_validator.py
+│  │
+│  ├─ exporters/
+│  │  ├─ __init__.py
+│  │  ├─ json_exporter.py
+│  │  ├─ xlsx_exporter.py
+│  │  └─ zip_exporter.py
+│  │
+│  └─ storage/
+│     ├─ __init__.py
+│     ├─ file_store.py
+│     └─ path_manager.py
+│
+├─ storage/
+│  ├─ uploads/
+│  ├─ processed/
+│  ├─ exports/
+│  ├─ temp/
+│  └─ logs/
+│
+├─ tests/
+│  ├─ conftest.py
+│  ├─ test_ingest.py
+│  ├─ test_routing.py
+│  ├─ test_normalization.py
+│  ├─ test_validators_inn.py
+│  ├─ test_validators_kpp.py
+│  ├─ test_validators_ogrn.py
+│  ├─ test_validators_bik.py
+│  ├─ test_validators_accounts.py
+│  ├─ test_pipeline_docx.py
+│  ├─ test_pipeline_pdf_text.py
+│  ├─ test_pipeline_pdf_scan.py
+│  └─ fixtures/
+│     ├─ sample.docx
+│     ├─ sample_text.pdf
+│     ├─ sample_scan.pdf
+│     └─ sample_image.jpg
+│
+├─ scripts/
+│  ├─ run_dev.py
+│  ├─ run_cli.py
+│  └─ batch_process.py
+│
+├─ requirements/
+│  ├─ base.txt
+│  ├─ dev.txt
+│  └─ prod.txt
+│
+├─ .env.example
+├─ .gitignore
+├─ README.md
+└─ pyproject.toml
+Назначение папок
+schemas/
+Тут лежат Pydantic-модели: входной документ, результат извлечения текста, итоговые реквизиты, отчет валидации, export metadata. Это удобно, потому что LLM-этап и postprocessing могут работать не со словарями “на глаз”, а со строгими структурами.
+
+services/
+Это orchestration-слой: здесь нет конкретного pdfplumber или tesseract, а есть бизнес-операции “извлечь текст”, “провалидировать”, “экспортировать”. Такой слой особенно полезен для pipeline-архитектуры, где надо свободно менять реализации компонентов.
+
+extractors/, ocr/, llm/, validators/, exporters/
+Это низкоуровневые адаптеры и реализации. Например, text_extraction_service решает, какой extractor выбрать, а pdf_text_extractor.py уже реально работает с PDF-библиотекой; точно так же llm_extraction_service не знает деталей провайдера, а конкретный клиент прячется в openai_client.py или ollama_client.py.
+
+api/ и web/
+API и HTML-интерфейс лучше разделить сразу, даже если оба будут на Flask. Это избавляет от смешивания Jinja-страниц, upload-логики и JSON-эндпоинтов в одном файле, а Flask-паттерн загрузки файлов прекрасно вписывается в такой раздельный слой.
+
+Основные сущности
+Ниже список базовых моделей, которые стоит завести с самого начала.
+
+DocumentInput
+python
+class DocumentInput(BaseModel):
+    document_id: str
+    original_filename: str
+    extension: str
+    mime_type: str
+    size_bytes: int
+    storage_path: str
+    sha256: str
+TextExtractionResult
+python
+class TextExtractionResult(BaseModel):
+    text: str
+    extractor_used: str
+    pages: int | None = None
+    ocr_used: bool = False
+    confidence: float | None = None
+    warnings: list[str] = []
+RequisitesData
+python
+class RequisitesData(BaseModel):
+    company_name: str | None = None
+    short_name: str | None = None
+    inn: str | None = None
+    kpp: str | None = None
+    ogrn: str | None = None
+    bik: str | None = None
+    bank_name: str | None = None
+    checking_account: str | None = None
+    correspondent_account: str | None = None
+    legal_address: str | None = None
+    postal_address: str | None = None
+    ceo_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    document_date: str | None = None
+    document_number: str | None = None
+ValidationReport
+python
+class ValidationItem(BaseModel):
+    valid: bool
+    reason: str | None = None
+
+class ValidationReport(BaseModel):
+    inn: ValidationItem | None = None
+    kpp: ValidationItem | None = None
+    ogrn: ValidationItem | None = None
+    bik: ValidationItem | None = None
+    checking_account: ValidationItem | None = None
+    correspondent_account: ValidationItem | None = None
+    cross_checks: list[str] = []
+PipelineResult
+python
+class PipelineResult(BaseModel):
+    document_id: str
+    data: RequisitesData
+    validation: ValidationReport
+    needs_review: bool
+    warnings: list[str]
+    raw_text_path: str
+    json_path: str | None = None
+    xlsx_path: str | None = None
+Как будет идти поток обработки
+Вот хороший базовый сценарий для pipeline_service.py:
+
+Принять файл.
+
+Сохранить во временное хранилище.
+
+Определить тип документа.
+
+Выбрать extractor.
+
+Извлечь текст.
+
+Нормализовать текст.
+
+Отправить в LLM с JSON schema.
+
+Провалидировать поля.
+
+Сформировать needs_review.
+
+Сохранить JSON.
+
+Сохранить XLSX.
+
+Вернуть результат в CLI/API/Web.
+
+Такой stage-by-stage pipeline соответствует хорошей практике document extraction: сначала ingestion и parse-path, затем extraction, затем confidence/validation, потом output delivery.
+
+Предлагаемый MVP-порядок реализации
+Фаза 1. Ядро без веба
+Сначала лучше собрать рабочее ядро в CLI-режиме, чтобы не дебажить одновременно Flask, OCR и LLM. Это самый быстрый путь до реального результата.
+
+Порядок:
+
+схемы Pydantic;
+
+ingest;
+
+routing;
+
+DOCX extractor;
+
+PDF text extractor;
+
+normalization;
+
+mock LLM extractor;
+
+validators;
+
+JSON export;
+
+XLSX export.
+
+Фаза 2. Подключение OCR
+Когда text PDF и DOCX заработают стабильно, добавляем OCR-ветку. Так проще отделить ошибки распознавания текста от ошибок схемы и валидации.
+
+Фаза 3. Подключение настоящего LLM
+После этого подключаем OpenAI-совместимый API или Ollama, сохраняя тот же интерфейс LLMClient. Схема должна остаться прежней, чтобы downstream-часть не менялась.
+
+Фаза 4. Flask API
+Далее делаем JSON API для загрузки файла и получения результата. Flask официально поддерживает стандартный паттерн file upload через форму и request.files, что для первого API-варианта более чем достаточно.
+
+Фаза 5. Flask Web UI
+Только после API делаем веб-страницы: загрузка, просмотр результата, скачивание JSON/XLSX, индикация needs_review. Такой порядок проще поддерживать и тестировать.
+
+Что можно упростить на старте
+Для первой итерации я бы не делал сразу:
+
+Telegram-бота;
+
+асинхронные очереди;
+
+базу данных;
+
+многопользовательский кабинет;
+
+авторизацию;
+
+batch watcher;
+
+хранение истории в БД.
+
+Для MVP достаточно:
+
+локального хранения файлов;
+
+одного pipeline;
+
+одного JSON schema;
+
+одного веб-экрана загрузки;
+
+одного экрана результата.
+
+Что стоит решить до кода
+Перед стартом реализации лучше утвердить еще 6 вещей:
+
+финальный список полей;
+
+формат Excel-выгрузки;
+
+какой LLM будет первым: OpenAI API или Ollama;
+
+нужен ли source snippet для каждого поля;
+
+делаем ли OCR сразу или второй фазой;
+
+стартуем на Flask или сначала CLI-only.
+
+Мой практический совет: начать с CLI + DOCX/PDF text + mock LLM + validators, потом добавить OCR, потом настоящий LLM, и только после этого поднимать Flask UI. Такой порядок даст рабочее ядро быстрее и с меньшим количеством ложных багов.
+

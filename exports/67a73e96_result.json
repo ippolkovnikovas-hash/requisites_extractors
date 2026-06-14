@@ -1,0 +1,79 @@
+{
+  "document_id": "67a73e96",
+  "needs_review": true,
+  "fill_rate": 0.75,
+  "data": {
+    "company_name": null,
+    "short_name": "Общество с ограниченной ответственностью «Роудстрой»",
+    "legal_address": "Ставропольский край, г. Пятигорск, ул. Московская д.14",
+    "postal_address": "Ставропольский край, г. Пятигорск, ул. Московская д.14",
+    "ogrn": "1182651008759",
+    "inn": "2632111012",
+    "kpp": "263201001",
+    "bank_name": "Ставропольпромстройбанк",
+    "checking_account": null,
+    "correspondent_account": null,
+    "bik": "040702760",
+    "ceo_position": "Генеральный директор",
+    "ceo_fio_full": "Багатырев Адам Рамзанович",
+    "ceo_fio": "Багатырев А.Р.",
+    "phone": "8-928-729-86-88, 8-906-486-00-06, 8-928-363-55-00",
+    "email": null
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "",
+    "ORG_NAME": "Общество с ограниченной ответственностью «Роудстрой»",
+    "LEGAL_ADDRES": "Ставропольский край, г. Пятигорск, ул. Московская д.14",
+    "POST_ADDRES": "Ставропольский край, г. Пятигорск, ул. Московская д.14",
+    "OGRN": "1182651008759",
+    "INN": "2632111012",
+    "KPP": "263201001",
+    "BANK_NAME": "Ставропольпромстройбанк",
+    "RS": "",
+    "KS": "",
+    "BIK": "040702760",
+    "CEO_POSITION": "Генеральный директор",
+    "CEO_FIO_FULL": "Багатырев Адам Рамзанович",
+    "CEO_FIO": "Багатырев А.Р.",
+    "TEL": "8-928-729-86-88, 8-906-486-00-06, 8-928-363-55-00",
+    "E-MAIL": ""
+  },
+  "validation": {
+    "inn": {
+      "valid": true,
+      "value": "2632111012",
+      "reason": null
+    },
+    "kpp": {
+      "valid": true,
+      "value": "263201001",
+      "reason": null
+    },
+    "ogrn": {
+      "valid": true,
+      "value": "1182651008759",
+      "reason": null
+    },
+    "bik": {
+      "valid": true,
+      "value": "040702760",
+      "reason": null
+    },
+    "checking_account": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "correspondent_account": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "cross_checks": [],
+    "errors": [
+      "field is null",
+      "Расчетный счет отсутствует",
+      "Корреспондентский счет отсутствует"
+    ]
+  }
+}

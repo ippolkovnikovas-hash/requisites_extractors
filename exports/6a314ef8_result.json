@@ -1,0 +1,75 @@
+{
+  "document_id": "6a314ef8",
+  "needs_review": false,
+  "fill_rate": 1.0,
+  "data": {
+    "company_name": "Общество с ограниченной ответственностью \"СИТИТЕК\"",
+    "short_name": "ООО \"СИТИТЕК\"",
+    "legal_address": "115230, г. Москва, Хлебозаводский пр-д д. 7, стр.9, помещ. 24/Н",
+    "postal_address": "115230, г. Москва, Хлебозаводский пр-д д. 7, стр.9, помещ. 24/Н",
+    "ogrn": "1237700710323",
+    "inn": "9724151699",
+    "kpp": "772401001",
+    "bank_name": "ООО \"БАНК ТОЧКА\"",
+    "checking_account": "40702810120000097507",
+    "correspondent_account": "30101810745374525104",
+    "bik": "044525104",
+    "ceo_position": "Генеральный директор",
+    "ceo_fio_full": "Хаштыров Казбек Баширович",
+    "ceo_fio": "Хаштыров К.Б.",
+    "phone": "+7 (915) 077-34-88",
+    "email": "city_tec @bk.ru"
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "Общество с ограниченной ответственностью \"СИТИТЕК\"",
+    "ORG_NAME": "ООО \"СИТИТЕК\"",
+    "LEGAL_ADDRES": "115230, г. Москва, Хлебозаводский пр-д д. 7, стр.9, помещ. 24/Н",
+    "POST_ADDRES": "115230, г. Москва, Хлебозаводский пр-д д. 7, стр.9, помещ. 24/Н",
+    "OGRN": "1237700710323",
+    "INN": "9724151699",
+    "KPP": "772401001",
+    "BANK_NAME": "ООО \"БАНК ТОЧКА\"",
+    "RS": "40702810120000097507",
+    "KS": "30101810745374525104",
+    "BIK": "044525104",
+    "CEO_POSITION": "Генеральный директор",
+    "CEO_FIO_FULL": "Хаштыров Казбек Баширович",
+    "CEO_FIO": "Хаштыров К.Б.",
+    "TEL": "+7 (915) 077-34-88",
+    "E-MAIL": "city_tec @bk.ru"
+  },
+  "validation": {
+    "inn": {
+      "valid": true,
+      "value": "9724151699",
+      "reason": null
+    },
+    "kpp": {
+      "valid": true,
+      "value": "772401001",
+      "reason": null
+    },
+    "ogrn": {
+      "valid": true,
+      "value": "1237700710323",
+      "reason": null
+    },
+    "bik": {
+      "valid": true,
+      "value": "044525104",
+      "reason": null
+    },
+    "checking_account": {
+      "valid": true,
+      "value": "40702810120000097507",
+      "reason": null
+    },
+    "correspondent_account": {
+      "valid": true,
+      "value": "30101810745374525104",
+      "reason": null
+    },
+    "cross_checks": [],
+    "errors": []
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "document_id": "ab5c87f0",
+  "needs_review": true,
+  "fill_rate": 0.69,
+  "data": {
+    "company_name": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «HELA »",
+    "short_name": "OOO «НЕГА»",
+    "legal_address": "СТАВРОПОЛЬ, Г СТАВРОПОЛЬ, ПРЕЗЕДЬ 1 ПАРАЛЛЕЛЬНЫЙ, Д. 7Б",
+    "postal_address": "СТАВРОПОЛЬ, Г СТАВРОПОЛЬ, ПРЕЗЕДЬ 1 ПАРАЛЛЕЛЬНЫЙ, Д. 7Б",
+    "ogrn": null,
+    "inn": null,
+    "kpp": null,
+    "bank_name": "АО «ТБанк»",
+    "checking_account": "30101810010001690942",
+    "correspondent_account": null,
+    "bik": "044525974",
+    "ceo_position": "Директор",
+    "ceo_fio_full": "Суслов Денис Владимирович",
+    "ceo_fio": "Суслов Д.В.",
+    "phone": "+7 918-873-75-35",
+    "email": null
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «HELA »",
+    "ORG_NAME": "OOO «НЕГА»",
+    "LEGAL_ADDRES": "СТАВРОПОЛЬ, Г СТАВРОПОЛЬ, ПРЕЗЕДЬ 1 ПАРАЛЛЕЛЬНЫЙ, Д. 7Б",
+    "POST_ADDRES": "СТАВРОПОЛЬ, Г СТАВРОПОЛЬ, ПРЕЗЕДЬ 1 ПАРАЛЛЕЛЬНЫЙ, Д. 7Б",
+    "OGRN": "",
+    "INN": "",
+    "KPP": "",
+    "BANK_NAME": "АО «ТБанк»",
+    "RS": "30101810010001690942",
+    "KS": "",
+    "BIK": "044525974",
+    "CEO_POSITION": "Директор",
+    "CEO_FIO_FULL": "Суслов Денис Владимирович",
+    "CEO_FIO": "Суслов Д.В.",
+    "TEL": "+7 918-873-75-35",
+    "E-MAIL": ""
+  },
+  "validation": {
+    "inn": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "kpp": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "ogrn": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "bik": {
+      "valid": true,
+      "value": "044525974",
+      "reason": null
+    },
+    "checking_account": {
+      "valid": false,
+      "value": "30101810010001690942",
+      "reason": "checking account must start with 40"
+    },
+    "correspondent_account": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "cross_checks": [],
+    "errors": [
+      "field is null",
+      "checking account must start with 40",
+      "ИНН отсутствует",
+      "КПП отсутствует",
+      "ОГРН отсутствует",
+      "Корреспондентский счет отсутствует"
+    ]
+  }
+}

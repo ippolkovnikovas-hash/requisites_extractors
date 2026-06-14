@@ -1,0 +1,75 @@
+{
+  "document_id": "bf34fef1",
+  "needs_review": false,
+  "fill_rate": 0.94,
+  "data": {
+    "company_name": "Общество с ограниченной ответственностью «ОЛИМП»",
+    "short_name": "ООО «ОЛИМП」",
+    "legal_address": "386 203, Республика Ингушетия, г.п. Сунжа ул. Висаитова 1/1",
+    "postal_address": "386 203, Республика Ингушетия, г.п. Сунжа ул. Висаитова 1/1",
+    "ogrn": "1070603000511",
+    "inn": "0603282034",
+    "kpp": "060301001",
+    "bank_name": "АО \"АЛЬФА-БАНК\"",
+    "checking_account": "40702810216070000188",
+    "correspondent_account": "30101810200000000593",
+    "bik": "044525593",
+    "ceo_position": null,
+    "ceo_fio_full": "Ильзов Башир Уматгиреевич",
+    "ceo_fio": "Ильзов Б.У.",
+    "phone": "8 (8734) 72-20-47",
+    "email": "oooolimp2007@mail.ru"
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "Общество с ограниченной ответственностью «ОЛИМП»",
+    "ORG_NAME": "ООО «ОЛИМП」",
+    "LEGAL_ADDRES": "386 203, Республика Ингушетия, г.п. Сунжа ул. Висаитова 1/1",
+    "POST_ADDRES": "386 203, Республика Ингушетия, г.п. Сунжа ул. Висаитова 1/1",
+    "OGRN": "1070603000511",
+    "INN": "0603282034",
+    "KPP": "060301001",
+    "BANK_NAME": "АО \"АЛЬФА-БАНК\"",
+    "RS": "40702810216070000188",
+    "KS": "30101810200000000593",
+    "BIK": "044525593",
+    "CEO_POSITION": "",
+    "CEO_FIO_FULL": "Ильзов Башир Уматгиреевич",
+    "CEO_FIO": "Ильзов Б.У.",
+    "TEL": "8 (8734) 72-20-47",
+    "E-MAIL": "oooolimp2007@mail.ru"
+  },
+  "validation": {
+    "inn": {
+      "valid": true,
+      "value": "0603282034",
+      "reason": null
+    },
+    "kpp": {
+      "valid": true,
+      "value": "060301001",
+      "reason": null
+    },
+    "ogrn": {
+      "valid": true,
+      "value": "1070603000511",
+      "reason": null
+    },
+    "bik": {
+      "valid": true,
+      "value": "044525593",
+      "reason": null
+    },
+    "checking_account": {
+      "valid": true,
+      "value": "40702810216070000188",
+      "reason": null
+    },
+    "correspondent_account": {
+      "valid": true,
+      "value": "30101810200000000593",
+      "reason": null
+    },
+    "cross_checks": [],
+    "errors": []
+  }
+}

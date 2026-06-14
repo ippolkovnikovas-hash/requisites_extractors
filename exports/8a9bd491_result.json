@@ -1,0 +1,75 @@
+{
+  "document_id": "8a9bd491",
+  "needs_review": false,
+  "fill_rate": 0.88,
+  "data": {
+    "company_name": "AO «Завод по производству сборно-монолитного бетона»",
+    "short_name": "pa AO «Завод по производству СМБ»",
+    "legal_address": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "postal_address": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "ogrn": "1180608003322",
+    "inn": "0603022879",
+    "kpp": "060301001",
+    "bank_name": null,
+    "checking_account": "40602810160350000017",
+    "correspondent_account": null,
+    "bik": "040702615",
+    "ceo_position": "Генеральный директор",
+    "ceo_fio_full": "Даурбеков Руслан Мухарбекович",
+    "ceo_fio": "Даурбеков Р.М.",
+    "phone": "+7 (928) 741-58-85",
+    "email": "ao-zavod-smb@mail.ru"
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "AO «Завод по производству сборно-монолитного бетона»",
+    "ORG_NAME": "pa AO «Завод по производству СМБ»",
+    "LEGAL_ADDRES": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "POST_ADDRES": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "OGRN": "1180608003322",
+    "INN": "0603022879",
+    "KPP": "060301001",
+    "BANK_NAME": "",
+    "RS": "40602810160350000017",
+    "KS": "",
+    "BIK": "040702615",
+    "CEO_POSITION": "Генеральный директор",
+    "CEO_FIO_FULL": "Даурбеков Руслан Мухарбекович",
+    "CEO_FIO": "Даурбеков Р.М.",
+    "TEL": "+7 (928) 741-58-85",
+    "E-MAIL": "ao-zavod-smb@mail.ru"
+  },
+  "validation": {
+    "inn": {
+      "valid": true,
+      "value": "0603022879",
+      "reason": null
+    },
+    "kpp": {
+      "valid": true,
+      "value": "060301001",
+      "reason": null
+    },
+    "ogrn": {
+      "valid": true,
+      "value": "1180608003322",
+      "reason": null
+    },
+    "bik": {
+      "valid": true,
+      "value": "040702615",
+      "reason": null
+    },
+    "checking_account": {
+      "valid": true,
+      "value": "40602810160350000017",
+      "reason": null
+    },
+    "correspondent_account": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "cross_checks": [],
+    "errors": []
+  }
+}

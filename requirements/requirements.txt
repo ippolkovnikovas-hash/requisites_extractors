@@ -1,0 +1,17 @@
+click
+loguru
+pydantic
+pydantic-settings
+python-docx
+pdfplumber
+openpyxl
+httpx
+openai
+flask
+pytesseract
+Pillow
+easyocr
+python-magic-bin
+flask
+werkzeug
+pdf2image

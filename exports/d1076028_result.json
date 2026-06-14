@@ -1,0 +1,80 @@
+{
+  "document_id": "d1076028",
+  "needs_review": true,
+  "fill_rate": 0.75,
+  "data": {
+    "company_name": "АО «Завод по производству сборно-монолитного бетона»",
+    "short_name": "АО «Завод по производству сборно-монолитного бетона»",
+    "legal_address": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "postal_address": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "ogrn": "1180608003322",
+    "inn": "0603022879",
+    "kpp": "060301001",
+    "bank_name": "ПАО СБЕРБАНК",
+    "checking_account": null,
+    "correspondent_account": null,
+    "bik": null,
+    "ceo_position": "Генеральный директор",
+    "ceo_fio_full": "Даурбеков Руслан Мухарбекович",
+    "ceo_fio": "Даурбеков Р.М.",
+    "phone": "+70608003322",
+    "email": null
+  },
+  "data_aliases": {
+    "FULL_ORG_NAME": "АО «Завод по производству сборно-монолитного бетона»",
+    "ORG_NAME": "АО «Завод по производству сборно-монолитного бетона»",
+    "LEGAL_ADDRES": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "POST_ADDRES": "386230, Ингушетия Респ, Карабулак г, Осканова ул, 1 д.",
+    "OGRN": "1180608003322",
+    "INN": "0603022879",
+    "KPP": "060301001",
+    "BANK_NAME": "ПАО СБЕРБАНК",
+    "RS": "",
+    "KS": "",
+    "BIK": "",
+    "CEO_POSITION": "Генеральный директор",
+    "CEO_FIO_FULL": "Даурбеков Руслан Мухарбекович",
+    "CEO_FIO": "Даурбеков Р.М.",
+    "TEL": "+70608003322",
+    "E-MAIL": ""
+  },
+  "validation": {
+    "inn": {
+      "valid": true,
+      "value": "0603022879",
+      "reason": null
+    },
+    "kpp": {
+      "valid": true,
+      "value": "060301001",
+      "reason": null
+    },
+    "ogrn": {
+      "valid": true,
+      "value": "1180608003322",
+      "reason": null
+    },
+    "bik": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "checking_account": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "correspondent_account": {
+      "valid": false,
+      "value": null,
+      "reason": "field is null"
+    },
+    "cross_checks": [],
+    "errors": [
+      "field is null",
+      "БИК отсутствует",
+      "Расчетный счет отсутствует",
+      "Корреспондентский счет отсутствует"
+    ]
+  }
+}

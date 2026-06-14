@@ -1,0 +1,324 @@
+Да — вот практически готовое ТЗ на реализацию по файлам проекта. Я ориентируюсь на твою текущую структуру с pipeline_service, text_extraction_service, text_normalization_service, validation, ollama_client и Flask UI; это хорошо ложится на отдельные модули без ломки уже рабочего потока DOCX/PDF.
+
+Что менять
+Смысл такой:
+
+не трогаем удачный happy-path для DOCX/PDF;
+
+добавляем усиление именно для image/table-сценария;
+
+после LLM вставляем recovery-слой из regex + строгой валидации.
+Для табличных OCR-кейсов полезно использовать pytesseract.image_to_data, потому что он возвращает не только текст, но и координаты/уверенность по словам, а это позволяет потом собирать строки таблицы, а не работать с “кашей” из текста.
+
+Файлы и правки
+app/extractors/image_extractor.py
+Задача: сделать не просто OCR-строку, а более структурированный выход для таблиц. pytesseract умеет отдавать данные с координатами через image_to_data, в том числе в формате словаря или DataFrame, что удобно для построчной сборки текста.
+
+Что добавить:
+
+preprocessing: grayscale, autocontrast/threshold, при необходимости upscale;
+
+режим image_to_string оставить как fallback;
+
+основной путь: image_to_data(..., output_type=Output.DICT or DATAFRAME);
+
+helper group_words_into_lines() по top-координате;
+
+helper extract_key_value_lines() для строк формата “ключ слева, значение справа”;
+
+в debug сохранять:
+
+raw_ocr_text
+
+ocr_lines
+
+kv_candidates
+
+Сигнатура может быть такой:
+
+python
+def extract_image_text(file_path: Path) -> ExtractedTextResult:
+    return ExtractedTextResult(
+        raw_text=raw_text,
+        lines=lines,
+        kv_candidates=kv_candidates,
+        source_format="image_table"
+    )
+app/services/text_extraction_service.py
+Сейчас этот сервис, вероятно, просто маршрутизирует по типу документа. Нужно расширить контракт: для image OCR он должен возвращать не только plain text, но и metadata/lines, если они есть.
+
+Что поменять:
+
+унифицировать результат извлечения:
+
+python
+@dataclass
+class ExtractionPayload:
+    text: str
+    lines: list[str] | None = None
+    kv_candidates: list[tuple[str, str]] | None = None
+    source_format: str | None = None
+для PDF/DOCX можно по-прежнему заполнять только text;
+
+для image — заполнять text + lines + kv_candidates.
+
+app/services/text_normalization_service.py
+Тут нужен отдельный нормализатор именно под реквизиты. OCR часто путает символы и разносит банковские числа пробелами; нормализация должна это выровнять, но аккуратно.
+
+Добавить функции:
+
+python
+normalize_ocr_text(text: str) -> str
+normalize_requisite_numbers(text: str) -> str
+split_classifiers_block(text: str) -> tuple[str, str | None]
+Что внутри:
+
+заменить разные тире и неразрывные пробелы;
+
+нормализовать E-mail, Email, e mail → email;
+
+нормализовать р/с, р\с, расчетный счет, расчётный счёт;
+
+нормализовать к/с, корр счет, корреспондентский счет;
+
+сделать отдельное выделение блока классификаторов:
+
+ОКПО
+
+ОКАТО
+
+ОКТМО
+
+ОКОГУ
+
+ОКВЭД
+
+этот блок либо убирать из основного текста для LLM, либо помечать как classifiers_text.
+
+app/prompts/ или app/llm/prompt_builder.py
+Если prompt у тебя сейчас зашит строкой, лучше вынести в отдельный builder. Пользователь хочет универсальное решение, но для image/table нужен отдельный профиль извлечения, а не тот же текстовый prompt.
+
+Сделай два prompt’а:
+
+python
+build_text_prompt(text: str) -> str
+build_image_table_prompt(text: str, lines: list[str] | None = None) -> str
+В image_table_prompt зафиксировать:
+
+не угадывать;
+
+если поле не найдено уверенно — вернуть null;
+
+не использовать ОКПО/ОКТМО/ОКВЭД/... как значения ИНН/КПП/ОГРН;
+
+ИНН/КПП делить на два поля;
+
+ОГРН только 13 цифр;
+
+БИК только 9 цифр;
+
+р/с и к/с только 20 цифр;
+
+если строка начинается с ключа слева, брать значение справа.
+
+app/llm/ollama_client.py
+Тут логика почти рабочая, менять немного. Нужно только передавать нужный prompt по типу источника, а ещё желательно логировать, какой prompt profile использован.
+
+Например:
+
+python
+def extract(text: str, *, prompt_profile: str = "text", lines: list[str] | None = None) -> str:
+    ...
+И в лог:
+
+python
+logger.debug("Sending to Ollama", prompt_profile=prompt_profile)
+app/parsers/llm_response_parser.py или где у тебя разбирается ответ
+После LLM надо прогонять данные через post-processing. В примере видно, что ОГРН заполнился неверным числом; значит нельзя слепо доверять модели.
+
+Добавить:
+
+очистку числовых полей от пробелов/дефисов;
+
+сплит ИНН/КПП, если модель вернула их одной строкой;
+
+если поле не проходит формат — переводить в None и записывать warning.
+
+app/services/fallback_regex_service.py — новый файл
+Это я бы вынес в отдельный сервис, чтобы не захламлять validator. Он нужен именно как слой “добора” после LLM.
+
+Сделай функции:
+
+python
+def extract_fallback_fields(text: str) -> dict[str, str | None]:
+    ...
+Минимальные regex:
+
+python
+INN_KPP_RE = r'(\d{10})\s*/\s*(\d{9})'
+OGRN_RE = r'\b\d{13}\b'
+EMAIL_RE = r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+PHONE_RE = r'(?:\+7|8)[\s(.-]*\d[\d\s().-]{8,}\d'
+Для БИК/рс/кс лучше искать рядом с ключом, а не просто все 9/20-значные числа:
+
+python
+BIK_RE = r'БИК(?:\s+банка)?[:\s]*([0-9 ]{9,})'
+RS_RE = r'(?:Р/с|Р\\с|Расчетн(?:ый|ого)\s+счет|Расч[её]тный\s+сч[её]т)[:\s]*([0-9 ]{20,})'
+KS_RE = r'(?:К/с|К\\с|Корреспондентск(?:ий|ого)\s+счет)[:\s]*([0-9 ]{20,})'
+И затем канонизация:
+
+убрать все пробелы;
+
+проверка начала:
+
+р/с начинается с 40
+
+к/с начинается с 30
+
+app/schemas/validation.py
+Здесь нужно усилить схему результата. Сейчас уже есть PipelineResult, но ему не хватает объяснимых причин needs_review.
+
+Добавь поля:
+
+python
+class PipelineResult(BaseModel):
+    ...
+    warnings: list[str] = []
+    review_reasons: list[str] = []
+    extracted_by: dict[str, str] | None = None
+Где extracted_by может хранить:
+
+python
+{
+  "inn": "regex",
+  "ogrn": "llm",
+  "email": "regex"
+}
+Это сильно поможет в отладке качества.
+
+app/services/validation_service.py или app/schemas/validation.py
+Если валидация у тебя внутри схемы — окей, но лучше вынести в сервис. Он должен проверять каждое поле и возвращать:
+
+очищенные данные;
+
+warnings;
+
+review_reasons;
+
+fill_rate.
+Строгие правила на длину реквизитов нужно реализовать именно тут.
+
+Пример функций:
+
+python
+def validate_inn(value: str | None) -> tuple[str | None, str | None]:
+def validate_kpp(value: str | None) -> tuple[str | None, str | None]:
+def validate_ogrn(value: str | None) -> tuple[str | None, str | None]:
+def validate_bik(value: str | None) -> tuple[str | None, str | None]:
+def validate_rs(value: str | None) -> tuple[str | None, str | None]:
+def validate_ks(value: str | None) -> tuple[str | None, str | None]:
+Правила:
+
+невалидное поле очищаем в None;
+
+причину пишем в review_reasons;
+
+если найден классификатор в поле ogrn, явно писать: "ogrn looks like classifier code".
+
+app/services/pipeline_service.py
+Это главный узел, сюда и надо вшить новый порядок. Сейчас для пользователя важно не ломать уже рабочий путь DOCX/PDF.
+
+Новый flow:
+
+routing
+
+extraction
+
+normalization
+
+prompt selection
+
+LLM extraction
+
+parse response
+
+fallback regex merge
+
+validation
+
+export
+
+Псевдокод:
+
+python
+payload = extract_text(...)
+normalized = normalize_payload(payload)
+
+prompt_profile = "image_table" if payload.source_format == "image_table" else "text"
+llm_raw = llm_client.extract(
+    normalized.text,
+    prompt_profile=prompt_profile,
+    lines=normalized.lines,
+)
+
+parsed = parse_llm_response(llm_raw)
+
+fallback = extract_fallback_fields(normalized.text)
+merged = merge_llm_and_fallback(parsed, fallback)
+
+validated = validate_requisites(
+    merged,
+    source_text=normalized.text,
+    source_format=payload.source_format,
+)
+Логика merge:
+
+если LLM поле пустое → берем regex;
+
+если LLM поле невалидное → берем regex;
+
+если оба есть и конфликтуют → сохраняем лучший по validator + warning.
+
+app/exporters/json_exporter.py и docx/xlsx экспортеры
+Добавить в JSON служебные поля:
+
+status
+
+warnings
+
+review_reasons
+
+fill_rate
+
+extracted_by
+Это поможет потом глазами смотреть, почему файл ушёл в needs_review.
+
+Минимальный план по коммитам
+Я бы внедрял так:
+
+Commit 1 — Validator hardening
+Добавить строгие проверки ИНН/КПП/ОГРН/БИК/рс/кс и review_reasons.
+
+Commit 2 — Fallback regex layer
+Новый fallback_regex_service.py + merge в pipeline_service.
+
+Commit 3 — Prompt split
+Разделить prompt для text и image_table.
+
+Commit 4 — OCR normalization
+Нормализация alias/ключей/чисел/классификаторов.
+
+Commit 5 — Structured OCR for images
+image_to_data, grouping into lines, kv-candidates.
+
+Что даст быстрый эффект
+Самый быстрый прирост качества дадут:
+
+validator,
+
+fallback regex,
+
+prompt split.
+Эти три пункта уже должны заметно улучшить кейс с “Карточкой контрагента”, даже до серьёзной переделки OCR-ветки, потому что многие поля там имеют жёсткий числовой формат и хорошо добираются регулярками.
+
+Если хочешь, следующим сообщением я могу дать уже черновые шаблоны кода для fallback_regex_service.py, validation_service.py и нового куска pipeline_service.py.

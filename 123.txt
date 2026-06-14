@@ -1,0 +1,231 @@
+12.06.26 - НОВЫЙ
+
+# Requisites Extractor
+
+Система автоматического извлечения реквизитов организаций из документов (PDF, DOCX, JPG, PNG) с использованием OCR и LLM.
+
+***
+
+## Статус проекта
+
+| Компонент | Статус |
+|-----------|--------|
+| Pipeline 9 шагов | ✅ Готово |
+| Извлечение из DOCX | ✅ Готово |
+| Извлечение из цифровых PDF | ✅ Готово |
+| OCR для JPG/PNG/TIFF | ✅ Готово |
+| LLM через Ollama (qwen2.5:3b) | ✅ Готово |
+| LLM через OpenAI / прокси | ✅ Готово |
+| Fallback regex-извлечение | ✅ Готово |
+| Валидация реквизитов (ИНН, КПП, ОГРН, БИК, счета) | ✅ Готово |
+| Экспорт JSON + XLSX + DOCX (шаблон) | ✅ Готово |
+| Flask веб-интерфейс (drag & drop, скачивание) | ✅ Готово |
+| CLI интерфейс | ✅ Готово |
+| OCR для сканированных PDF | 🔲 В планах |
+| Batch-обработка через веб | 🔲 В планах |
+| История документов в веб-интерфейсе | 🔲 В планах |
+
+***
+
+## Структура проекта
+
+```
+requisites_extractor/
+├── app/
+│   ├── core/
+│   │   ├── constants.py          # IMAGE_EXTENSIONS, MAX_FILE_SIZE и т.д.
+│   │   ├── enums.py              # DocumentType, ExtractorType, LLMProvider, ExportFormat
+│   │   └── exceptions.py        # UnsupportedFileTypeError, TextExtractionError и т.д.
+│   ├── schemas/
+│   │   ├── document.py           # DocumentInput
+│   │   ├── extraction.py         # TextExtractionResult, NormalizedText, LLMExtractionResult
+│   │   ├── requisites.py         # RequisitesData (16 полей)
+│   │   └── validation.py         # ValidationReport, FieldValidation, PipelineResult
+│   ├── extractors/
+│   │   ├── docx_extractor.py
+│   │   ├── pdf_extractor.py
+│   │   └── image_ocr_extractor.py  # pytesseract → TextExtractionResult
+│   ├── services/
+│   │   ├── pipeline_service.py           # run_pipeline() — главная точка входа
+│   │   ├── routing_service.py            # detect_document_type()
+│   │   ├── text_extraction_service.py    # выбор экстрактора
+│   │   ├── text_normalization_service.py # очистка OCR/PDF-шума перед LLM
+│   │   ├── fallback_regex_service.py     # regex-добивка если LLM пропустил поля
+│   │   └── validation_service.py         # validate_requisites()
+│   ├── llm/
+│   │   ├── mock_client.py
+│   │   ├── ollama_client.py
+│   │   └── openai_client.py
+│   ├── exporters/
+│   │   ├── json_exporter.py
+│   │   ├── xlsx_exporter.py
+│   │   ├── docx_exporter.py      # заполняет shablon.docx
+│   │   └── zip_exporter.py
+│   ├── validators/
+│   │   ├── inn_validator.py
+│   │   ├── kpp_validator.py
+│   │   ├── ogrn_validator.py
+│   │   ├── bik_validator.py
+│   │   └── account_validator.py
+│   ├── web/                      # Flask-приложение
+│   └── config.py
+├── scripts/
+│   ├── run_cli.py
+│   └── run_web.py
+├── uploads/                      # загружаемые файлы (temp)
+├── exports/                      # результаты: JSON, XLSX, DOCX
+├── processed/                    # отладочные raw.txt
+├── logs/
+├── shablon.docx                  # шаблон для DOCX-экспорта
+├── .env
+└── requirements.txt
+```
+
+***
+
+## Установка и запуск
+
+### Требования
+
+- Python 3.11+
+- [Ollama](https://ollama.com/download/windows) с моделью `qwen2.5:3b`
+- [Tesseract OCR v5.5.0](https://github.com/UB-Mannheim/tesseract/wiki) с русским языком (`rus.traineddata`)
+
+### 1. Виртуальное окружение
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 2. Файл `.env`
+
+```ini
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5:3b
+PROMPT_VERSION=v1
+LLM_TIMEOUT_SECONDS=120.0
+OPENAI_API_KEY=none
+TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
+```
+
+Для OpenAI через прокси (из РФ):
+
+```ini
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
+OPENAI_MODEL=gpt-4o-mini
+```
+
+### 3. Tesseract в PATH (один раз)
+
+```powershell
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";C:\Program Files\Tesseract-OCR", "User")
+```
+
+### 4. Запуск
+
+**Веб-интерфейс:**
+```powershell
+python scripts/run_web.py
+# Открыть: http://localhost:5000
+```
+
+**CLI:**
+```powershell
+# Один файл
+python scripts/run_cli.py process путь\к\файлу.pdf --show-result
+
+# Batch по папке
+python scripts/run_cli.py batch C:\путь\к\папке -e pdf docx jpg
+
+# Файл с пробелами в имени — обязательно в кавычках
+python scripts/run_cli.py process "C:\Users\Admin\Desktop\Карта СИТИТЕК (Точка).docx" --show-result
+
+# Текущие настройки
+python scripts/run_cli.py info
+```
+
+***
+
+## Поля реквизитов (16 полей)
+
+| Поле | Псевдоним в shablon.docx | Описание | Валидация |
+|------|--------------------------|----------|-----------|
+| `company_name` | `FULL_ORG_NAME` | Полное наименование | — |
+| `short_name` | `ORG_NAME` | Краткое наименование | — |
+| `legal_address` | `LEGAL_ADDRES` | Юридический адрес | — |
+| `postal_address` | `POST_ADDRES` | Почтовый адрес | — |
+| `ogrn` | `OGRN` | ОГРН | 13 или 15 цифр |
+| `inn` | `INN` | ИНН | 10 или 12 цифр + контрольная сумма |
+| `kpp` | `KPP` | КПП | 9 цифр |
+| `bank_name` | `BANK_NAME` | Наименование банка | — |
+| `checking_account` | `RS` | Расчётный счёт | 20 цифр |
+| `correspondent_account` | `KS` | Корреспондентский счёт | 20 цифр |
+| `bik` | `BIK` | БИК | 9 цифр, начинается с 04 |
+| `ceo_position` | `CEO_POSITION` | Должность руководителя | — |
+| `ceo_fio_full` | `CEO_FIO_FULL` | ФИО руководителя полностью | — |
+| `ceo_fio` | `CEO_FIO` | ФИО сокращённо (Фамилия И.О.) | — |
+| `phone` | `TEL` | Телефон | — |
+| `email` | `E-MAIL` | Email | — |
+
+***
+
+## Pipeline — 9 шагов
+
+```
+Файл
+  │
+  ▼
+1. DocumentInput   — sha256, MIME, extension
+2. Routing         — определяем тип: PDF / DOCX / IMAGE
+3. Text Extraction — pdfplumber / python-docx / pytesseract
+4. Normalization   — очищаем OCR-шум, схлопываем пробелы
+5. LLM Extraction  — Ollama / OpenAI → JSON с реквизитами
+6. Parse + Merge   — объединяем LLM + fallback regex
+7. Validation      — ИНН, КПП, ОГРН, БИК, счета
+8. Export          — JSON + XLSX + DOCX
+9. PipelineResult  — fill_rate, needs_review, warnings
+```
+
+`needs_review = True` означает что хотя бы одно обязательное поле не прошло валидацию формата или отсутствует в документе.
+
+***
+
+## Результаты тестирования
+
+| Файл | Тип | Заполнено | Статус | Время LLM |
+|------|-----|-----------|--------|-----------|
+| `karta_rassvet.pdf` | PDF цифровой | 15/16 (94%) | ⚠️ needs_review | ~14 сек |
+| `Карта СИТИТЕК (Точка).docx` | DOCX | 14/16 (88%) | ✅ done | ~22 сек |
+| `test_real.docx` | DOCX | 15/16 (94%) | ⚠️ needs_review | ~22 сек |
+| `PHOTO-2025-11-27.jpg` | JPG (OCR) | 12/16 (75%) | ⚠️ needs_review | ~19 сек |
+
+`needs_review` при 75% — часто означает что карточка контрагента просто не заполнена полностью (р/с и к/с отсутствуют физически в документе).
+
+***
+
+## Известные ограничения
+
+| Проблема | Причина | Статус |
+|----------|---------|--------|
+| `company_name` часто пустой | Нет явной метки «Полное наименование» в ряде карточек | Доработать промпт |
+| р/с и к/с не извлекаются из OCR | Поля не заполнены в исходном документе | Норма, `needs_review` |
+| Сканированные PDF не поддерживаются | OCR применяется только к IMAGE-типу | В планах |
+| `qwen2.5:3b` иногда пропускает поля | Малая модель, 3B параметров | Переход на 7b или OpenAI |
+
+***
+
+## LLM провайдеры
+
+| Провайдер | `LLM_PROVIDER` | Стоимость | Качество |
+|-----------|----------------|-----------|----------|
+| Ollama локально (`qwen2.5:3b`) | `ollama` | Бесплатно | Хорошо для полных карточек |
+| OpenAI `gpt-4o-mini` через прокси | `openai` | ~$0.0002/документ | Лучше на сложных документах |
+| Mock (тест без LLM) | `mock` | Бесплатно | Все поля = null |
+
+> Для OpenAI из РФ: [proxyapi.ru](https://proxyapi.ru) или [vsegpt.ru](https://vsegpt.ru)
+

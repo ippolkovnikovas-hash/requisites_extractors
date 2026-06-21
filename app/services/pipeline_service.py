@@ -115,7 +115,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         size_kb=round(file_path.stat().st_size / 1024, 1),
     )
 
-    # ── 1. DocumentInput ────────────────────────────────────────────────
+    # ── 1. DocumentInput ─────────────────────────────────────────────────
     sha256 = hashlib.sha256(file_path.read_bytes()).hexdigest()
 
     doc = DocumentInput(
@@ -128,7 +128,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         sha256=sha256,
     )
 
-    # ── 2. Routing ──────────────────────────────────────────────────────
+    # ── 2. Routing ───────────────────────────────────────────────────────
     doc.doc_type = detect_document_type(doc)
     if doc.doc_type == DocumentType.UNSUPPORTED:
         raise UnsupportedFileTypeError(
@@ -137,7 +137,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         )
     logger.info("Step 2/9 routing done", doc_type=doc.doc_type)
 
-    # ── 3. Text extraction ──────────────────────────────────────────────
+    # ── 3. Text extraction ───────────────────────────────────────────────
     extraction = extract_text(doc)
     logger.info(
         "Step 3/9 text extracted",
@@ -151,7 +151,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     raw_text_path = settings.processed_folder / f"{document_id}_raw.txt"
     raw_text_path.write_text(extraction.text, encoding="utf-8")
 
-    # ── 4. Normalization ────────────────────────────────────────────────
+    # ── 4. Normalization ─────────────────────────────────────────────────
     norm = normalize_text(extraction.text)
     logger.info(
         "Step 4/9 normalization done",
@@ -163,7 +163,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         norm.normalized_text, encoding="utf-8"
     )
 
-    # ── 5. LLM extraction ───────────────────────────────────────────────
+    # ── 5. LLM extraction ────────────────────────────────────────────────
     llm_client = _build_llm_client()
     llm_result = llm_client.extract(norm.normalized_text, settings.prompt_version)
     logger.info(
@@ -173,7 +173,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         prompt_version=llm_result.prompt_version,
     )
 
-    # ── 6. Parse → merge LLM + fallback regex → RequisitesData ─────────
+    # ── 6. Parse → merge LLM + fallback regex → RequisitesData ──────────
     safe_data = {
         k: v
         for k, v in llm_result.parsed_data.items()
@@ -182,38 +182,6 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
 
     fallback_data = extract_fallback_fields(norm.normalized_text)
     merged_data, extracted_by = merge_llm_and_fallback(safe_data, fallback_data)
-
-    debug_keys = [
-        "company_name",
-        "short_name",
-        "legal_address",
-        "postal_address",
-        "inn",
-        "kpp",
-        "ogrn",
-        "bik",
-        "bank_name",
-        "checking_account",
-        "correspondent_account",
-        "ceo_position",
-        "ceo_fio_full",
-        "ceo_fio",
-        "phone",
-        "email",
-    ]
-
-    print("\n" + "=" * 90)
-    print("DEBUG STEP 6: LLM / FALLBACK / MERGE")
-    print("=" * 90)
-    print("\n[SAFE_DATA / LLM]")
-    print({k: safe_data.get(k) for k in debug_keys})
-    print("\n[FALLBACK_DATA]")
-    print({k: fallback_data.get(k) for k in debug_keys})
-    print("\n[MERGED_DATA]")
-    print({k: merged_data.get(k) for k in debug_keys})
-    print("\n[EXTRACTED_BY]")
-    print(extracted_by)
-    print("=" * 90 + "\n")
 
     requisites = RequisitesData(**merged_data)
 
@@ -232,26 +200,8 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     if not requisites.company_name and requisites.short_name:
         requisites.company_name = requisites.short_name
 
-    # ── 7. Validation ───────────────────────────────────────────────────
-    print("\n" + "=" * 90)
-    print("DEBUG STEP 7: BEFORE VALIDATION")
-    print("=" * 90)
-    print("\n[REQUISITES BEFORE VALIDATION]")
-    print({k: requisites.model_dump().get(k) for k in debug_keys})
-    print("=" * 90 + "\n")
-
+    # ── 7. Validation ────────────────────────────────────────────────────
     validation_report, needs_review = validate_requisites(requisites)
-
-    print("\n" + "=" * 90)
-    print("DEBUG STEP 7: AFTER VALIDATION")
-    print("=" * 90)
-    print("\n[REQUISITES AFTER VALIDATION]")
-    print({k: requisites.model_dump().get(k) for k in debug_keys})
-    print("\n[VALIDATION_REPORT]")
-    print(validation_report)
-    print("\n[NEEDS_REVIEW]")
-    print(needs_review)
-    print("=" * 90 + "\n")
 
     logger.info(
         "Step 7/9 validation done",
@@ -259,7 +209,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         errors=validation_report.errors,
     )
 
-    # ── 8. Export ───────────────────────────────────────────────────────
+    # ── 8. Export ────────────────────────────────────────────────────────
     settings.exports_folder.mkdir(parents=True, exist_ok=True)
 
     json_path = export_json(document_id, requisites, validation_report, needs_review)
@@ -283,7 +233,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     else:
         logger.debug("shablon.docx not found, DOCX export skipped")
 
-    # ── 9. Result ───────────────────────────────────────────────────────
+    # ── 9. Result ────────────────────────────────────────────────────────
     all_warnings = _build_review_warnings(
         requisites=requisites,
         validation_report=validation_report,

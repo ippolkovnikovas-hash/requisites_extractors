@@ -1,4 +1,4 @@
-click
+﻿click
 loguru
 pydantic
 pydantic-settings
@@ -8,10 +8,9 @@ openpyxl
 httpx
 openai
 flask
+werkzeug
 pytesseract
 Pillow
 easyocr
 python-magic-bin
-flask
-werkzeug
 pdf2image

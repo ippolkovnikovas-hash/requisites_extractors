@@ -1,12 +1,13 @@
 import json
+
 import httpx
 from loguru import logger
 
 from app.config import settings
+from app.core.exceptions import LLMError, LLMParseError
 from app.llm.base import BaseLLMClient
 from app.llm.prompts import get_prompt
 from app.schemas.extraction import LLMExtractionResult
-from app.core.exceptions import LLMError, LLMParseError
 
 
 class OllamaClient(BaseLLMClient):

@@ -8,13 +8,13 @@
 """
 
 from pathlib import Path
+
 from docx import Document
-from docx.oxml.ns import qn
 from loguru import logger
 
-from app.schemas.extraction import TextExtractionResult
 from app.core.enums import ExtractorType
 from app.core.exceptions import TextExtractionError
+from app.schemas.extraction import TextExtractionResult
 
 
 def extract_docx(file_path: Path) -> TextExtractionResult:

@@ -9,10 +9,10 @@
 
 from loguru import logger
 
-from app.schemas.document import DocumentInput
-from app.schemas.extraction import TextExtractionResult
 from app.core.enums import DocumentType
 from app.core.exceptions import UnsupportedFileTypeError
+from app.schemas.document import DocumentInput
+from app.schemas.extraction import TextExtractionResult
 
 
 def extract_text(doc: DocumentInput) -> TextExtractionResult:

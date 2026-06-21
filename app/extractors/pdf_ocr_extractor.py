@@ -8,19 +8,18 @@ OCR-извлечение текста из сканированных PDF.
   4. Склеиваем текст всех страниц в единый результат.
 """
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 import pytesseract
+from loguru import logger
 from pdf2image import convert_from_path
 from PIL import Image, ImageFilter, ImageOps
-from loguru import logger
 
 from app.config import settings
-from app.schemas.extraction import TextExtractionResult
 from app.core.enums import ExtractorType
 from app.core.exceptions import TextExtractionError
-
+from app.schemas.extraction import TextExtractionResult
 
 TESSERACT_CONFIG = r"--psm 11 --oem 3 -c preserve_interword_spaces=1"
 

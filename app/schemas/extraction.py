@@ -3,6 +3,7 @@
 """
 
 from pydantic import BaseModel
+
 from app.core.enums import ExtractorType
 
 

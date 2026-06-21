@@ -5,14 +5,14 @@
 """
 
 from pathlib import Path
+
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from app.config import settings
 from app.schemas.requisites import RequisitesData
 from app.schemas.validation import ValidationReport
-
 
 # Маппинг python-имя → человекочитаемое название (порядок совпадает с shablon.docx)
 _FIELD_LABELS: list[tuple[str, str]] = [

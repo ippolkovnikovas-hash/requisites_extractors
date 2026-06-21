@@ -4,6 +4,7 @@
 """
 
 from pathlib import Path
+
 from docx import Document
 
 from app.schemas.requisites import RequisitesData

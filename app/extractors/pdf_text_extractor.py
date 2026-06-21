@@ -9,13 +9,14 @@
 """
 
 from pathlib import Path
+
 import pdfplumber
 from loguru import logger
 
 from app.config import settings
-from app.schemas.extraction import TextExtractionResult
 from app.core.enums import ExtractorType
 from app.core.exceptions import TextExtractionError
+from app.schemas.extraction import TextExtractionResult
 
 
 def extract_pdf_text(file_path: Path) -> TextExtractionResult:

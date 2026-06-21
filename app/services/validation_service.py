@@ -1,10 +1,10 @@
 from app.schemas.requisites import RequisitesData
 from app.schemas.validation import ValidationReport
+from app.validators.account_validator import validate_account, validate_cross_bik_corr
+from app.validators.bik_validator import validate_bik
 from app.validators.inn_validator import validate_inn
 from app.validators.kpp_validator import validate_kpp
 from app.validators.ogrn_validator import validate_ogrn
-from app.validators.bik_validator import validate_bik
-from app.validators.account_validator import validate_account, validate_cross_bik_corr
 
 
 def validate_requisites(data: RequisitesData) -> tuple[ValidationReport, bool]:

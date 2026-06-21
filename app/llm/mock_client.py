@@ -7,6 +7,7 @@ Mock LLM — для отладки pipeline без реального прова
 """
 
 import json
+
 from app.llm.base import BaseLLMClient
 from app.schemas.extraction import LLMExtractionResult
 

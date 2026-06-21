@@ -11,12 +11,12 @@
 
 import re
 import unicodedata
-from loguru import logger
 
-from app.schemas.extraction import NormalizedText
+from loguru import logger
 
 # Лимит символов для LLM (GPT-4o-mini ~128k токенов, но реквизиты — всегда в начале)
 from app.core.constants import NORMALIZE_MAX_CHARS
+from app.schemas.extraction import NormalizedText
 
 
 def normalize_text(raw_text: str) -> NormalizedText:

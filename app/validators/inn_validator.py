@@ -6,7 +6,6 @@
 
 from app.schemas.validation import FieldValidation
 
-
 _WEIGHTS_10 = [2, 4, 10, 3, 5, 9, 4, 6, 8]
 _WEIGHTS_11 = [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 _WEIGHTS_12 = [3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]

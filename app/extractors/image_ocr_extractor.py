@@ -1,6 +1,7 @@
-﻿import pytesseract
+﻿from pathlib import Path
+
+import pytesseract
 from PIL import Image, ImageFilter, ImageOps
-from pathlib import Path
 
 from app.config import settings
 from app.schemas.extraction import TextExtractionResult

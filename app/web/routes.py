@@ -2,11 +2,20 @@ import os
 import uuid
 from pathlib import Path
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from werkzeug.utils import secure_filename
 
-from app.services.pipeline_service import run_pipeline
 from app.schemas.validation import PipelineResult
+from app.services.pipeline_service import run_pipeline
 
 web_bp = Blueprint('web', __name__)
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.jpg', '.jpeg', '.png', '.tiff'}

@@ -1,12 +1,13 @@
 import json
-from openai import OpenAI
+
 from loguru import logger
+from openai import OpenAI
 
 from app.config import settings
+from app.core.exceptions import LLMError, LLMParseError
 from app.llm.base import BaseLLMClient
 from app.llm.prompts import get_prompt
 from app.schemas.extraction import LLMExtractionResult
-from app.core.exceptions import LLMError, LLMParseError
 
 
 class OpenAIClient(BaseLLMClient):

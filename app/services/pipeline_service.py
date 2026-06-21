@@ -20,6 +20,7 @@ from pathlib import Path
 from loguru import logger
 
 from app.config import settings
+from app.core.constants import NORMALIZE_MAX_CHARS
 from app.core.enums import DocumentType, LLMProvider
 from app.core.exceptions import UnsupportedFileTypeError
 from app.exporters.json_exporter import export_json
@@ -35,8 +36,6 @@ from app.services.routing_service import detect_document_type
 from app.services.text_extraction_service import extract_text
 from app.services.text_normalization_service import normalize_text
 from app.services.validation_service import validate_requisites
-from app.core.constants import NORMALIZE_MAX_CHARS
-
 
 _REQUISITES_FIELDS: frozenset[str] = frozenset(RequisitesData.model_fields.keys())
 

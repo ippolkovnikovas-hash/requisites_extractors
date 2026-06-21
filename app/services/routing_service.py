@@ -11,17 +11,18 @@
 """
 
 from pathlib import Path
+
 import pdfplumber
 from loguru import logger
 
 from app.config import settings
-from app.schemas.document import DocumentInput
-from app.core.enums import DocumentType
 from app.core.constants import (
+    DOCX_EXTENSION,
     IMAGE_EXTENSIONS,
     PDF_EXTENSION,
-    DOCX_EXTENSION,
 )
+from app.core.enums import DocumentType
+from app.schemas.document import DocumentInput
 
 
 def detect_document_type(doc: DocumentInput) -> DocumentType:

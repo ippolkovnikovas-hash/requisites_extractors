@@ -25,6 +25,8 @@ def export_json(
     requisites: RequisitesData,
     validation: ValidationReport,
     needs_review: bool,
+    extracted_by: list[str] | None = None,
+    processing_meta: dict | None = None,
 ) -> Path:
     """
     Сохраняет JSON в exports/{document_id}_result.json.
@@ -46,6 +48,8 @@ def export_json(
 
         # Отчёт валидации
         "validation": validation.model_dump(),
+        "extracted_by": extracted_by or [],
+        "processing_meta": processing_meta or {},
     }
 
     out_path.write_text(

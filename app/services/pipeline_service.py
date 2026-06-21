@@ -212,7 +212,23 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     # ── 8. Export ────────────────────────────────────────────────────────
     settings.exports_folder.mkdir(parents=True, exist_ok=True)
 
-    json_path = export_json(document_id, requisites, validation_report, needs_review)
+    json_path = export_json(
+        document_id,
+        requisites,
+        validation_report,
+        needs_review,
+        extracted_by=extracted_by,
+        processing_meta={
+            "extractor": extraction.extractor_used,
+            "ocr_used": extraction.ocr_used,
+            "llm_provider": llm_result.provider,
+            "llm_model": llm_result.model_name,
+            "prompt_version": llm_result.prompt_version,
+            "sha256": sha256,
+            "fallback_used": bool(extracted_by),
+            "fallback_count": len(extracted_by),
+        },
+    )
     logger.info("Step 8/9 JSON saved", path=json_path.name)
 
     xlsx_path = export_xlsx(document_id, requisites, validation_report)

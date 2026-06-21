@@ -1,0 +1,191 @@
+Зафиксированные решения
+.gitignore — будем дорабатывать как отдельный пункт в Ч.1, с пояснением про *.docx и !shablon.docx дойдём по ходу
+
+Ч.2 — пошагово с проверкой после каждого действия
+
+Ч.3 — синтетические фикстуры делаем
+
+Ч.4 CI/CD — пока ничего делать не надо, это просто заметка на будущее: когда будем писать ci.yml, нужно прописать эти переменные окружения. Сейчас не актуально
+
+Ч.5 — делаем отдельно и подробно, цель — идеальное извлечение
+
+Ч.6 — Flask + jsonify/marshmallow (Вариант A)
+
+Ollama в Docker — отдельный вопрос, отвечу ниже
+
+Вопрос про Ollama на других устройствах
+Это важный архитектурный момент. Три варианта:
+
+Вариант	Как работает	Плюсы	Минусы
+A. Ollama отдельно	Ollama стоит на хосте, приложение в Docker обращается к host.docker.internal:11434	Модель не в образе, образ лёгкий	Ollama нужно ставить вручную на каждой машине
+B. Ollama в compose	docker-compose.yml поднимает контейнер ollama/ollama, модель скачивается при первом старте	Полностью воспроизводимо	Образ ~2GB + модель ~2GB, нужен GPU passthrough
+C. Mock в тестах, Ollama на проде	В CI/тестах LLM_PROVIDER=mock, в проде — вариант A или B	Тесты не зависят от Ollama	Prod требует отдельной настройки
+Рекомендация для тебя: Вариант A сейчас (Ollama на хосте, приложение в Docker), Вариант B — когда захочешь отдать проект кому-то ещё. Реализуем в Ч.8.
+
+Полный план с детализацией
+Ч.1 — Гигиена репозитория
+Цель: чистый, безопасный, воспроизводимый репо.
+
+Удалить мусорные файлы из репо: 123.txt, script.py, fix_structure.py, 12.06.26 продолжение программы.txt, план.txt, test_real.docx, папку .idea/
+
+Переместить полезные заметки: план.txt → docs/architecture.md, заметки от 12.06 → docs/extraction-notes.md
+
+Очистить exports/ в git — оставить только .gitkeep
+
+Настроить .gitignore — добавить все нужные паттерны (включая *.docx + !shablon.docx)
+
+Создать .env.example со всеми ключами без значений
+
+Разбить requirements.txt на requirements/base.txt, dev.txt, prod.txt — убрать дубль flask
+
+Заполнить pyproject.toml конфигами ruff, black, pytest
+
+Проверка после каждого шага — git status, git log, pip install dry-run.
+
+Ч.2 — Чистка кода
+Цель: убрать отладочный мусор, решить судьбу пустых файлов.
+
+Открыть pipeline_service.py — найти все print() в шагах 6 и 7, заменить на logger.debug(...)
+
+Удалить пустые файлы-заглушки: ingest_service.py, postprocess_service.py, llm_extraction_service.py, export_service.py (логика уже в pipeline)
+
+Удалить пустые API-заглушки: app/api/* (реализуем в Ч.6 с нуля чисто)
+
+Оставить и пометить под реализацию: cross_field_validator.py (нужен в Ч.5), app/web/forms.py (нужен в Ч.6), OCR backends (нужны в Ч.5)
+
+Вынести магические числа из кода в config.py / constants.py
+
+Прогнать ruff check app/ + black app/ — исправить замечания
+
+Проверка после каждого шага — запустить CLI python scripts/run_cli.py process shablon.docx --show-result, убедиться что всё ещё работает.
+
+Ч.3 — Тесты
+Цель: покрытие критичной бизнес-логики, фундамент для безопасного рефакторинга.
+
+Создать структуру tests/ + conftest.py + tests/fixtures/
+
+Создать синтетические тестовые документы в fixtures/ — DOCX и PDF с выдуманными, но корректными реквизитами (валидные ИНН/КПП/ОГРН по алгоритму, не реальные организации)
+
+Unit-тесты валидаторов (высокий приоритет, быстрый выигрыш):
+
+test_validators_inn.py — валидные 10/12-значные, битая контрольная сумма, буквы, пустое
+
+test_validators_kpp.py, test_validators_ogrn.py, test_validators_bik.py, test_validators_accounts.py
+
+Кросс-проверка БИК↔корр.счёт
+
+Unit-тесты regex-слоя — test_fallback_regex.py
+
+Unit-тесты нормализации — test_normalization.py
+
+Unit-тесты маршрутизации — test_routing.py
+
+Интеграционные тесты pipeline на mock-LLM — test_pipeline_docx.py, test_pipeline_pdf_text.py
+
+Настроить pytest с порогом покрытия ≥90% для validators/
+
+Проверка: pytest --cov=app tests/ — зелёный, покрытие выводится.
+
+Ч.4 — CI/CD (GitHub Actions)
+Цель: автопроверка на каждый push.
+
+Создать .github/workflows/ci.yml:
+
+Matrix Python 3.11 / 3.12
+
+Шаги: install → ruff → black → pytest с LLM_PROVIDER=mock
+
+Кэш pip
+
+Добавить бейджи в README (build status, coverage)
+
+(Опц.) pre-commit хуки — ruff/black до коммита
+
+(Опц.) Dependabot
+
+Проверка: пуш в ветку → Actions зелёный в GitHub.
+
+Ч.5 — Качество извлечения (ключевой эпик)
+Цель: идеальное извлечение реквизитов — максимальный fill_rate и точность.
+
+Это самая важная и объёмная часть. Разбиваем на 7 отдельных под-этапов, каждый — отдельный коммит:
+
+Validator hardening — review_reasons, защита от ОКПО/ОКТМО в поле ОГРН, очистка невалидных полей
+
+Усиление fallback regex — контекстный поиск (БИК рядом с меткой), канонизация р/с → 40..., к/с → 30...
+
+Split промптов — отдельный build_text_prompt() и build_image_table_prompt() с жёсткими правилами
+
+Нормализация OCR-текста — normalize_ocr_text(), normalize_requisite_numbers(), split_classifiers_block() (вынос ОКПО/ОКАТО/ОКВЭД)
+
+Структурный OCR — переход на image_to_data(Output.DICT), сборка строк по top-координате, extract_key_value_lines()
+
+OCR backends — ocr/base.py (интерфейс), tesseract_backend.py, easyocr_backend.py, переключение через settings.ocr_backend
+
+Расширение схемы результата — extracted_by, review_reasons, fill_rate в JSON-экспорте
+
+Проверка на каждом шаге: тест на реальных документах, сравнение fill_rate до/после.
+
+Ч.6 — REST API + Web UI (Flask)
+Цель: полноценный Flask-слой — и JSON API, и веб-интерфейс.
+
+app/main.py — фабрика create_app(), регистрация blueprints, error handlers
+
+app/dependencies.py — общие зависимости (билдер pipeline, лимиты файлов)
+
+app/api/routes_health.py — GET /api/health
+
+app/api/routes_upload.py — POST /api/extract, GET /api/result/<id>, GET /api/download/<id>/<format>
+
+Единый формат ошибок — {error, code, details} через exceptions.py
+
+app/web/ — Flask-роуты для веб-интерфейса (загрузка, результат, скачивание), forms.py
+
+Тесты API — test_api.py (health, upload, invalid file, 413)
+
+Проверка: curl -F file=@shablon.docx localhost:5000/api/extract → корректный JSON.
+
+Ч.7 — CLI и batch-обработка
+Цель: завершить все режимы запуска.
+
+Ревизия scripts/run_cli.py — привести к актуальному pipeline, добавить тест
+
+scripts/run_dev.py — запуск Flask в dev-режиме
+
+scripts/batch_process.py — прогресс-бар, сводный отчёт CSV/JSON, счётчик needs_review
+
+Единая точка входа — python -m app или console_scripts в pyproject.toml
+
+Проверка: python scripts/batch_process.py ./test_folder → сводка в терминале.
+
+Ч.8 — Docker
+Цель: воспроизводимый запуск с системными зависимостями OCR.
+
+Dockerfile — multi-stage, tesseract-ocr + tesseract-ocr-rus + poppler-utils, non-root user
+
+docker-compose.yml — сервис app + опциональный ollama/ollama (Вариант B); для текущего использования — Ollama на хосте через host.docker.internal:11434 (Вариант A)
+
+.dockerignore
+
+Healthcheck на /api/health
+
+Документация в README
+
+Проверка: docker compose up → curl localhost:5000/api/health → {"status": "ok"}.
+
+Ч.9 — Документация
+Цель: проект понятен любому за 15 минут.
+
+README.md — архитектура (диаграмма pipeline), быстрый старт local/Docker, переменные окружения, примеры CLI и API
+
+docs/ — перенести заметки как architecture.md и extraction-notes.md
+
+CONTRIBUTING.md — тесты, линтеры, формат коммитов
+
+Структурное логирование — request/document id, время по этапам, причина needs_review
+
+Порядок работы
+text
+Ч.1 → Ч.2 → Ч.3 → Ч.4 → Ч.5 → Ч.6 → Ч.7 → Ч.8 → Ч.9
+ └─ гигиена  └─ код  └─ тесты └─ CI  └─ качество └─ API/Web └─ CLI └─ Docker └─ Docs
+Части 1–4 — быстрая расчистка (по 1–2 вечера каждая). Ч.5 — основная продуктовая работа, дробим на 7 коммитов. Ч.6–9 — можно частично параллельно.

@@ -87,3 +87,31 @@ def normalize_text(raw_text: str) -> NormalizedText:
         char_count_before=len(original),
         char_count_after=len(text),
     )
+
+
+
+
+def normalize_requisite_numbers(text: str) -> str:
+    import re as _re
+    NUMERIC_LABELS = _re.compile(
+        r"(ИНН|КПП|ОГРН|БИК|расчётн|корр|счёт|счет|[Рр]/[Сс]|[Кк]/[Сс])",
+        _re.IGNORECASE,
+    )
+    result_lines = []
+    for line in text.splitlines():
+        if NUMERIC_LABELS.search(line):
+            line = _re.sub(r"(?<=\d) (?=\d)", "", line)
+        result_lines.append(line)
+    return "\n".join(result_lines)
+
+
+def split_classifiers_block(text: str) -> str:
+    import re as _re
+    pat = _re.compile(r"(?<!\n)(ОКПО|ОКТМО|ОКВЭД|ОКАТО|ОКОПФ|ОКФС|КБК)", _re.IGNORECASE)
+    return pat.sub(r"\n\1", text)
+
+
+def normalize_ocr_text(raw_text: str) -> str:
+    text = split_classifiers_block(raw_text)
+    text = normalize_requisite_numbers(text)
+    return text

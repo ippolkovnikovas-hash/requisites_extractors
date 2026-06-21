@@ -492,17 +492,17 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
     checking_account = _extract_rs(text)
     correspondent_account = _extract_ks(text)
 
-    logger.info("=== fallback debug start ===")
-    logger.info("RAW TEXT PREVIEW:\n%s", text[:4000])
-    logger.info("partner_card_data=%s", partner_card_data)
-    logger.info("regex inn=%s", inn)
-    logger.info("regex kpp=%s", kpp)
-    logger.info("regex ogrn=%s", ogrn)
-    logger.info("regex bik=%s", bik)
-    logger.info("regex checking_account=%s", checking_account)
-    logger.info("regex correspondent_account=%s", correspondent_account)
-    logger.info("regex email=%s", _extract_email(text))
-    logger.info("=== fallback debug end ===")
+    logger.debug("=== fallback debug start ===")
+    logger.debug("RAW TEXT PREVIEW:\n%s", text[:4000])
+    logger.debug("partner_card_data=%s", partner_card_data)
+    logger.debug("regex inn=%s", inn)
+    logger.debug("regex kpp=%s", kpp)
+    logger.debug("regex ogrn=%s", ogrn)
+    logger.debug("regex bik=%s", bik)
+    logger.debug("regex checking_account=%s", checking_account)
+    logger.debug("regex correspondent_account=%s", correspondent_account)
+    logger.debug("regex email=%s", _extract_email(text))
+    logger.debug("=== fallback debug end ===")
 
     if inn:
         inn_digits = re.sub(r"\D", "", inn)
@@ -543,7 +543,7 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
         "ceo_fio": partner_card_data.get("ceo_fio") or ceo_fio,
     }
 
-    logger.info("fallback result=%s", result)
+    logger.debug("fallback result=%s", result)
     return result
 
 
@@ -592,21 +592,15 @@ def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool
                 return True
             if len(regex_digits) in (10, 12) and len(llm_digits) == 20:
                 return True
-            if regex_digits == "0700012629":
-                return True
 
     if field == "kpp":
         if llm_digits and regex_digits:
             if len(regex_digits) == 9 and len(llm_digits) != 9:
                 return True
-            if len(regex_digits) == 9 and regex_digits.startswith("26") and regex_digits != llm_digits:
-                return True
 
     if field == "ogrn":
         if llm_digits and regex_digits:
             if len(regex_digits) == 13 and len(llm_digits) != 13:
-                return True
-            if len(regex_digits) == 13 and regex_digits != llm_digits:
                 return True
 
     if field == "bik":
@@ -637,9 +631,9 @@ def merge_llm_and_fallback(
     llm_data: dict[str, Any],
     fallback_data: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, str]]:
-    logger.info("=== merge debug start ===")
-    logger.info("llm_data=%s", llm_data)
-    logger.info("fallback_data=%s", fallback_data)
+    logger.debug("=== merge debug start ===")
+    logger.debug("llm_data=%s", llm_data)
+    logger.debug("fallback_data=%s", fallback_data)
 
     merged = dict(llm_data)
     extracted_by: dict[str, str] = {}
@@ -660,8 +654,8 @@ def merge_llm_and_fallback(
             merged[key] = fallback_value
             extracted_by[key] = "regex"
 
-    logger.info("merged=%s", merged)
-    logger.info("extracted_by=%s", extracted_by)
-    logger.info("=== merge debug end ===")
+    logger.debug("merged=%s", merged)
+    logger.debug("extracted_by=%s", extracted_by)
+    logger.debug("=== merge debug end ===")
 
     return merged, extracted_by

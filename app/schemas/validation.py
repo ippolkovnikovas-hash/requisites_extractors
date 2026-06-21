@@ -18,6 +18,7 @@ class ValidationReport(BaseModel):
     correspondent_account: FieldValidation | None = None
     cross_checks:          list[str] = []
     errors:                list[str] = []
+    review_reasons:        list[str] = []
 
     model_config = {"arbitrary_types_allowed": True}
 

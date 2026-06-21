@@ -35,6 +35,7 @@ from app.services.routing_service import detect_document_type
 from app.services.text_extraction_service import extract_text
 from app.services.text_normalization_service import normalize_text
 from app.services.validation_service import validate_requisites
+from app.core.constants import NORMALIZE_MAX_CHARS
 
 
 _REQUISITES_FIELDS: frozenset[str] = frozenset(RequisitesData.model_fields.keys())
@@ -92,8 +93,8 @@ def _build_review_warnings(
 ) -> list[str]:
     warnings = extraction_warnings.copy()
 
-    if normalized_char_count_before > 12_000:
-        warnings.append(f"Text truncated: {normalized_char_count_before} → 12000 chars")
+    if normalized_char_count_before > NORMALIZE_MAX_CHARS:
+        warnings.append(f"Text truncated: {normalized_char_count_before} → {NORMALIZE_MAX_CHARS} chars")
 
     if validation_report.errors:
         warnings.extend(validation_report.errors)

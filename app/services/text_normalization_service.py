@@ -6,7 +6,7 @@
   - Артефакты pdfplumber: двойные пробелы, лишние переносы строк
   - DOCX-артефакты: повторяющиеся заголовки колонтитулов
   - Мусорные Unicode-символы (неразрывные пробелы, BOM, управляющие символы)
-  - Слишком длинный текст: обрезаем до MAX_CHARS чтобы не превышать context window LLM
+  - Слишком длинный текст: обрезаем до NORMALIZE_MAX_CHARS чтобы не превышать context window LLM
 """
 
 import re
@@ -16,7 +16,7 @@ from loguru import logger
 from app.schemas.extraction import NormalizedText
 
 # Лимит символов для LLM (GPT-4o-mini ~128k токенов, но реквизиты — всегда в начале)
-MAX_CHARS = 12_000
+from app.core.constants import NORMALIZE_MAX_CHARS
 
 
 def normalize_text(raw_text: str) -> NormalizedText:
@@ -65,14 +65,14 @@ def normalize_text(raw_text: str) -> NormalizedText:
 
     # 9. Обрезаем до лимита LLM с предупреждением
     warnings_in_meta = []
-    if len(text) > MAX_CHARS:
+    if len(text) > NORMALIZE_MAX_CHARS:
         logger.warning(
             "Text truncated before LLM",
             original_chars=len(text),
-            max_chars=MAX_CHARS,
+            NORMALIZE_MAX_CHARS=NORMALIZE_MAX_CHARS,
         )
-        text = text[:MAX_CHARS]
-        warnings_in_meta.append(f"Text truncated to {MAX_CHARS} chars")
+        text = text[:NORMALIZE_MAX_CHARS]
+        warnings_in_meta.append(f"Text truncated to {NORMALIZE_MAX_CHARS} chars")
 
     logger.debug(
         "Text normalization done",

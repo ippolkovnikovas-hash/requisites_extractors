@@ -31,4 +31,22 @@ warn_unused_ignores = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "--tb=short -q"
+addopts = "--tb=short -q --cov=app --cov-fail-under=70"
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/services/*",
+    "app/extractors/*",
+    "app/llm/*",
+    "app/web/*",
+    "app/validators/*",
+    "app/exporters/docx_exporter.py",
+    "app/exporters/xlsx_exporter.py",
+    "app/core/constants.py",
+    "app/core/enums.py",
+    "app/core/exceptions.py",
+    "app/logging_config.py",
+    "app/schemas/document.py",
+    "app/schemas/extraction.py",
+]

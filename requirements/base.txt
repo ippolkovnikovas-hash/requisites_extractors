@@ -12,5 +12,6 @@ werkzeug
 pytesseract
 Pillow
 easyocr
-python-magic-bin
+python-magic-bin; platform_system == "Windows"
+python-magic; platform_system != "Windows"
 pdf2image

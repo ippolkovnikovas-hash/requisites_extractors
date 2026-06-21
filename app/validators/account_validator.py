@@ -1,4 +1,4 @@
-from app.schemas.validation import FieldValidation
+﻿from app.schemas.validation import FieldValidation
 
 
 def validate_account(value: str | None, account_type: str) -> FieldValidation:
@@ -52,3 +52,4 @@ def validate_cross_bik_corr(bik: str | None, correspondent_account: str | None) 
         return "BIK and correspondent account mismatch"
 
     return None
+

@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><title>API Test</title>
+<style>body{font-family:sans-serif;max-width:700px;margin:40px auto;padding:0 20px}
+button{padding:8px 16px;background:#01696f;color:#fff;border:none;border-radius:6px;cursor:pointer}
+pre{background:#f3f0ec;padding:16px;border-radius:6px;overflow:auto;font-size:13px}
+input{padding:6px;border:1px solid #ccc;border-radius:4px}</style></head>
+<body>
+<h2>🧪 Requisites Extractor — API Test</h2>
+
+<h3>1. Health</h3>
+<button onclick="health()">GET /api/health</button>
+<pre id="r1">—</pre>
+
+<h3>2. Extract</h3>
+<input type="file" id="f" accept=".pdf,.docx,.doc,.jpg,.png">
+<button onclick="extract()">POST /api/extract</button>
+<pre id="r2">—</pre>
+
+<h3>3. Download result</h3>
+<input id="doc_id" placeholder="document_id" style="width:200px">
+<button onclick="dl('docx')">docx</button>
+<button onclick="dl('xlsx')">xlsx</button>
+<button onclick="dl('json')">json</button>
+<pre id="r3">—</pre>
+
+<script>
+const BASE = "http://127.0.0.1:5000/api";
+let lastId = "";
+
+async function health() {
+  const r = await fetch(BASE + "/health");
+  document.getElementById("r1").textContent = JSON.stringify(await r.json(), null, 2);
+}
+
+async function extract() {
+  const file = document.getElementById("f").files[0];
+  if (!file) return alert("Выберите файл");
+  const fd = new FormData(); fd.append("file", file);
+  document.getElementById("r2").textContent = "⏳ обработка...";
+  const r = await fetch(BASE + "/extract", {method:"POST", body: fd});
+  const data = await r.json();
+  lastId = data.document_id || "";
+  document.getElementById("doc_id").value = lastId;
+  document.getElementById("r2").textContent = JSON.stringify(data, null, 2);
+}
+
+async function dl(fmt) {
+  const id = document.getElementById("doc_id").value;
+  if (!id) return alert("Сначала выполните extract");
+  const r = await fetch(`${BASE}/download/${id}/${fmt}`);
+  if (!r.ok) { document.getElementById("r3").textContent = "Ошибка: " + r.status; return; }
+  const blob = await r.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `result_${id}.${fmt}`;
+  a.click();
+  document.getElementById("r3").textContent = `✅ скачан result_${id}.${fmt} (${blob.size} bytes)`;
+}
+</script>
+</body></html>

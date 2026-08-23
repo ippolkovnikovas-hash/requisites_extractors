@@ -60,14 +60,16 @@
 
 ### 1.2. Чего нет, хотя старый ROADMAP/README считали это сделанным
 
+Строки ниже описывают состояние **до** работ 23.08.2026. Закрытое отмечено.
+
 | Заявлено | Факт |
 |----------|------|
-| «Web UI на Flask» | Есть `app/web/routes.py` с `index`/`upload`/`downloads` и два шаблона, но **review-формы нет**, `_build_review_rows` нет, `POST /generate` нет. `templates/result.html` и `templates/upload.html` — пустые файлы. `app/web/forms.py` — пустой. |
-| Единое Flask-приложение | **Две несвязанные фабрики**: `app/main.py:create_app()` регистрирует только API-блюпринты, `app/web/__init__.py:create_app()` — только `web_bp`. Друг о друге не знают, запускаются разными скриптами (`run_dev.py` / `run_web.py`). |
-| «Кросс-проверка БИК↔корр.счёт» | `app/validators/cross_field_validator.py` — **пустой файл**. Реально работает `validate_cross_bik_corr()` в `account_validator.py`, и она сравнивает `кс[17:20]` с `БИК[-3:]` — это не методика ЦБ РФ №515 из CLAUDE.md. |
+| ~~«Web UI на Flask»~~ | ~~review-формы нет, `_build_review_rows` нет, `POST /generate` нет~~ — **закрыто в Э7**. |
+| ~~Единое Flask-приложение~~ | ~~Две несвязанные фабрики~~ — **закрыто в Э7**: `app.main.create_app()` регистрирует и `web_bp`, и API; `app.web.create_app` оставлен совместимым псевдонимом. |
+| ~~«Кросс-проверка БИК↔корр.счёт»~~ | ~~`cross_field_validator.py` пустой, методика не та~~ — **закрыто в Э4**. |
 | «Нормализация OCR-текста» (Ч.5.4) | `normalize_ocr_text()`, `normalize_requisite_numbers()`, `split_classifiers_block()` написаны — но **мёртвый код**: `normalize_text()` их не вызывает, никто их не импортирует. |
 | «OCR backends с переключением» (Ч.5.6) | `OcrBackend` (ABC), `TesseractBackend`, `EasyOcrBackend` есть, но **фабрики нет**: оба экстрактора жёстко импортируют `TesseractBackend`. `settings.ocr_backend` используется ровно в одном месте — печатается в `run_cli.py info`. Вдобавок `image_to_lines()` объявлен только в Tesseract-бэкенде, но не в ABC — переключение на EasyOCR упадёт. |
-| «Расширение схемы результата: `review_reasons`, `fill_rate`» (Ч.5.7) | `fill_rate` и `review_reasons` есть. Схема `FieldValidation` при этом **не соответствует** правилам валидации CLAUDE.md (см. §2). |
+| ~~«Расширение схемы результата»~~ (Ч.5.7) | ~~`FieldValidation` не соответствует правилам CLAUDE.md~~ — **закрыто в Э3–Э6**. |
 | «CI/CD на GitHub Actions» | Каталога `.github/` не существует. |
 | «Документация: architecture.md, extraction-notes.md, CONTRIBUTING» | В `docs/` лежат только `plan-21.06.26.txt`, `ROADMAP.pdf` и три `.docx`. Ни одного из трёх заявленных файлов нет. |
 
@@ -78,17 +80,22 @@
 `app/llm/json_schema.py`, `app/schemas/export.py`, `app/extractors/base.py`,
 `app/web/forms.py`, `app/web/templates/result.html`, `app/web/templates/upload.html`.
 
-Из них под реализацию нужны: `core/utils.py`, `cross_field_validator.py`,
-`web/forms.py`, `templates/result.html`. Остальные — кандидаты на удаление.
+**Обновлено 23.08.2026.** `core/utils.py`, `cross_field_validator.py` и
+`templates/result.html` реализованы (Э3, Э4, Э7). Пять неиспользуемых заглушек
+удалены (Э2). Остался пустым только `app/web/forms.py` — формы собираются прямо
+в роутах без WTForms, так что файл под удаление.
 
 ### 1.4. Состояние тестов (прогон 23.08.2026)
 
-**Обновлено 23.08.2026 после Э3–Э6.** Из восьми несобиравшихся модулей семь
-реализованы и зелёные. Текущее состояние:
+**Обновлено 23.08.2026 после Э3–Э7.** Все восемь несобиравшихся модулей
+реализованы.
 
-- **361 тест проходит**, падений нет.
-- Не собирается один модуль — `test_web_routes.py` (`_build_review_rows`,
-  `POST /generate`). Это контракт эпика Э7, реализация ещё не написана.
+- **378 тестов проходят**, падений и ошибок сборки нет.
+- Покрытие **90%** при пороге 88.
+- `ruff` по `app/` и `scripts/`: 18 замечаний, все в файлах, не затронутых этой
+  работой (`app/api/*`, `app/ocr/*`, `scripts/run_cli.py`,
+  `scripts/batch_process.py`). В основном несортированные импорты и неиспользуемые
+  имена; надо вычистить перед Э10, иначе CI будет красным.
 
 Историческая справка: до Э3 не собирались восемь модулей и падало ~25 тестов —
 почти все из-за отсутствия `raw_value` / `normalized_value` / `is_missing` /
@@ -122,7 +129,10 @@
 | Что | Где |
 |-----|-----|
 | Bootstrap CSS/JS с `cdn.jsdelivr.net` | `app/web/templates/base.html:7,132` — исходящий сетевой запрос при каждом открытии формы; для локального офлайн-приложения (Р1) недопустимо |
-| Серверы слушают `0.0.0.0` | `scripts/run_dev.py`, `scripts/run_web.py` — приложение доступно из локальной сети, хотя `settings.flask_host` по умолчанию `127.0.0.1` и скриптами игнорируется |
+
+~~Серверы слушают `0.0.0.0`~~ — **исправлено 23.08.2026** в Э7: единая точка
+входа `scripts/run_app.py` использует `settings.flask_host` (`127.0.0.1`) и
+`debug=False` по умолчанию.
 
 ### 2.2. Правила валидации
 
@@ -313,7 +323,7 @@ class FieldValidation(BaseModel):
 
 **DoD:** выполнен — `test_validation_service.py` зелёный (15 тестов).
 
-### Э7. Review-форма и `POST /generate` *(главный продуктовый эпик, Р2)*
+### Э7. Review-форма и `POST /generate` *(сделано 23.08.2026)*
 
 Контракт полностью задан в `tests/test_web_routes.py`.
 
@@ -341,13 +351,36 @@ class FieldValidation(BaseModel):
    браузера на стартовой странице, `debug=False` по умолчанию.
    Console script в `pyproject.toml`.
 
-**DoD:** зелёный `test_web_routes.py`; ручная проверка сценария
-загрузка → правка → «Сформировать DOCX»; приложение поднимается одной командой
-и не слушает внешние интерфейсы.
+**DoD:** выполнен.
+
+- `test_web_routes.py` зелёный (17 тестов), весь набор — **378 тестов**.
+- Ручная проверка объединённого приложения: `GET /` → 200, `GET /api/health` →
+  200 JSON, `POST /generate` → 200 с вложением 8.4 КБ, битый ИНН без
+  подтверждения → 422 с сохранением введённого значения в форме, с
+  `confirm_invalid` → 200 и невалидное значение в документе.
+- Обработчики ошибок отдают JSON для `/api/*` и HTML-страницу для веб-части:
+  `GET /nope` → HTML 404, `GET /api/nope` → JSON 404.
+- `run_dev.py` и `run_web.py` сведены к обёрткам над `run_app.py` — они
+  поднимали `0.0.0.0` с `debug=True`, это устранено.
+- Добавлены console scripts: `requisites-extractor` и `reqextract`.
+
+Реализовано сверх плана: `fill_template_to_bytes()` в `docx_exporter`,
+`run_field_validators()` и `FIELD_LABELS` сделаны публичными в
+`validation_service`, добавлен шаблон `error.html`. Подпись поля `email`
+изменена с «E-mail» на «Электронная почта» — контракт требует, чтобы все
+подписи в форме были на русском.
 
 ### Э8. Опциональное сохранение артефактов *(Р4)*
 
+**Замер 23.08.2026, обосновывает приоритет.** Каждый прогон `pytest` пишет
+артефакты в рабочие папки проекта: накопилось **521 файл в `exports/` (4.6 МБ)
+и 809 в `processed/` (3.5 МБ)**. В Git они не попадают (папки игнорируются), но
+тесты pipeline используют реальные `settings.exports_folder` и
+`settings.processed_folder` вместо `tmp_path` — это надо чинить вместе с самим
+переключателем.
+
 - Добавить настройку (напр. `persist_artifacts: bool = False`).
+- Тесты pipeline перевести на `tmp_path`, чтобы прогон не оставлял мусора.
 - По умолчанию pipeline **не пишет** `processed/*_raw.txt`,
   `processed/*_normalized.txt`, `exports/*.json|xlsx|docx`.
 - CLI и `batch_process.py` включают сохранение явно — там оно осмысленно.
@@ -368,7 +401,8 @@ class FieldValidation(BaseModel):
       91-100%, `validation_service` 97%. Ниже 78% тянут `app/api/*`,
       `app/main.py` и `app/dependencies.py` — все по 0%, они попадут под тесты
       в Э7.
-- [ ] **Шаг 3.** После Э7 — убрать `app/web/*` и поднять порог.
+- [x] **Шаг 3** (23.08.2026). Из `omit` убран `app/web/*`. Покрытие выросло до
+      **90%**, порог поднят с 78 до **88**.
 - [ ] **Шаг 4.** Далее — оставшиеся `app/services/*`, `app/extractors/*`,
       `app/llm/*`, `app/ocr/*`.
 
@@ -438,7 +472,12 @@ class FieldValidation(BaseModel):
 результат, ради него всё остальное. Э9 идёт «прицепом» к Э4/Э6/Э7. Э10–Э12
 можно вести параллельно после Э7.
 
-**Ближайший шаг: Э1 + Э2.**
+**Состояние на 23.08.2026:** Э1 (кроме двух пунктов), Э2, Э3, Э4, Э5, Э6, Э7 и
+шаги 1-3 эпика Э9 — сделаны. 378 тестов, покрытие 90%.
+
+**Ближайший шаг: Э8** — сохранение артефактов опциональным, тесты pipeline на
+`tmp_path`. Затем остаток Э1 (локальный Bootstrap, явная ошибка на неизвестный
+`LLM_PROVIDER`) и чистка `ruff` — оба нужны до Э10 (CI).
 
 ---
 

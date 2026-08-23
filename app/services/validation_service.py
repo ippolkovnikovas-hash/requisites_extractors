@@ -39,7 +39,7 @@ from app.validators.ogrn_validator import validate_ogrn
 from app.validators.phone_validator import validate_phone
 from app.validators.short_name_validator import validate_short_name
 
-_FIELD_LABELS = {
+FIELD_LABELS = {
     "company_name": "Полное наименование",
     "short_name": "Сокращённое наименование",
     "legal_address": "Юридический адрес",
@@ -55,7 +55,7 @@ _FIELD_LABELS = {
     "ceo_fio_full": "ФИО руководителя (полное)",
     "ceo_fio": "ФИО руководителя (краткое)",
     "phone": "Телефон",
-    "email": "E-mail",
+    "email": "Электронная почта",
 }
 
 # Поля, отсутствие которых само по себе требует внимания: без них договор не
@@ -78,7 +78,7 @@ def validate_requisites(data: RequisitesData) -> tuple[ValidationReport, bool]:
     """
     report = ValidationReport()
 
-    field_results = _run_field_validators(data)
+    field_results = run_field_validators(data)
     for name, result in field_results.items():
         setattr(report, name, result)
 
@@ -91,7 +91,7 @@ def validate_requisites(data: RequisitesData) -> tuple[ValidationReport, bool]:
         if result.valid or result.is_missing:
             continue
 
-        label = _FIELD_LABELS[name]
+        label = FIELD_LABELS[name]
         reason = result.reason or "invalid format"
         errors.append(reason)
         review_reasons.append(
@@ -104,7 +104,7 @@ def validate_requisites(data: RequisitesData) -> tuple[ValidationReport, bool]:
     # ── Отсутствие обязательных полей ───────────────────────────────────────
     for name in _REQUIRED_FIELDS:
         if field_results[name].is_missing:
-            message = f"{_FIELD_LABELS[name]} отсутствует"
+            message = f"{FIELD_LABELS[name]} отсутствует"
             errors.append(message)
             review_reasons.append(message)
 
@@ -126,7 +126,7 @@ def validate_requisites(data: RequisitesData) -> tuple[ValidationReport, bool]:
     return report, needs_review
 
 
-def _run_field_validators(data: RequisitesData) -> dict[str, FieldValidation]:
+def run_field_validators(data: RequisitesData) -> dict[str, FieldValidation]:
     return {
         "company_name": validate_company_name(data.company_name),
         "short_name": validate_short_name(data.short_name),

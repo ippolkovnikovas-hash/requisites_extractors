@@ -3,6 +3,7 @@
 Плейсхолдеры в шаблоне обёрнуты в одинарные кавычки: 'FULL_ORG_NAME'.
 """
 
+import io
 from pathlib import Path
 
 from docx import Document
@@ -15,9 +16,34 @@ def fill_template(
     requisites: RequisitesData,
     out_path: Path,
 ) -> Path:
+    """Заполняет шаблон и сохраняет результат в файл."""
+    doc = _fill(template_path, requisites)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(out_path))
+    return out_path
+
+
+def fill_template_to_bytes(
+    template_path: Path,
+    requisites: RequisitesData,
+) -> io.BytesIO:
     """
-    Открывает шаблон, заменяет все плейсхолдеры вида 'ALIAS'
-    на соответствующие значения из RequisitesData.
+    Заполняет шаблон и возвращает результат в памяти.
+
+    Используется в `/generate`: готовый документ отдаётся пользователю сразу и
+    не должен оставаться на диске или в репозитории (CLAUDE.md).
+    """
+    doc = _fill(template_path, requisites)
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def _fill(template_path: Path, requisites: RequisitesData) -> Document:
+    """
+    Открывает шаблон и заменяет все плейсхолдеры вида 'ALIAS' на значения из
+    RequisitesData.
     """
     doc = Document(str(template_path))
     substitutions = {
@@ -35,9 +61,7 @@ def fill_template(
     for para in doc.paragraphs:
         _replace_in_para(para, substitutions)
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    doc.save(str(out_path))
-    return out_path
+    return doc
 
 
 def _replace_in_cell(cell, substitutions: dict[str, str]) -> None:

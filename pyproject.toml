@@ -7,6 +7,10 @@ name = "requisites_extractor"
 version = "0.1.0"
 requires-python = ">=3.13"
 
+[project.scripts]
+requisites-extractor = "scripts.run_app:main"
+reqextract = "scripts.run_cli:cli"
+
 [tool.setuptools.packages.find]
 where = ["."]
 
@@ -31,7 +35,7 @@ warn_unused_ignores = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "--tb=short -q --cov=app --cov-fail-under=78"
+addopts = "--tb=short -q --cov=app --cov-fail-under=88"
 
 [tool.coverage.run]
 source = ["app"]
@@ -46,7 +50,6 @@ omit = [
     "app/services/text_normalization_service.py",
     "app/extractors/*",
     "app/llm/*",
-    "app/web/*",
     "app/ocr/*",
     "app/exporters/docx_exporter.py",
     "app/exporters/xlsx_exporter.py",

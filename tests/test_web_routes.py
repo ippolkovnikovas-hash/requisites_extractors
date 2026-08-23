@@ -20,7 +20,6 @@ from app.schemas.requisites import RequisitesData
 from app.schemas.validation import FieldValidation, PipelineResult, ValidationReport
 from app.web.routes import _build_review_rows
 
-
 # ── Фикстуры ──────────────────────────────────────────────────────────────────
 
 @pytest.fixture

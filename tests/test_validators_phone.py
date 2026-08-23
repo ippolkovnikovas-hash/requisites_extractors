@@ -25,7 +25,6 @@ import pytest
 
 from app.validators.phone_validator import validate_phone
 
-
 # ── Российские форматы ───────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("value", [

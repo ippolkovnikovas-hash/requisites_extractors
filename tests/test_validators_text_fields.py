@@ -8,15 +8,14 @@ ceo_position, ceo_fio_full, ceo_fio_short.
 """
 import pytest
 
-from app.validators.company_name_validator import validate_company_name
-from app.validators.short_name_validator import validate_short_name
 from app.validators.bank_name_validator import validate_bank_name
 from app.validators.ceo_validator import (
-    validate_ceo_position,
     validate_ceo_fio_full,
     validate_ceo_fio_short,
+    validate_ceo_position,
 )
-
+from app.validators.company_name_validator import validate_company_name
+from app.validators.short_name_validator import validate_short_name
 
 # ── validate_company_name ────────────────────────────────────────────────────
 

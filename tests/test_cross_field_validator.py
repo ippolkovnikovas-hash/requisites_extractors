@@ -13,10 +13,9 @@ validate_bik_account_consistency() (БИК + р/с/к/с, контрольный
 import pytest
 
 from app.validators.cross_field_validator import (
-    validate_inn_kpp_consistency,
     validate_ceo_fio_consistency,
+    validate_inn_kpp_consistency,
 )
-
 
 # ── ИНН + КПП ─────────────────────────────────────────────────────────────────
 # Warning только если ИНН существует, проходит validate_inn() и имеет 12 цифр,

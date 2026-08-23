@@ -27,7 +27,6 @@ import pytest
 
 from app.validators.address_validator import validate_address
 
-
 # ── Валидные адреса (сильный признак присутствует) ──────────────────────────
 
 def test_address_valid_full_with_index():

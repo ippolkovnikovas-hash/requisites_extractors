@@ -1,12 +1,12 @@
 ﻿"""Unit-тесты валидаторов БИК и счетов."""
 import pytest
-from app.schemas.validation import FieldValidation
-from app.validators.bik_validator import validate_bik
+
 from app.validators.account_validator import (
+    account_control_key_ok,
     validate_account,
     validate_cross_bik_corr,
-    account_control_key_ok,
 )
+from app.validators.bik_validator import validate_bik
 from app.validators.cross_field_validator import validate_bik_account_consistency
 
 

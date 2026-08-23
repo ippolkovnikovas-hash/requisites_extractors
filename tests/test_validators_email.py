@@ -21,7 +21,6 @@ import pytest
 
 from app.validators.email_validator import validate_email
 
-
 # ── Валидные адреса ───────────────────────────────────────────────────────────
 
 def test_email_valid_simple():

@@ -18,11 +18,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import click
-from loguru import logger
 
 from app.config import settings
 from app.logging_config import setup_logging
-
 
 # ── Главная группа команд ────────────────────────────────────────────────────
 
@@ -112,8 +110,8 @@ def process(file_path: Path, prompt_version: str | None, no_save: bool, show_res
 @click.option("--prompt-version", "-p", default=None, help="Версия промпта")
 def batch(folder_path: Path, ext: tuple, prompt_version: str | None):
     """Обработать все файлы в папке."""
-    from app.services.pipeline_service import run_pipeline
     from app.core.exceptions import AppException
+    from app.services.pipeline_service import run_pipeline
 
     if prompt_version:
         settings.prompt_version = prompt_version
@@ -164,11 +162,11 @@ def batch(folder_path: Path, ext: tuple, prompt_version: str | None):
               help="Тип реквизита для проверки")
 def validate(value: str, field_type: str):
     """Проверить одно значение реквизита."""
+    from app.validators.account_validator import validate_account
+    from app.validators.bik_validator import validate_bik
     from app.validators.inn_validator import validate_inn
     from app.validators.kpp_validator import validate_kpp
     from app.validators.ogrn_validator import validate_ogrn
-    from app.validators.bik_validator import validate_bik
-    from app.validators.account_validator import validate_account
 
     validators = {
         "inn":  lambda v: validate_inn(v),

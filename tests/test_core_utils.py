@@ -1,6 +1,7 @@
 """Unit-тесты общих нормализаторов app/core/utils.py."""
 import pytest
-from app.core.utils import strip_formatting, fold_numeric_confusables
+
+from app.core.utils import fold_numeric_confusables, strip_formatting
 
 
 @pytest.mark.parametrize("value,expected", [

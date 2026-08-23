@@ -1,8 +1,5 @@
 ﻿"""Тесты fallback regex-экстрактора на тестовом PDF."""
-import pytest
-from pathlib import Path
 from app.services.fallback_regex_service import extract_fallback_fields
-
 
 SAMPLE_TEXT = """
 ООО Тестовая Организация

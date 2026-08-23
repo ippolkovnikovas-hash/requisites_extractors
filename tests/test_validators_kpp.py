@@ -4,6 +4,7 @@
 проверка: 9 символов, первые 4 — цифры, 5-6 — цифры или латинские буквы, последние 3 — цифры.
 """
 import pytest
+
 from app.validators.kpp_validator import validate_kpp
 
 

@@ -105,7 +105,16 @@ def export_xlsx(
 
     # ── Лист 2: отчёт валидации ─────────────────────────────────────────
     ws2 = wb.create_sheet("Валидация")
-    ws2.append(["Поле", "Валидно", "Значение", "Причина ошибки"])
+    ws2.append(
+        [
+            "Поле",
+            "Валидно",
+            "Исходное значение",
+            "Нормализованное",
+            "Причина ошибки",
+            "Предупреждение",
+        ]
+    )
     for cell in ws2[1]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = _HEADER
@@ -115,8 +124,20 @@ def export_xlsx(
     for fname in validated:
         fv = getattr(validation, fname, None)
         if fv:
-            fill = _GREEN if fv.valid else _RED
-            row = [fname, "Да" if fv.valid else "Нет", fv.value or "", fv.reason or ""]
+            if fv.is_missing:
+                status, fill = "Не заполнено", _HEADER
+            elif fv.valid:
+                status, fill = "Да", _GREEN
+            else:
+                status, fill = "Нет", _RED
+            row = [
+                fname,
+                status,
+                fv.raw_value or "",
+                fv.normalized_value or "",
+                fv.reason or "",
+                fv.warning or "",
+            ]
             ws2.append(row)
             for c in ws2[ws2.max_row]:
                 c.border = _THIN

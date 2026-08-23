@@ -4,6 +4,7 @@
 Лист 2 — сырой отчёт валидации.
 """
 
+import io
 from pathlib import Path
 
 from openpyxl import Workbook
@@ -63,7 +64,31 @@ def export_xlsx(
     requisites: RequisitesData,
     validation: ValidationReport,
 ) -> Path:
+    """Собирает книгу и сохраняет её в exports/{document_id}_result.xlsx."""
     out_path = settings.exports_folder / f"{document_id}_result.xlsx"
+    settings.exports_folder.mkdir(parents=True, exist_ok=True)
+    _build_workbook(requisites, validation).save(out_path)
+    return out_path
+
+
+def export_xlsx_to_bytes(
+    requisites: RequisitesData,
+    validation: ValidationReport,
+) -> io.BytesIO:
+    """
+    Та же книга, но в памяти — для `/api/download`, где файл отдаётся сразу и
+    не должен оставаться в exports/.
+    """
+    buffer = io.BytesIO()
+    _build_workbook(requisites, validation).save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def _build_workbook(
+    requisites: RequisitesData,
+    validation: ValidationReport,
+) -> Workbook:
     wb = Workbook()
 
     # ── Лист 1: реквизиты ───────────────────────────────────────────────
@@ -152,5 +177,4 @@ def export_xlsx(
     for col in range(1, 5):
         ws2.column_dimensions[get_column_letter(col)].width = 30
 
-    wb.save(out_path)
-    return out_path
+    return wb

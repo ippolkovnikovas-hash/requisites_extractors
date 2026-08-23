@@ -39,25 +39,18 @@ def cli():
 @click.argument("file_path", type=click.Path(exists=True, path_type=Path))
 @click.option("--prompt-version", "-p", default=None,
               help="Версия промпта: v1 (default) или v2 (chain-of-thought)")
-@click.option("--no-docx", is_flag=True, default=False,
-              help="Пропустить заполнение shablon.docx")
+@click.option("--no-save", is_flag=True, default=False,
+              help="Не сохранять JSON/XLSX/DOCX на диск — только вывод в консоль")
 @click.option("--show-result", "-s", is_flag=True, default=False,
               help="Вывести итоговые реквизиты в консоль")
-def process(file_path: Path, prompt_version: str | None, no_docx: bool, show_result: bool):
+def process(file_path: Path, prompt_version: str | None, no_save: bool, show_result: bool):
     """Обработать один файл и извлечь реквизиты."""
-    import json
-    from app.services.pipeline_service import run_pipeline
     from app.core.exceptions import AppException
+    from app.services.pipeline_service import run_pipeline
 
     # Переопределяем версию промпта если передана
     if prompt_version:
         settings.prompt_version = prompt_version
-
-    # Временно отключаем DOCX-экспорт если нужно
-    if no_docx:
-        import builtins
-        _real_exists = Path.exists
-        # патч не нужен — pipeline проверяет exists() сам, просто не кладём шаблон
 
     click.echo(f"\n📄 Файл:    {file_path.name}")
     click.echo(f"🔧 Промпт:  {settings.prompt_version}")
@@ -65,7 +58,7 @@ def process(file_path: Path, prompt_version: str | None, no_docx: bool, show_res
     click.echo(f"🤖 LLM:     {settings.llm_provider} / {_model}\n")
 
     try:
-        result = run_pipeline(file_path, file_path.name)
+        result = run_pipeline(file_path, file_path.name, persist=not no_save)
     except AppException as e:
         click.secho(f"\n❌ Ошибка: {e.message}", fg="red")
         if e.details:
@@ -82,10 +75,14 @@ def process(file_path: Path, prompt_version: str | None, no_docx: bool, show_res
     click.echo(f"📊 Заполнено: {int(result.fill_rate * 100)}%  ({len(result.data.filled_fields())}/16 полей)")
     click.echo(f"🆔 doc_id:    {result.document_id}")
     click.echo("─" * 55)
-    click.echo(f"📁 JSON:      {result.json_path}")
-    click.echo(f"📊 XLSX:      {result.xlsx_path}")
+    if result.json_path:
+        click.echo(f"📁 JSON:      {result.json_path}")
+    if result.xlsx_path:
+        click.echo(f"📊 XLSX:      {result.xlsx_path}")
     if result.docx_path:
         click.echo(f"📝 DOCX:      {result.docx_path}")
+    if not result.json_path:
+        click.echo("💾 Файлы не сохранялись (--no-save)")
     if result.warnings:
         click.secho("\n⚠️  Предупреждения:", fg="yellow")
         for w in result.warnings:
@@ -136,7 +133,7 @@ def batch(folder_path: Path, ext: tuple, prompt_version: str | None):
     for i, file_path in enumerate(sorted(files), 1):
         click.echo(f"[{i}/{len(files)}] {file_path.name} ... ", nl=False)
         try:
-            result = run_pipeline(file_path, file_path.name)
+            result = run_pipeline(file_path, file_path.name, persist=True)
             if result.needs_review:
                 click.secho("⚠️  needs_review", fg="yellow")
                 review += 1

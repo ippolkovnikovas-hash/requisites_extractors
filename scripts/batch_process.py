@@ -78,7 +78,7 @@ def main(
         click.echo(f"[{i}/{len(files)}] {file_path.name} ... ", nl=False)
 
         try:
-            result: PipelineResult = run_pipeline(file_path, file_path.name)
+            result: PipelineResult = run_pipeline(file_path, file_path.name, persist=True)
 
             needs_review = result.needs_review
             status_icon = "⚠️" if needs_review else "✅"

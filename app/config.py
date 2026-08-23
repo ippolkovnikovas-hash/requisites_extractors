@@ -52,6 +52,12 @@ class Settings(BaseSettings):
     exports_folder: Path = Path("exports")
     processed_folder: Path = Path("processed")
 
+    # ── Артефакты ────────────────────────────────────────────────────────
+    # По умолчанию pipeline не оставляет на диске ни сырой текст, ни
+    # результаты: реквизиты не должны переживать обработку (CLAUDE.md).
+    # Включается осознанно — для CLI и пакетной обработки, где отчёты нужны.
+    persist_artifacts: bool = False
+
     # ── Flask ────────────────────────────────────────────────────────────
     flask_secret_key: str = "change-me-in-production"
     flask_debug: bool = False

@@ -52,10 +52,11 @@ def test_pipeline_fallback_fills_ogrn(tmp_path):
 
 
 def test_pipeline_creates_json_file(tmp_path):
+    """Сохранение по умолчанию выключено — здесь проверяется сам экспорт."""
     import shutil
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
-    result = run_pipeline(pdf, "sample.pdf")
+    result = run_pipeline(pdf, "sample.pdf", persist=True)
     assert Path(result.json_path).exists()
 
 
@@ -63,7 +64,7 @@ def test_pipeline_creates_xlsx_file(tmp_path):
     import shutil
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
-    result = run_pipeline(pdf, "sample.pdf")
+    result = run_pipeline(pdf, "sample.pdf", persist=True)
     assert Path(result.xlsx_path).exists()
 
 
@@ -213,6 +214,6 @@ def test_pipeline_fills_docx_template(tmp_path, monkeypatch):
     shutil.copy(PROJECT_ROOT / "shablon.docx", tmp_path / "shablon.docx")
     monkeypatch.chdir(tmp_path)
 
-    result = run_pipeline(pdf, "sample.pdf")
+    result = run_pipeline(pdf, "sample.pdf", persist=True)
     assert result.docx_path is not None
     assert Path(result.docx_path).exists()

@@ -99,7 +99,23 @@ def _build_review_warnings(
     return list(dict.fromkeys(warnings))
 
 
-def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
+def run_pipeline(
+    file_path: Path,
+    original_filename: str,
+    persist: bool | None = None,
+) -> PipelineResult:
+    """
+    Прогоняет документ через весь pipeline.
+
+    `persist` управляет сохранением артефактов на диск. `None` — брать значение
+    из настройки `PERSIST_ARTIFACTS` (по умолчанию выключено). При выключенном
+    сохранении сырой текст, JSON, XLSX и DOCX не пишутся вовсе, а поля
+    `*_path` в результате остаются `None`: реквизиты не должны переживать
+    обработку (CLAUDE.md).
+    """
+    if persist is None:
+        persist = settings.persist_artifacts
+
     document_id = str(uuid.uuid4())[:8]
 
     logger.info(
@@ -141,9 +157,11 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         warnings=len(extraction.warnings),
     )
 
-    settings.processed_folder.mkdir(parents=True, exist_ok=True)
-    raw_text_path = settings.processed_folder / f"{document_id}_raw.txt"
-    raw_text_path.write_text(extraction.text, encoding="utf-8")
+    raw_text_path: Path | None = None
+    if persist:
+        settings.processed_folder.mkdir(parents=True, exist_ok=True)
+        raw_text_path = settings.processed_folder / f"{document_id}_raw.txt"
+        raw_text_path.write_text(extraction.text, encoding="utf-8")
 
     # ── 4. Normalization ─────────────────────────────────────────────────
     norm = normalize_text(extraction.text)
@@ -153,9 +171,10 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         after=norm.char_count_after,
     )
 
-    (settings.processed_folder / f"{document_id}_normalized.txt").write_text(
-        norm.normalized_text, encoding="utf-8"
-    )
+    if persist:
+        (settings.processed_folder / f"{document_id}_normalized.txt").write_text(
+            norm.normalized_text, encoding="utf-8"
+        )
 
     # ── 5. LLM extraction ────────────────────────────────────────────────
     llm_client = _build_llm_client()
@@ -204,44 +223,53 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     )
 
     # ── 8. Export ────────────────────────────────────────────────────────
-    settings.exports_folder.mkdir(parents=True, exist_ok=True)
-
-    json_path = export_json(
-        document_id,
-        requisites,
-        validation_report,
-        needs_review,
-        extracted_by=extracted_by,
-        processing_meta={
-            "extractor": extraction.extractor_used,
-            "ocr_used": extraction.ocr_used,
-            "llm_provider": llm_result.provider,
-            "llm_model": llm_result.model_name,
-            "prompt_version": llm_result.prompt_version,
-            "sha256": sha256,
-            "fallback_used": bool(extracted_by),
-            "fallback_count": len(extracted_by),
-        },
-    )
-    logger.info("Step 8/9 JSON saved", path=json_path.name)
-
-    xlsx_path = export_xlsx(document_id, requisites, validation_report)
-    logger.info("Step 8/9 XLSX saved", path=xlsx_path.name)
-
+    # Пишем на диск только по явному запросу. По умолчанию результат живёт в
+    # памяти и уходит вызывающему коду — API отдаёт его в ответе, веб-форма
+    # рендерит, а `/generate` собирает DOCX уже из отредактированных значений.
+    json_path: Path | None = None
+    xlsx_path: Path | None = None
     docx_path: str | None = None
-    template_path = Path("shablon.docx")
-    if template_path.exists():
-        try:
-            from app.exporters.docx_exporter import fill_template
 
-            out_docx = settings.exports_folder / f"{document_id}_result.docx"
-            fill_template(template_path, requisites, out_docx)
-            docx_path = str(out_docx)
-            logger.info("Step 8/9 DOCX filled", path=out_docx.name)
-        except Exception as e:
-            logger.warning("DOCX export failed", reason=str(e))
+    if persist:
+        settings.exports_folder.mkdir(parents=True, exist_ok=True)
+
+        json_path = export_json(
+            document_id,
+            requisites,
+            validation_report,
+            needs_review,
+            extracted_by=extracted_by,
+            processing_meta={
+                "extractor": extraction.extractor_used,
+                "ocr_used": extraction.ocr_used,
+                "llm_provider": llm_result.provider,
+                "llm_model": llm_result.model_name,
+                "prompt_version": llm_result.prompt_version,
+                "sha256": sha256,
+                "fallback_used": bool(extracted_by),
+                "fallback_count": len(extracted_by),
+            },
+        )
+        logger.info("Step 8/9 JSON saved", path=json_path.name)
+
+        xlsx_path = export_xlsx(document_id, requisites, validation_report)
+        logger.info("Step 8/9 XLSX saved", path=xlsx_path.name)
+
+        template_path = Path("shablon.docx")
+        if template_path.exists():
+            try:
+                from app.exporters.docx_exporter import fill_template
+
+                out_docx = settings.exports_folder / f"{document_id}_result.docx"
+                fill_template(template_path, requisites, out_docx)
+                docx_path = str(out_docx)
+                logger.info("Step 8/9 DOCX filled", path=out_docx.name)
+            except Exception as e:
+                logger.warning("DOCX export failed", reason=str(e))
+        else:
+            logger.debug("shablon.docx not found, DOCX export skipped")
     else:
-        logger.debug("shablon.docx not found, DOCX export skipped")
+        logger.debug("Step 8/9 export skipped: persist_artifacts disabled")
 
     # ── 9. Result ────────────────────────────────────────────────────────
     all_warnings = _build_review_warnings(
@@ -262,9 +290,9 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         warnings=all_warnings,
         status=status,
         fill_rate=requisites.fill_rate(),
-        raw_text_path=str(raw_text_path),
-        json_path=str(json_path),
-        xlsx_path=str(xlsx_path),
+        raw_text_path=str(raw_text_path) if raw_text_path else None,
+        json_path=str(json_path) if json_path else None,
+        xlsx_path=str(xlsx_path) if xlsx_path else None,
         docx_path=docx_path,
         processing_meta={
             "extractor": extraction.extractor_used,
@@ -285,8 +313,9 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         status=result.status,
         fill_rate=result.fill_rate,
         needs_review=needs_review,
-        json=json_path.name,
-        xlsx=xlsx_path.name,
+        persisted=persist,
+        json=json_path.name if json_path else None,
+        xlsx=xlsx_path.name if xlsx_path else None,
         docx=Path(docx_path).name if docx_path else None,
     )
 

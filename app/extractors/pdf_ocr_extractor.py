@@ -28,7 +28,9 @@ def extract_pdf_ocr(path: Path) -> TextExtractionResult:
     try:
         with tempfile.TemporaryDirectory() as tmp_dir:
             images = convert_from_path(
-                str(path), dpi=300, fmt="png",
+                str(path),
+                dpi=300,
+                fmt="png",
                 output_folder=tmp_dir,
                 poppler_path=settings.poppler_path or None,
             )

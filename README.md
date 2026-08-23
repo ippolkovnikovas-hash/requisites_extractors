@@ -264,11 +264,13 @@ app/
 Порядок работы — TDD: сначала тест, затем реализация, затем прогон.
 
 ```bash
-pytest                       # весь набор с coverage
-pytest --no-cov tests/test_validators_inn.py   # отдельный модуль
-ruff check app/
-black app/
+pytest                                          # весь набор с coverage
+pytest --no-cov tests/test_validators_inn.py    # отдельный модуль
+ruff check app/ scripts/ tests/
+black --check app/ scripts/ tests/
 ```
+
+Все три проверки должны проходить чисто — они же пойдут в CI.
 
 Часть тестов написана **вперёд реализации** — они падают с `ImportError`, и это
 ожидаемое состояние, а не поломка. Такие тесты задают контракт для эпиков Э3–Э7
@@ -284,7 +286,6 @@ black app/
 - Переключение OCR-бэкенда через `OCR_BACKEND` пока не работает: оба
   экстрактора жёстко используют Tesseract (Э11).
 - CI нет.
-- Код не отформатирован `black`, хотя он настроен в `pyproject.toml`.
 
 ## Файлы на диске
 

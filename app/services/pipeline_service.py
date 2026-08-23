@@ -55,10 +55,12 @@ def _build_llm_client():
 
     if provider == LLMProvider.OLLAMA:
         from app.llm.ollama_client import OllamaClient
+
         return OllamaClient()
 
     if provider == LLMProvider.MOCK:
         from app.llm.mock_client import MockLLMClient
+
         return MockLLMClient()
 
     supported = ", ".join(sorted(p.value for p in LLMProvider))
@@ -73,6 +75,7 @@ def _build_llm_client():
 def _guess_mime(path: Path) -> str:
     try:
         import magic
+
         return magic.from_file(str(path), mime=True)
     except Exception:
         mapping = {
@@ -95,7 +98,9 @@ def _build_review_warnings(
     warnings = extraction_warnings.copy()
 
     if normalized_char_count_before > NORMALIZE_MAX_CHARS:
-        warnings.append(f"Text truncated: {normalized_char_count_before} → {NORMALIZE_MAX_CHARS} chars")
+        warnings.append(
+            f"Text truncated: {normalized_char_count_before} → {NORMALIZE_MAX_CHARS} chars"
+        )
 
     if validation_report.errors:
         warnings.extend(validation_report.errors)
@@ -196,9 +201,7 @@ def run_pipeline(
 
     # ── 6. Parse → merge LLM + fallback regex → RequisitesData ──────────
     safe_data = {
-        k: v
-        for k, v in llm_result.parsed_data.items()
-        if k in _REQUISITES_FIELDS
+        k: v for k, v in llm_result.parsed_data.items() if k in _REQUISITES_FIELDS
     }
 
     fallback_data = extract_fallback_fields(norm.normalized_text)

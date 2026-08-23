@@ -60,9 +60,7 @@ def validate_ceo_fio_full(value: str | None) -> FieldValidation:
         return FieldValidation(valid=True, is_missing=True, raw_value=value)
 
     normalized = collapse_whitespace(value)
-    warning = (
-        _FIO_FULL_SINGLE_TOKEN_WARNING if len(normalized.split()) < 2 else None
-    )
+    warning = _FIO_FULL_SINGLE_TOKEN_WARNING if len(normalized.split()) < 2 else None
 
     return FieldValidation(
         valid=True, raw_value=value, normalized_value=normalized, warning=warning

@@ -6,6 +6,7 @@ ceo_position, ceo_fio_full, ceo_fio_short.
 Ни один hard error не завязан на конкретную ОПФ/должность/отчество; bank_name
 не делает сетевых запросов и не сверяется со справочником.
 """
+
 import pytest
 
 from app.validators.bank_name_validator import validate_bank_name
@@ -19,11 +20,15 @@ from app.validators.short_name_validator import validate_short_name
 
 # ── validate_company_name ────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "Общество с ограниченной ответственностью Ромашка",  # с ОПФ
-    "Ромашка Trading Corp",                                # без ОПФ вообще
-    "ИП Иванов Иван Иванович",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "Общество с ограниченной ответственностью Ромашка",  # с ОПФ
+        "Ромашка Trading Corp",  # без ОПФ вообще
+        "ИП Иванов Иван Иванович",
+    ],
+)
 def test_company_name_valid(value):
     result = validate_company_name(value)
     assert result.valid, f"expected valid company_name: {value!r}, got: {result.reason}"
@@ -60,12 +65,16 @@ def test_company_name_normalizes_whitespace():
 
 # ── validate_short_name ──────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "ООО Ромашка",
-    'АО "Север"',
-    "ИП Иванов И.И.",
-    "Ромашка",  # без ОПФ вообще
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ООО Ромашка",
+        'АО "Север"',
+        "ИП Иванов И.И.",
+        "Ромашка",  # без ОПФ вообще
+    ],
+)
 def test_short_name_valid(value):
     result = validate_short_name(value)
     assert result.valid, f"expected valid short_name: {value!r}, got: {result.reason}"
@@ -94,7 +103,7 @@ def test_short_name_ip_alone_is_not_warning():
     assert result.warning is None
 
 
-@pytest.mark.parametrize("value", ['ООО «Ромашка»', 'ООО "Ромашка"'])
+@pytest.mark.parametrize("value", ["ООО «Ромашка»", 'ООО "Ромашка"'])
 def test_short_name_valid_regardless_of_quote_style(value):
     result = validate_short_name(value)
     assert result.valid
@@ -103,19 +112,23 @@ def test_short_name_valid_regardless_of_quote_style(value):
 
 # ── validate_bank_name ───────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "ПАО Сбербанк",
-    'ПАО "Сбербанк"',
-    'АО "Альфа-Банк"',
-    "Банк ВТБ (ПАО)",
-    "Филиал ПАО Сбербанк в г. Москве",
-    "Дополнительный офис №1 ПАО Сбербанк",
-    "Отделение 1 Банка России",
-    "Центральный банк Российской Федерации (Банк России)",
-    "РКЦ",
-    "ГРКЦ",
-    "ГУ Банка России",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "ПАО Сбербанк",
+        'ПАО "Сбербанк"',
+        'АО "Альфа-Банк"',
+        "Банк ВТБ (ПАО)",
+        "Филиал ПАО Сбербанк в г. Москве",
+        "Дополнительный офис №1 ПАО Сбербанк",
+        "Отделение 1 Банка России",
+        "Центральный банк Российской Федерации (Банк России)",
+        "РКЦ",
+        "ГРКЦ",
+        "ГУ Банка России",
+    ],
+)
 def test_bank_name_valid(value):
     result = validate_bank_name(value)
     assert result.valid, f"expected valid bank_name: {value!r}"
@@ -147,24 +160,28 @@ def test_bank_name_normalizes_whitespace():
 
 # ── validate_ceo_position ────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "Генеральный директор",
-    "Директор",
-    "Исполнительный директор",
-    "Управляющий",
-    "Президент",
-    "Председатель правления",
-    "Председатель",
-    "Руководитель",
-    "Индивидуальный предприниматель",
-    "Конкурсный управляющий",
-    "Временный управляющий",
-    "Ликвидатор",
-    "Председатель ликвидационной комиссии",
-    "Директор филиала",
-    "Главный врач",
-    "Ректор",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "Генеральный директор",
+        "Директор",
+        "Исполнительный директор",
+        "Управляющий",
+        "Президент",
+        "Председатель правления",
+        "Председатель",
+        "Руководитель",
+        "Индивидуальный предприниматель",
+        "Конкурсный управляющий",
+        "Временный управляющий",
+        "Ликвидатор",
+        "Председатель ликвидационной комиссии",
+        "Директор филиала",
+        "Главный врач",
+        "Ректор",
+    ],
+)
 def test_ceo_position_valid_typical(value):
     result = validate_ceo_position(value)
     assert result.valid, f"expected valid ceo_position: {value!r}"
@@ -201,6 +218,7 @@ def test_ceo_position_looks_like_email_is_warning():
 
 # ── validate_ceo_fio_full ────────────────────────────────────────────────────
 
+
 def test_ceo_fio_full_valid_with_patronymic():
     result = validate_ceo_fio_full("Иванов Иван Иванович")
     assert result.valid
@@ -220,10 +238,13 @@ def test_ceo_fio_full_valid_latin_name():
     assert result.warning is None
 
 
-@pytest.mark.parametrize("value", [
-    "Петров-Водкин Кузьма",
-    "О'Брайен Джон",
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "Петров-Водкин Кузьма",
+        "О'Брайен Джон",
+    ],
+)
 def test_ceo_fio_full_valid_with_hyphen_and_apostrophe(value):
     result = validate_ceo_fio_full(value)
     assert result.valid, f"expected valid ceo_fio_full: {value!r}"
@@ -253,17 +274,23 @@ def test_ceo_fio_full_normalizes_multiple_spaces():
 
 # ── validate_ceo_fio_short ───────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "Иванов И.И.",
-    "Иванов И. И.",
-    "Иванов И",
-    "Иванов И.",
-    "O'Brian J.",
-    "Петров-Водкин К.",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "Иванов И.И.",
+        "Иванов И. И.",
+        "Иванов И",
+        "Иванов И.",
+        "O'Brian J.",
+        "Петров-Водкин К.",
+    ],
+)
 def test_ceo_fio_short_valid(value):
     result = validate_ceo_fio_short(value)
-    assert result.valid, f"expected valid ceo_fio_short: {value!r}, got warning: {result.warning}"
+    assert (
+        result.valid
+    ), f"expected valid ceo_fio_short: {value!r}, got warning: {result.warning}"
     assert result.warning is None
 
 

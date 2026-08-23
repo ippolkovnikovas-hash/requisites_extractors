@@ -1,4 +1,5 @@
 ﻿"""Тесты DOCX-экстрактора."""
+
 from pathlib import Path
 
 import pytest
@@ -32,6 +33,7 @@ def test_contains_bik():
 
 def test_extractor_type():
     from app.core.enums import ExtractorType
+
     result = extract_docx(FIXTURE)
     assert result.extractor_used == ExtractorType.PYTHON_DOCX
 
@@ -53,6 +55,7 @@ def test_raises_on_missing_file():
 
 def test_empty_docx_has_warning(tmp_path):
     from docx import Document
+
     empty = tmp_path / "empty.docx"
     Document().save(str(empty))
     result = extract_docx(empty)

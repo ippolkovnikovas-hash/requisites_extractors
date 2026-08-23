@@ -47,8 +47,7 @@ def _fill(template_path: Path, requisites: RequisitesData) -> Document:
     """
     doc = Document(str(template_path))
     substitutions = {
-        f"'{alias}'": value
-        for alias, value in requisites.to_template_dict().items()
+        f"'{alias}'": value for alias, value in requisites.to_template_dict().items()
     }
 
     # Таблицы

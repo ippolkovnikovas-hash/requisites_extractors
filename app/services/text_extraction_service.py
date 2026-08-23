@@ -32,18 +32,22 @@ def extract_text(doc: DocumentInput) -> TextExtractionResult:
 
         case DocumentType.DOCX:
             from app.extractors.docx_extractor import extract_docx
+
             return extract_docx(doc.storage_path)
 
         case DocumentType.PDF_TEXT:
             from app.extractors.pdf_text_extractor import extract_pdf_text
+
             return extract_pdf_text(doc.storage_path)
 
         case DocumentType.PDF_SCAN:
             from app.extractors.pdf_ocr_extractor import extract_pdf_ocr
+
             return extract_pdf_ocr(doc.storage_path)
 
         case DocumentType.IMAGE:
             from app.extractors.image_ocr_extractor import extract_image_ocr
+
             return extract_image_ocr(doc.storage_path)
 
         case DocumentType.UNSUPPORTED | _:

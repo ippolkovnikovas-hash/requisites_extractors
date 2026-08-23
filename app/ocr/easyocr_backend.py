@@ -7,6 +7,7 @@ from app.ocr.base import OcrBackend
 class EasyOcrBackend(OcrBackend):
     def __init__(self, langs: list[str] | None = None) -> None:
         import easyocr
+
         self._reader = easyocr.Reader(langs or ["ru", "en"], gpu=False)
 
     def image_to_text(self, image: Image.Image, lang: str = "rus+eng") -> str:

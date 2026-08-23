@@ -23,11 +23,13 @@ warning не ставится, даже без сильного признака
 всегда None), warning содержит "адрес", если ни одно из условий выше не
 выполнено.
 """
+
 import pytest
 
 from app.validators.address_validator import validate_address
 
 # ── Валидные адреса (сильный признак присутствует) ──────────────────────────
+
 
 def test_address_valid_full_with_index():
     result = validate_address("119019, г. Москва, ул. Волхонка, д. 15")
@@ -51,6 +53,7 @@ def test_address_valid_partial_city_and_street_only():
 
 # ── Отсутствие значения — необязательное поле ────────────────────────────────
 
+
 @pytest.mark.parametrize("value", [None, "", "   "])
 def test_address_missing_variants(value):
     result = validate_address(value)
@@ -61,6 +64,7 @@ def test_address_missing_variants(value):
 
 
 # ── Мусор/не-адрес вместо адреса ─────────────────────────────────────────────
+
 
 def test_address_email_in_field_is_warning():
     result = validate_address("info@example.ru")
@@ -100,6 +104,7 @@ def test_address_generic_garbage_no_entity_is_warning():
 
 # ── Совпадение/различие юр. и почт. адреса — валидатор не сравнивает поля ────
 
+
 def test_address_legal_and_postal_equal_values_both_valid_independently():
     value = "г. Москва, ул. Волхонка, д. 15"
     legal_result = validate_address(value)
@@ -119,6 +124,7 @@ def test_address_legal_and_postal_different_values_both_valid_independently():
 
 # ── Нормализация: только пробелы/переносы, без перестановки частей ──────────
 
+
 def test_address_normalizes_whitespace_without_reordering_parts():
     result = validate_address("г. Москва,\n  ул.   Волхонка,\nд. 15")
     assert result.valid
@@ -128,13 +134,17 @@ def test_address_normalizes_whitespace_without_reordering_parts():
 
 # ── Никогда не hard error ─────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "info@example.ru",
-    "40702810000000012345",
-    "asdkjh qwerty zxc",
-    "123456",
-    "офис 12",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "info@example.ru",
+        "40702810000000012345",
+        "asdkjh qwerty zxc",
+        "123456",
+        "офис 12",
+    ],
+)
 def test_address_never_produces_hard_error(value):
     result = validate_address(value)
     assert result.valid is True
@@ -142,6 +152,7 @@ def test_address_never_produces_hard_error(value):
 
 
 # ── Слабые признаки поодиночке — недостаточно, warning ставится ─────────────
+
 
 def test_address_single_weak_signal_office_only_is_warning():
     result = validate_address("офис 12")
@@ -166,6 +177,7 @@ def test_address_single_weak_signal_house_number_only_is_warning():
 
 # ── Сильный + слабый — сильного одного достаточно ───────────────────────────
 
+
 def test_address_strong_city_plus_weak_house_no_warning():
     result = validate_address("г. Москва, д. 15")
     assert result.valid
@@ -179,6 +191,7 @@ def test_address_strong_street_plus_weak_office_no_warning():
 
 
 # ── Единственное исключение среди слабых: дом+номер вместе с индексом ───────
+
 
 def test_address_house_number_plus_index_no_warning():
     """Связка "дом/д." + номер вместе с индексом — специальное исключение,

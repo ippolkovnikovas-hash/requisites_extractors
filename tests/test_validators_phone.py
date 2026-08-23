@@ -21,17 +21,22 @@ None/""/пробелы -> is_missing=True, valid=True.
 
 Нет сетевых вызовов, нет определения оператора/владельца номера.
 """
+
 import pytest
 
 from app.validators.phone_validator import validate_phone
 
 # ── Российские форматы ───────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "+79161234567",
-    "89161234567",
-    "79161234567",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "+79161234567",
+        "89161234567",
+        "79161234567",
+    ],
+)
 def test_phone_valid_ru_formats(value):
     result = validate_phone(value)
     assert result.valid, f"expected valid RU phone: {value!r}, got: {result.reason}"
@@ -63,22 +68,28 @@ def test_phone_valid_with_extension_dob():
     assert result.raw_value == "+7 (495) 123-45-67 доб. 123"
 
 
-@pytest.mark.parametrize("value", [
-    "+74951234567 доб 123",
-    "+74951234567 доб. 123",
-    "+74951234567 ext. 123",
-    "+74951234567 ext123",
-    "+74951234567x123",
-    "+74951234567 #123",
-])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "+74951234567 доб 123",
+        "+74951234567 доб. 123",
+        "+74951234567 ext. 123",
+        "+74951234567 ext123",
+        "+74951234567x123",
+        "+74951234567 #123",
+    ],
+)
 def test_phone_valid_with_extension_variants(value):
     result = validate_phone(value)
-    assert result.valid, f"expected valid phone with extension: {value!r}, got: {result.reason}"
+    assert (
+        result.valid
+    ), f"expected valid phone with extension: {value!r}, got: {result.reason}"
     assert result.warning is None
     assert "123" in result.normalized_value
 
 
 # ── Несколько номеров в одном поле ───────────────────────────────────────────
+
 
 def test_phone_multiple_ru_numbers_comma_separated():
     result = validate_phone("+79161234567, 89261234567")
@@ -121,13 +132,19 @@ def test_phone_ru_plus_international_mixed_is_warning():
 
 # ── Международные номера — warning, не ошибка, наличие "+" не имеет значения ──
 
-@pytest.mark.parametrize("value", [
-    "+442071234567",   # Великобритания
-    "+12025551234",    # США
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "+442071234567",  # Великобритания
+        "+12025551234",  # США
+    ],
+)
 def test_phone_international_with_plus_is_warning(value):
     result = validate_phone(value)
-    assert result.valid, f"expected valid (warning) international phone: {value!r}, got: {result.reason}"
+    assert (
+        result.valid
+    ), f"expected valid (warning) international phone: {value!r}, got: {result.reason}"
     assert result.warning is not None
     assert "нероссийск" in result.warning
 
@@ -141,6 +158,7 @@ def test_phone_international_without_plus_is_warning():
 
 
 # ── Hard error: не 7-15 цифр или текст без цифр ──────────────────────────────
+
 
 def test_phone_too_short_is_hard_error():
     result = validate_phone("12345")
@@ -162,6 +180,7 @@ def test_phone_random_text_without_digit_run_is_hard_error():
 
 # ── OCR-устойчивость ──────────────────────────────────────────────────────────
 
+
 def test_phone_ocr_broken_spacing_still_valid():
     result = validate_phone("+7 916 1 2 3-45-67")
     assert result.valid
@@ -170,6 +189,7 @@ def test_phone_ocr_broken_spacing_still_valid():
 
 
 # ── 8-800 и мобильные ─────────────────────────────────────────────────────────
+
 
 def test_phone_toll_free_8800_valid():
     result = validate_phone("88001234567")
@@ -184,6 +204,7 @@ def test_phone_mobile_valid():
 
 
 # ── raw_value никогда не подменяется скрытно ─────────────────────────────────
+
 
 def test_phone_raw_value_never_silently_replaces_8_with_plus7():
     result = validate_phone("89161234567")

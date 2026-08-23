@@ -1,4 +1,5 @@
 ﻿"""Тесты сервиса валидации реквизитов."""
+
 from app.schemas.requisites import RequisitesData
 from app.services.validation_service import validate_requisites
 
@@ -103,33 +104,40 @@ def test_review_reasons_populated_on_invalid_field():
     """review_reasons содержит читаемое описание при невалидном поле."""
     from app.schemas.requisites import RequisitesData
     from app.services.validation_service import validate_requisites
+
     data = RequisitesData(inn="123456789012")  # битая контрольная сумма
     report, needs_review = validate_requisites(data)
     assert needs_review
     assert any("ИНН" in r for r in report.review_reasons)
 
+
 def test_invalid_field_cleared_from_data():
     """Невалидное значение поля обнуляется в data после валидации."""
     from app.schemas.requisites import RequisitesData
     from app.services.validation_service import validate_requisites
+
     data = RequisitesData(inn="123456789012")
     validate_requisites(data)
     assert data.inn is None
+
 
 def test_ogrn_classifier_cleared_and_in_review_reasons():
     """ОКПО в поле ОГРН отклоняется, поле обнуляется, причина в review_reasons."""
     from app.schemas.requisites import RequisitesData
     from app.services.validation_service import validate_requisites
+
     data = RequisitesData(ogrn="12345678")  # 8 цифр — ОКПО
     report, needs_review = validate_requisites(data)
     assert needs_review
     assert data.ogrn is None
     assert any("ОГРН" in r for r in report.review_reasons)
 
+
 def test_review_reasons_empty_on_all_none():
     """Если все поля None — review_reasons только про отсутствие полей."""
     from app.schemas.requisites import RequisitesData
     from app.services.validation_service import validate_requisites
+
     data = RequisitesData()
     report, needs_review = validate_requisites(data)
     assert needs_review

@@ -10,6 +10,7 @@ validate_bik_account_consistency() (БИК + р/с/к/с, контрольный
 (совпадение/несовпадение для обоих типов счёта, пропуск при
 невалидном/отсутствующем БИК, пропуск при невалидном счёте).
 """
+
 import pytest
 
 from app.validators.cross_field_validator import (
@@ -22,6 +23,7 @@ from app.validators.cross_field_validator import (
 # И КПП существует и проходит validate_kpp() по структурной проверке. Если КПП
 # отсутствует или невалиден по формату — None (его собственная ошибка уже
 # показана validate_kpp, дублировать шумом не нужно).
+
 
 def test_inn_kpp_12digit_inn_with_valid_kpp_is_warning():
     result = validate_inn_kpp_consistency("500100732259", "774401001")
@@ -72,6 +74,7 @@ def test_inn_kpp_consistency_does_not_mutate_inputs():
 
 # ── Полное + краткое ФИО ──────────────────────────────────────────────────────
 
+
 def test_ceo_fio_consistency_matching_surname_no_warning():
     result = validate_ceo_fio_consistency("Иванов Иван Иванович", "Иванов И.И.")
     assert result is None
@@ -82,10 +85,13 @@ def test_ceo_fio_consistency_mismatched_surname_is_warning():
     assert result is not None
 
 
-@pytest.mark.parametrize("fio_full,fio_short", [
-    (None, "Иванов И.И."),
-    ("Иванов Иван", None),
-])
+@pytest.mark.parametrize(
+    "fio_full,fio_short",
+    [
+        (None, "Иванов И.И."),
+        ("Иванов Иван", None),
+    ],
+)
 def test_ceo_fio_consistency_one_missing_no_warning(fio_full, fio_short):
     result = validate_ceo_fio_consistency(fio_full, fio_short)
     assert result is None

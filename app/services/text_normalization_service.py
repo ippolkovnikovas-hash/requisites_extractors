@@ -27,7 +27,7 @@ def normalize_text(raw_text: str) -> NormalizedText:
     text = unicodedata.normalize("NFKC", text)
 
     # 2. Удаляем управляющие символы кроме \n и \t
-    text = re.sub(r"[^\S\n\t ]+", " ", text)          # прочие whitespace → пробел
+    text = re.sub(r"[^\S\n\t ]+", " ", text)  # прочие whitespace → пробел
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
 
     # 3. Неразрывные пробелы и похожие → обычный пробел
@@ -89,10 +89,9 @@ def normalize_text(raw_text: str) -> NormalizedText:
     )
 
 
-
-
 def normalize_requisite_numbers(text: str) -> str:
     import re as _re
+
     NUMERIC_LABELS = _re.compile(
         r"(ИНН|КПП|ОГРН|БИК|расчётн|корр|счёт|счет|[Рр]/[Сс]|[Кк]/[Сс])",
         _re.IGNORECASE,
@@ -107,6 +106,7 @@ def normalize_requisite_numbers(text: str) -> str:
 
 def split_classifiers_block(text: str) -> str:
     import re as _re
+
     pat = _re.compile(r"(?<!\n)(ОКПО|ОКТМО|ОКВЭД|ОКАТО|ОКОПФ|ОКФС|КБК)", _re.IGNORECASE)
     return pat.sub(r"\n\1", text)
 

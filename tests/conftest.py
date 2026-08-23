@@ -1,4 +1,5 @@
 """Общие фикстуры для всех тестов."""
+
 from pathlib import Path
 
 import pytest

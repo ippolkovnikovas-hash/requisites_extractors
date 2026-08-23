@@ -1,4 +1,5 @@
 ﻿"""Unit-тесты валидаторов БИК и счетов."""
+
 import pytest
 
 from app.validators.account_validator import (
@@ -16,11 +17,14 @@ def test_bik_valid():
     assert result.warning is None
 
 
-@pytest.mark.parametrize("value,reason_part", [
-    (None,        "null"),
-    ("",          "null"),
-    ("12345",     "length"),
-])
+@pytest.mark.parametrize(
+    "value,reason_part",
+    [
+        (None, "null"),
+        ("", "null"),
+        ("12345", "length"),
+    ],
+)
 def test_bik_invalid(value, reason_part):
     result = validate_bik(value)
     assert not result.valid
@@ -43,11 +47,14 @@ def test_bik_nonstandard_prefix_is_warning():
     assert "04" in result.warning
 
 
-@pytest.mark.parametrize("value,expected", [
-    ("О44525225", "044525225"),   # кириллическая О
-    ("0I452522I", "014525221"),   # I → 1 (позиции 2 и 9)
-    ("044 525 225", "044525225"), # пробелы — не фолдинг, просто форматирование
-])
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("О44525225", "044525225"),  # кириллическая О
+        ("0I452522I", "014525221"),  # I → 1 (позиции 2 и 9)
+        ("044 525 225", "044525225"),  # пробелы — не фолдинг, просто форматирование
+    ],
+)
 def test_bik_ocr_confusables_normalized(value, expected):
     result = validate_bik(value)
     assert result.normalized_value == expected
@@ -130,31 +137,45 @@ def test_unknown_account_type():
 # Проверочные векторы зафиксированы по публичным публикациям текста документа;
 # контрольный ключ используется только как warning.
 
+
 def test_account_control_key_checking_valid_vector():
     """БИК[6:9]-правило (расчётный счёт). БИК 049805746 + счёт 40602810700000000025."""
-    assert account_control_key_ok("049805746", "40602810700000000025", "checking") is True
+    assert (
+        account_control_key_ok("049805746", "40602810700000000025", "checking") is True
+    )
 
 
 def test_account_control_key_checking_negative_vector():
     """Та же пара с одной изменённой последней цифрой счёта — ключ не сходится."""
-    assert account_control_key_ok("049805746", "40602810700000000026", "checking") is False
+    assert (
+        account_control_key_ok("049805746", "40602810700000000026", "checking") is False
+    )
 
 
 def test_account_control_key_correspondent_valid_vector():
     """0+БИК[4:6]-правило (корр. счёт). БИК 040305000 + счёт 40102810100000010001."""
-    assert account_control_key_ok("040305000", "40102810100000010001", "correspondent") is True
+    assert (
+        account_control_key_ok("040305000", "40102810100000010001", "correspondent")
+        is True
+    )
 
 
 def test_account_control_key_correspondent_negative_vector():
-    assert account_control_key_ok("040305000", "40102810100000010002", "correspondent") is False
+    assert (
+        account_control_key_ok("040305000", "40102810100000010002", "correspondent")
+        is False
+    )
 
 
 def test_account_control_key_wrong_significant_bik_digits_fails():
     """Другой БИК (те же длины) с той же парой счёта — ключ не должен случайно сойтись."""
-    assert account_control_key_ok("049805747", "40602810700000000025", "checking") is False
+    assert (
+        account_control_key_ok("049805747", "40602810700000000025", "checking") is False
+    )
 
 
 # ── validate_bik_account_consistency: warning-only wrapper ──────────────────
+
 
 def test_bik_account_consistency_matching_pair_no_warning():
     bik_result = validate_bik("049805746")
@@ -177,7 +198,9 @@ def test_bik_account_consistency_mismatch_is_warning_not_error():
 def test_bik_account_consistency_correspondent_mismatch_is_warning():
     bik_result = validate_bik("040305000")
     account_result = validate_account("40102810100000010002", "correspondent")
-    warning = validate_bik_account_consistency(bik_result, account_result, "correspondent")
+    warning = validate_bik_account_consistency(
+        bik_result, account_result, "correspondent"
+    )
     assert warning is not None
 
 
@@ -198,6 +221,8 @@ def test_bik_account_consistency_skipped_when_bik_missing():
 
 def test_bik_account_consistency_skipped_when_account_invalid():
     bik_result = validate_bik("049805746")
-    account_result = validate_account("406028107000000000", "checking")  # неверная длина
+    account_result = validate_account(
+        "406028107000000000", "checking"
+    )  # неверная длина
     warning = validate_bik_account_consistency(bik_result, account_result, "checking")
     assert warning is None

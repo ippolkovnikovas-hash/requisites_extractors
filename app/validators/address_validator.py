@@ -44,9 +44,7 @@ _SETTLEMENT = re.compile(
     re.IGNORECASE,
 )
 
-_FEDERAL_CITY = re.compile(
-    r"\b(?:Москва|Санкт-Петербург|Севастополь)\b", re.IGNORECASE
-)
+_FEDERAL_CITY = re.compile(r"\b(?:Москва|Санкт-Петербург|Севастополь)\b", re.IGNORECASE)
 
 _REGION = re.compile(
     r"(?:^|[\s.,])(?:обл|область|край|респ|республика|автономн\w*\s+округ"

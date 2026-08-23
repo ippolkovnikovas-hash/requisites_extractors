@@ -8,6 +8,7 @@
 Раньше `base.html` подключал Bootstrap с `cdn.jsdelivr.net`. Тест закрывает эту
 регрессию: любой внешний хост в отрендеренной странице — ошибка.
 """
+
 import re
 
 import pytest
@@ -15,7 +16,9 @@ import pytest
 from app.schemas.requisites import RequisitesData
 from app.web.routes import _build_review_rows
 
-_EXTERNAL_URL = re.compile(r"""(?:src|href)\s*=\s*["']\s*(?:https?:)?//""", re.IGNORECASE)
+_EXTERNAL_URL = re.compile(
+    r"""(?:src|href)\s*=\s*["']\s*(?:https?:)?//""", re.IGNORECASE
+)
 
 _VENDOR_FILES = [
     "vendor/bootstrap/bootstrap.min.css",
@@ -81,8 +84,10 @@ def test_vendored_asset_does_not_fetch_from_network(filename):
     """В самих файлах не должно остаться ни url(https://…), ни sourceMappingURL."""
     from pathlib import Path
 
-    content = Path("app/static") .joinpath(filename).read_text(
-        encoding="utf-8", errors="replace"
+    content = (
+        Path("app/static")
+        .joinpath(filename)
+        .read_text(encoding="utf-8", errors="replace")
     )
     assert not re.search(r"url\(\s*['\"]?https?:", content)
     assert "sourceMappingURL" not in content

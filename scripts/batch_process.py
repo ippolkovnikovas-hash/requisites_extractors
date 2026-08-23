@@ -1,8 +1,8 @@
-﻿"""
+﻿r"""
 Batch-обработка документов + отчёт (CSV/JSON).
 
 Пример:
-  python scripts/batch_process.py C:\\path\to\\examples -e pdf -e docx
+  python scripts/batch_process.py C:\path\to\examples -e pdf -e docx
 """
 
 import csv
@@ -25,7 +25,9 @@ from app.services.pipeline_service import run_pipeline
 
 
 @click.command()
-@click.argument("folder_path", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.argument(
+    "folder_path", type=click.Path(exists=True, file_okay=False, path_type=Path)
+)
 @click.option(
     "--ext",
     "-e",
@@ -77,7 +79,9 @@ def main(
         click.echo(f"[{i}/{len(files)}] {file_path.name} ... ", nl=False)
 
         try:
-            result: PipelineResult = run_pipeline(file_path, file_path.name, persist=True)
+            result: PipelineResult = run_pipeline(
+                file_path, file_path.name, persist=True
+            )
 
             needs_review = result.needs_review
 

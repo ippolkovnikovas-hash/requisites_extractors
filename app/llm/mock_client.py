@@ -14,32 +14,27 @@ from app.schemas.extraction import LLMExtractionResult
 # Ключи совпадают с python-именами полей RequisitesData (populate_by_name=True)
 _EMPTY_RESPONSE: dict[str, None] = {
     # --- Идентификация организации ---
-    "company_name":          None,  # FULL_ORG_NAME
-    "short_name":            None,  # ORG_NAME
-
+    "company_name": None,  # FULL_ORG_NAME
+    "short_name": None,  # ORG_NAME
     # --- Адреса ---
-    "legal_address":         None,  # LEGAL_ADDRES
-    "postal_address":        None,  # POST_ADDRES
-
+    "legal_address": None,  # LEGAL_ADDRES
+    "postal_address": None,  # POST_ADDRES
     # --- Регистрационные данные ---
-    "ogrn":                  None,  # OGRN
-    "inn":                   None,  # INN
-    "kpp":                   None,  # KPP
-
+    "ogrn": None,  # OGRN
+    "inn": None,  # INN
+    "kpp": None,  # KPP
     # --- Банковские реквизиты ---
-    "bank_name":             None,  # BANK_NAME
-    "checking_account":      None,  # RS
+    "bank_name": None,  # BANK_NAME
+    "checking_account": None,  # RS
     "correspondent_account": None,  # KS
-    "bik":                   None,  # BIK
-
+    "bik": None,  # BIK
     # --- Руководитель ---
-    "ceo_position":          None,  # CEO_POSITION
-    "ceo_fio_full":          None,  # CEO_FIO_FULL
-    "ceo_fio":               None,  # CEO_FIO
-
+    "ceo_position": None,  # CEO_POSITION
+    "ceo_fio_full": None,  # CEO_FIO_FULL
+    "ceo_fio": None,  # CEO_FIO
     # --- Контакты ---
-    "phone":                 None,  # TEL
-    "email":                 None,  # E-MAIL
+    "phone": None,  # TEL
+    "email": None,  # E-MAIL
 }
 
 

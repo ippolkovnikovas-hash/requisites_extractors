@@ -17,11 +17,13 @@ valid=False для всего поля.
 жёсткая ошибка как обычный недопустимый символ). Проверка исключительно
 синтаксическая: без DNS/MX/SMTP/сети.
 """
+
 import pytest
 
 from app.validators.email_validator import validate_email
 
 # ── Валидные адреса ───────────────────────────────────────────────────────────
+
 
 def test_email_valid_simple():
     result = validate_email("user@example.ru")
@@ -60,6 +62,7 @@ def test_email_missing_variants(value):
 
 # ── Несколько адресов ─────────────────────────────────────────────────────────
 
+
 def test_email_multiple_valid_comma_separated():
     result = validate_email("a@example.ru, b@example.com")
     assert result.valid
@@ -91,6 +94,7 @@ def test_email_never_produces_warning():
 
 
 # ── Базовая структура: @, local-part, домен ──────────────────────────────────
+
 
 def test_email_no_at_symbol_is_hard_error():
     result = validate_email("userexample.ru")
@@ -136,6 +140,7 @@ def test_email_disallowed_character_is_hard_error():
 
 # ── Кириллица — явно hard error, не отдельный IDN-сценарий ──────────────────
 
+
 def test_email_cyrillic_local_part_is_hard_error():
     """IDN/punycode не поддерживается — кириллица трактуется как недопустимый символ."""
     result = validate_email("пользователь@example.ru")
@@ -151,11 +156,15 @@ def test_email_cyrillic_domain_is_hard_error():
 
 # ── Точки в local-part: начало/конец/подряд ──────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "user..name@example.ru",  # двойная точка
-    ".user@example.ru",       # точка в начале
-    "user.@example.ru",       # точка в конце
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "user..name@example.ru",  # двойная точка
+        ".user@example.ru",  # точка в начале
+        "user.@example.ru",  # точка в конце
+    ],
+)
 def test_email_local_part_dot_placement_is_hard_error(value):
     result = validate_email(value)
     assert not result.valid, f"expected hard error for {value!r}"
@@ -164,11 +173,15 @@ def test_email_local_part_dot_placement_is_hard_error(value):
 
 # ── Точки в домене: начало/конец/подряд ──────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "user@example..ru",   # двойная точка
-    "user@.example.ru",   # точка в начале
-    "user@example.ru.",   # точка в конце
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "user@example..ru",  # двойная точка
+        "user@.example.ru",  # точка в начале
+        "user@example.ru.",  # точка в конце
+    ],
+)
 def test_email_domain_dot_placement_is_hard_error(value):
     result = validate_email(value)
     assert not result.valid, f"expected hard error for {value!r}"
@@ -177,10 +190,14 @@ def test_email_domain_dot_placement_is_hard_error(value):
 
 # ── Дефис в начале/конце доменной метки ──────────────────────────────────────
 
-@pytest.mark.parametrize("value", [
-    "user@-example.ru",
-    "user@example-.ru",
-])
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "user@-example.ru",
+        "user@example-.ru",
+    ],
+)
 def test_email_domain_label_hyphen_placement_is_hard_error(value):
     result = validate_email(value)
     assert not result.valid, f"expected hard error for {value!r}"

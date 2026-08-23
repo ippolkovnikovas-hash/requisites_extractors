@@ -63,7 +63,9 @@ def extract_docx(file_path: Path) -> TextExtractionResult:
     full_text = "\n".join(parts)
 
     if not full_text.strip():
-        warnings.append("DOCX extracted text is empty — document may be blank or image-only")
+        warnings.append(
+            "DOCX extracted text is empty — document may be blank or image-only"
+        )
         logger.warning("Empty text from DOCX", path=str(file_path))
 
     logger.debug(
@@ -77,7 +79,7 @@ def extract_docx(file_path: Path) -> TextExtractionResult:
     return TextExtractionResult(
         text=full_text,
         extractor_used=ExtractorType.PYTHON_DOCX,
-        pages=None,       # DOCX не имеет фиксированных страниц
+        pages=None,  # DOCX не имеет фиксированных страниц
         ocr_used=False,
         warnings=warnings,
     )

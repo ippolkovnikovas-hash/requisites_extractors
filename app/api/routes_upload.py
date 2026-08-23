@@ -39,9 +39,7 @@ _results: dict[str, tuple[dict, PipelineResult]] = {}
 def extract():
     data, filename = validate_upload(request)
 
-    with tempfile.NamedTemporaryFile(
-        delete=False, suffix=Path(filename).suffix
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(filename).suffix) as tmp:
         tmp.write(data)
         tmp_path = Path(tmp.name)
 

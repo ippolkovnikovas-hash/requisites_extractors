@@ -1,4 +1,5 @@
 ﻿"""Тесты JSON-экспортёра."""
+
 import json
 
 from app.exporters.json_exporter import export_json
@@ -24,6 +25,7 @@ def test_export_creates_file(tmp_path, monkeypatch):
     from unittest.mock import patch
 
     import app.exporters.json_exporter as je
+
     with patch.object(je.settings, "exports_folder", tmp_path):
         path = export_json("test-001", make_requisites(), ValidationReport(), False)
     assert path.exists()
@@ -34,6 +36,7 @@ def test_export_valid_json(tmp_path, monkeypatch):
     from unittest.mock import patch
 
     import app.exporters.json_exporter as je
+
     with patch.object(je.settings, "exports_folder", tmp_path):
         path = export_json("test-002", make_requisites(), ValidationReport(), False)
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -48,6 +51,7 @@ def test_export_fill_rate(tmp_path):
     from unittest.mock import patch
 
     import app.exporters.json_exporter as je
+
     with patch.object(je.settings, "exports_folder", tmp_path):
         path = export_json("test-003", make_requisites(), ValidationReport(), False)
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -58,6 +62,7 @@ def test_export_inn_in_data(tmp_path):
     from unittest.mock import patch
 
     import app.exporters.json_exporter as je
+
     with patch.object(je.settings, "exports_folder", tmp_path):
         path = export_json("test-004", make_requisites(), ValidationReport(), False)
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -68,6 +73,7 @@ def test_export_needs_review_true(tmp_path):
     from unittest.mock import patch
 
     import app.exporters.json_exporter as je
+
     with patch.object(je.settings, "exports_folder", tmp_path):
         path = export_json("test-005", make_requisites(), ValidationReport(), True)
     payload = json.loads(path.read_text(encoding="utf-8"))

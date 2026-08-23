@@ -37,8 +37,12 @@ def export_json(
 
     out_path.write_text(
         build_json_payload(
-            document_id, requisites, validation, needs_review,
-            extracted_by, processing_meta,
+            document_id,
+            requisites,
+            validation,
+            needs_review,
+            extracted_by,
+            processing_meta,
         ),
         encoding="utf-8",
     )
@@ -65,13 +69,10 @@ def build_json_payload(
         "document_id": document_id,
         "needs_review": needs_review,
         "fill_rate": requisites.fill_rate(),
-
         # Реквизиты по python-именам — для downstream-кода
         "data": requisites.model_dump(),
-
         # Реквизиты по плейсхолдерам шаблона — для быстрой сверки с shablon.docx
         "data_aliases": requisites.to_template_dict(),
-
         # Отчёт валидации
         "validation": validation.model_dump(),
         "extracted_by": extracted_by or [],

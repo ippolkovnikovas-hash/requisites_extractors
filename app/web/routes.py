@@ -86,9 +86,7 @@ def _build_review_rows(
         else:
             value = getattr(data, key)
 
-        is_hard_error = bool(
-            result and not result.valid and not result.is_missing
-        )
+        is_hard_error = bool(result and not result.valid and not result.is_missing)
 
         rows.append(
             {

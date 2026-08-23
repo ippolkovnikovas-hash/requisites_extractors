@@ -1,4 +1,5 @@
 ﻿"""Интеграционные тесты pipeline_service через MockLLMClient."""
+
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,11 +17,13 @@ DOCX_FIXTURE = Path("tests/fixtures/sample_requisites.docx")
 def use_mock_llm(monkeypatch):
     import app.services.pipeline_service as ps
     from app.llm.mock_client import MockLLMClient
+
     monkeypatch.setattr(ps, "_build_llm_client", lambda: MockLLMClient())
 
 
 def test_pipeline_pdf_returns_result(tmp_path):
     import shutil
+
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
     result = run_pipeline(pdf, "sample.pdf")
@@ -31,6 +34,7 @@ def test_pipeline_pdf_returns_result(tmp_path):
 
 def test_pipeline_docx_returns_result(tmp_path):
     import shutil
+
     docx = tmp_path / "sample.docx"
     shutil.copy(DOCX_FIXTURE, docx)
     result = run_pipeline(docx, "sample.docx")
@@ -40,6 +44,7 @@ def test_pipeline_docx_returns_result(tmp_path):
 
 def test_pipeline_fallback_fills_inn(tmp_path):
     import shutil
+
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
     result = run_pipeline(pdf, "sample.pdf")
@@ -48,6 +53,7 @@ def test_pipeline_fallback_fills_inn(tmp_path):
 
 def test_pipeline_fallback_fills_ogrn(tmp_path):
     import shutil
+
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
     result = run_pipeline(pdf, "sample.pdf")
@@ -57,6 +63,7 @@ def test_pipeline_fallback_fills_ogrn(tmp_path):
 def test_pipeline_creates_json_file(tmp_path):
     """Сохранение по умолчанию выключено — здесь проверяется сам экспорт."""
     import shutil
+
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
     result = run_pipeline(pdf, "sample.pdf", persist=True)
@@ -65,6 +72,7 @@ def test_pipeline_creates_json_file(tmp_path):
 
 def test_pipeline_creates_xlsx_file(tmp_path):
     import shutil
+
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
     result = run_pipeline(pdf, "sample.pdf", persist=True)
@@ -80,6 +88,7 @@ def test_pipeline_unsupported_raises(tmp_path):
 
 def test_pipeline_processing_meta(tmp_path):
     import shutil
+
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
     result = run_pipeline(pdf, "sample.pdf")
@@ -97,6 +106,7 @@ def test_build_llm_mock():
         s.llm_provider = "mock"
         client = _build_llm_client()
         from app.llm.mock_client import MockLLMClient
+
         assert isinstance(client, MockLLMClient)
 
 
@@ -154,20 +164,25 @@ def test_config_error_lists_supported_providers():
 
 def test_no_external_llm_provider_in_enum():
     from app.core.enums import LLMProvider
-    assert {p.value for p in LLMProvider} == {"mock", "ollama"}
 
+    assert {p.value for p in LLMProvider} == {"mock", "ollama"}
 
 
 def test_guess_mime_uses_extension_fallback(tmp_path, monkeypatch):
     """magic недоступен или падает — используется маппинг по расширению."""
     import app.services.pipeline_service as ps
-    monkeypatch.setattr(ps, "_guess_mime", lambda p: {
-        ".pdf":  "application/pdf",
-        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ".jpg":  "image/jpeg",
-        ".png":  "image/png",
-        ".xyz":  "application/octet-stream",
-    }.get(p.suffix.lower(), "application/octet-stream"))
+
+    monkeypatch.setattr(
+        ps,
+        "_guess_mime",
+        lambda p: {
+            ".pdf": "application/pdf",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".jpg": "image/jpeg",
+            ".png": "image/png",
+            ".xyz": "application/octet-stream",
+        }.get(p.suffix.lower(), "application/octet-stream"),
+    )
 
     assert ps._guess_mime(tmp_path / "doc.pdf") == "application/pdf"
     assert "wordprocessingml" in ps._guess_mime(tmp_path / "doc.docx")
@@ -180,6 +195,7 @@ def test_guess_mime_magic_fails_falls_back(tmp_path, monkeypatch):
     import builtins
 
     import app.services.pipeline_service as ps
+
     real_import = builtins.__import__
 
     def mock_import(name, *args, **kwargs):
@@ -206,6 +222,7 @@ def test_build_llm_ollama(monkeypatch):
 def test_openai_client_module_does_not_exist():
     """Модуль внешнего провайдера должен отсутствовать в репозитории."""
     import importlib.util
+
     assert importlib.util.find_spec("app.llm.openai_client") is None
 
 

@@ -71,8 +71,9 @@ def _make_error_handler(code: int):
                 code,
             )
         return (
-            render_template("error.html", code=code, title=_ERROR_TITLES[code],
-                            details=str(error)),
+            render_template(
+                "error.html", code=code, title=_ERROR_TITLES[code], details=str(error)
+            ),
             code,
         )
 

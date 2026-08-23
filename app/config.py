@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # ── LLM ─────────────────────────────────────────────────────────────
     # Только локальные провайдеры: ollama — локальный endpoint, mock — тесты/CI.
     # Внешние LLM-сервисы в проекте запрещены (см. CLAUDE.md, раздел «Приватность»).
-    llm_provider: str = "mock"           # mock | ollama
+    llm_provider: str = "mock"  # mock | ollama
     llm_timeout_seconds: float = 120.0
 
     # ── Ollama ───────────────────────────────────────────────────────────
@@ -35,11 +35,11 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5:3b"
 
     # ── Промпт ──────────────────────────────────────────────────────────
-    prompt_version: str = "v1"           # v1 | v2 | v3
+    prompt_version: str = "v1"  # v1 | v2 | v3
 
     # ── OCR ─────────────────────────────────────────────────────────────
-    tesseract_cmd: str = ""              # путь к tesseract.exe, пусто = системный PATH
-    ocr_backend: str = "tesseract"       # tesseract | easyocr
+    tesseract_cmd: str = ""  # путь к tesseract.exe, пусто = системный PATH
+    ocr_backend: str = "tesseract"  # tesseract | easyocr
     ocr_min_text_chars: int = 50
 
     # ── Файлы ────────────────────────────────────────────────────────────

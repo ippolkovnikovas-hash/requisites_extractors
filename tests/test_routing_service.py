@@ -1,4 +1,5 @@
 ﻿"""Тесты сервиса маршрутизации документов."""
+
 from pathlib import Path
 
 from app.core.enums import DocumentType
@@ -27,6 +28,7 @@ def test_pdf_text_detected():
 
 def test_pdf_scan_detected_empty_pdf(tmp_path):
     from reportlab.pdfgen import canvas
+
     empty = tmp_path / "scan.pdf"
     canvas.Canvas(str(empty)).save()
     doc = make_doc(storage_path=empty)

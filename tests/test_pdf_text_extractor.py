@@ -1,4 +1,5 @@
 ﻿"""Тесты PDF text-экстрактора."""
+
 from pathlib import Path
 
 import pytest
@@ -59,6 +60,7 @@ def test_raises_on_missing_file():
 
 def test_scan_warning_on_empty_pdf(tmp_path):
     from reportlab.pdfgen import canvas
+
     empty_pdf = tmp_path / "empty.pdf"
     c = canvas.Canvas(str(empty_pdf))
     c.save()
@@ -77,13 +79,20 @@ def test_table_extraction_error_adds_warning(tmp_path, monkeypatch):
     import pdfplumber
 
     class FakePage:
-        def extract_text(self, **kw): return "ИНН: 7744012347"
-        def extract_tables(self): raise RuntimeError("table parse error")
+        def extract_text(self, **kw):
+            return "ИНН: 7744012347"
+
+        def extract_tables(self):
+            raise RuntimeError("table parse error")
 
     class FakePDF:
         pages = [FakePage()]
-        def __enter__(self): return self
-        def __exit__(self, *a): pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
 
     monkeypatch.setattr(pdfplumber, "open", lambda *a, **kw: FakePDF())
     result = extract_pdf_text(tmp_path / "fake.pdf")

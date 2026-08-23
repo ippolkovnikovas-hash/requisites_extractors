@@ -24,6 +24,7 @@ from app.logging_config import setup_logging
 
 # ── Главная группа команд ────────────────────────────────────────────────────
 
+
 @click.group()
 def cli():
     """Requisites Extractor — извлечение реквизитов из документов."""
@@ -33,15 +34,31 @@ def cli():
 
 # ── process: обработка одного файла ─────────────────────────────────────────
 
+
 @cli.command()
 @click.argument("file_path", type=click.Path(exists=True, path_type=Path))
-@click.option("--prompt-version", "-p", default=None,
-              help="Версия промпта: v1 (default) или v2 (chain-of-thought)")
-@click.option("--no-save", is_flag=True, default=False,
-              help="Не сохранять JSON/XLSX/DOCX на диск — только вывод в консоль")
-@click.option("--show-result", "-s", is_flag=True, default=False,
-              help="Вывести итоговые реквизиты в консоль")
-def process(file_path: Path, prompt_version: str | None, no_save: bool, show_result: bool):
+@click.option(
+    "--prompt-version",
+    "-p",
+    default=None,
+    help="Версия промпта: v1 (default) или v2 (chain-of-thought)",
+)
+@click.option(
+    "--no-save",
+    is_flag=True,
+    default=False,
+    help="Не сохранять JSON/XLSX/DOCX на диск — только вывод в консоль",
+)
+@click.option(
+    "--show-result",
+    "-s",
+    is_flag=True,
+    default=False,
+    help="Вывести итоговые реквизиты в консоль",
+)
+def process(
+    file_path: Path, prompt_version: str | None, no_save: bool, show_result: bool
+):
     """Обработать один файл и извлечь реквизиты."""
     from app.core.exceptions import AppException
     from app.services.pipeline_service import run_pipeline
@@ -69,8 +86,13 @@ def process(file_path: Path, prompt_version: str | None, no_save: bool, show_res
     # --- Вывод результата ---
     status_icon = "⚠️ " if result.needs_review else "✅"
     click.echo("─" * 55)
-    click.secho(f"{status_icon} Статус:      {result.status}", fg="yellow" if result.needs_review else "green")
-    click.echo(f"📊 Заполнено: {int(result.fill_rate * 100)}%  ({len(result.data.filled_fields())}/16 полей)")
+    click.secho(
+        f"{status_icon} Статус:      {result.status}",
+        fg="yellow" if result.needs_review else "green",
+    )
+    click.echo(
+        f"📊 Заполнено: {int(result.fill_rate * 100)}%  ({len(result.data.filled_fields())}/16 полей)"
+    )
     click.echo(f"🆔 doc_id:    {result.document_id}")
     click.echo("─" * 55)
     if result.json_path:
@@ -103,10 +125,18 @@ def process(file_path: Path, prompt_version: str | None, no_save: bool, show_res
 
 # ── batch: обработка папки ───────────────────────────────────────────────────
 
+
 @cli.command()
-@click.argument("folder_path", type=click.Path(exists=True, file_okay=False, path_type=Path))
-@click.option("--ext", "-e", multiple=True, default=["pdf", "docx"],
-              help="Расширения файлов для обработки (можно несколько: -e pdf -e docx)")
+@click.argument(
+    "folder_path", type=click.Path(exists=True, file_okay=False, path_type=Path)
+)
+@click.option(
+    "--ext",
+    "-e",
+    multiple=True,
+    default=["pdf", "docx"],
+    help="Расширения файлов для обработки (можно несколько: -e pdf -e docx)",
+)
 @click.option("--prompt-version", "-p", default=None, help="Версия промпта")
 def batch(folder_path: Path, ext: tuple, prompt_version: str | None):
     """Обработать все файлы в папке."""
@@ -120,7 +150,9 @@ def batch(folder_path: Path, ext: tuple, prompt_version: str | None):
     files = [f for f in folder_path.iterdir() if f.suffix.lower() in extensions]
 
     if not files:
-        click.secho(f"Файлы с расширениями {extensions} не найдены в {folder_path}", fg="yellow")
+        click.secho(
+            f"Файлы с расширениями {extensions} не найдены в {folder_path}", fg="yellow"
+        )
         return
 
     click.echo(f"\n📂 Папка: {folder_path}")
@@ -154,12 +186,17 @@ def batch(folder_path: Path, ext: tuple, prompt_version: str | None):
 
 # ── validate: быстрая проверка одного значения ───────────────────────────────
 
+
 @cli.command()
 @click.argument("value")
-@click.option("--type", "-t", "field_type",
-              type=click.Choice(["inn", "kpp", "ogrn", "bik", "rs", "ks"]),
-              required=True,
-              help="Тип реквизита для проверки")
+@click.option(
+    "--type",
+    "-t",
+    "field_type",
+    type=click.Choice(["inn", "kpp", "ogrn", "bik", "rs", "ks"]),
+    required=True,
+    help="Тип реквизита для проверки",
+)
 def validate(value: str, field_type: str):
     """Проверить одно значение реквизита."""
     from app.validators.account_validator import validate_account
@@ -169,12 +206,12 @@ def validate(value: str, field_type: str):
     from app.validators.ogrn_validator import validate_ogrn
 
     validators = {
-        "inn":  lambda v: validate_inn(v),
-        "kpp":  lambda v: validate_kpp(v),
+        "inn": lambda v: validate_inn(v),
+        "kpp": lambda v: validate_kpp(v),
         "ogrn": lambda v: validate_ogrn(v),
-        "bik":  lambda v: validate_bik(v),
-        "rs":   lambda v: validate_account(v, "checking"),
-        "ks":   lambda v: validate_account(v, "correspondent"),
+        "bik": lambda v: validate_bik(v),
+        "rs": lambda v: validate_account(v, "checking"),
+        "ks": lambda v: validate_account(v, "correspondent"),
     }
 
     result = validators[field_type](value)
@@ -182,10 +219,13 @@ def validate(value: str, field_type: str):
     if result.valid:
         click.secho(f"✅ {field_type.upper()} «{value}» — валидно", fg="green")
     else:
-        click.secho(f"❌ {field_type.upper()} «{value}» — ошибка: {result.reason}", fg="red")
+        click.secho(
+            f"❌ {field_type.upper()} «{value}» — ошибка: {result.reason}", fg="red"
+        )
 
 
 # ── info: информация о настройках ────────────────────────────────────────────
+
 
 @cli.command()
 def info():

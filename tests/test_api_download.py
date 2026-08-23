@@ -9,6 +9,7 @@
 Реальные OCR/LLM/сеть не вызываются: run_pipeline подменяется на фиксированный
 результат.
 """
+
 import io
 
 import pytest
@@ -133,7 +134,9 @@ def test_download_docx_generated_on_the_fly(client, uploaded, docx_template):
     assert "ООО Тестовая Компания" in paragraph_text
 
 
-def test_download_docx_without_template_is_not_500(client, uploaded, tmp_path, monkeypatch):
+def test_download_docx_without_template_is_not_500(
+    client, uploaded, tmp_path, monkeypatch
+):
     monkeypatch.chdir(tmp_path)  # shablon.docx намеренно отсутствует
     response = client.get("/api/download/apitest1/docx")
     assert response.status_code != 500

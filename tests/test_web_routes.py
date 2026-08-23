@@ -11,6 +11,7 @@ shablon.docx проекта не читается и не изменяется �
 созданный в tmp_path, с реальным синтаксисом плейсхолдеров fill_template()
 (текст в одинарных кавычках вида 'FULL_ORG_NAME'/'INN', а не {{...}}).
 """
+
 import io
 
 import pytest
@@ -22,9 +23,11 @@ from app.web.routes import _build_review_rows
 
 # ── Фикстуры ──────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def app(tmp_path):
     from app.web import create_app
+
     flask_app = create_app()
     flask_app.config["TESTING"] = True
     flask_app.config["UPLOAD_FOLDER"] = str(tmp_path / "uploads")
@@ -75,10 +78,13 @@ def _valid_form_data(**overrides):
 
 # ── _build_review_rows ───────────────────────────────────────────────────────
 
+
 def test_build_review_rows_invalid_field_uses_raw_value_not_cleared_data():
     data = RequisitesData(bik=None)  # уже обнулено validate_requisites
     field_results = {
-        "bik": FieldValidation(valid=False, raw_value="124525225", reason="wrong length: 5, expected 9"),
+        "bik": FieldValidation(
+            valid=False, raw_value="124525225", reason="wrong length: 5, expected 9"
+        ),
     }
     rows = _build_review_rows(data, field_results, None)
     row = next(r for r in rows if r["key"] == "bik")
@@ -90,7 +96,8 @@ def test_build_review_rows_valid_with_warning_shows_warning_not_error():
     data = RequisitesData(checking_account="40702810000000012345")
     field_results = {
         "checking_account": FieldValidation(
-            valid=True, raw_value="40702810000000012345",
+            valid=True,
+            raw_value="40702810000000012345",
             normalized_value="40702810000000012345",
             warning="контрольный ключ счёта не совпадает с БИК",
         ),
@@ -103,7 +110,11 @@ def test_build_review_rows_valid_with_warning_shows_warning_not_error():
 
 def test_build_review_rows_ogrn_label_13_digits():
     data = RequisitesData(ogrn="1027700123450")
-    field_results = {"ogrn": FieldValidation(valid=True, raw_value="1027700123450", normalized_value="1027700123450")}
+    field_results = {
+        "ogrn": FieldValidation(
+            valid=True, raw_value="1027700123450", normalized_value="1027700123450"
+        )
+    }
     rows = _build_review_rows(data, field_results, None)
     row = next(r for r in rows if r["key"] == "ogrn")
     assert row["label"] == "ОГРН"
@@ -111,7 +122,11 @@ def test_build_review_rows_ogrn_label_13_digits():
 
 def test_build_review_rows_ogrn_label_15_digits():
     data = RequisitesData(ogrn="304500116000157")
-    field_results = {"ogrn": FieldValidation(valid=True, raw_value="304500116000157", normalized_value="304500116000157")}
+    field_results = {
+        "ogrn": FieldValidation(
+            valid=True, raw_value="304500116000157", normalized_value="304500116000157"
+        )
+    }
     rows = _build_review_rows(data, field_results, None)
     row = next(r for r in rows if r["key"] == "ogrn")
     assert row["label"] == "ОГРНИП"
@@ -119,7 +134,11 @@ def test_build_review_rows_ogrn_label_15_digits():
 
 def test_build_review_rows_ogrn_label_missing_generic():
     data = RequisitesData(ogrn=None)
-    field_results = {"ogrn": FieldValidation(valid=False, is_missing=True, raw_value=None, reason="field is null")}
+    field_results = {
+        "ogrn": FieldValidation(
+            valid=False, is_missing=True, raw_value=None, reason="field is null"
+        )
+    }
     rows = _build_review_rows(data, field_results, None)
     row = next(r for r in rows if r["key"] == "ogrn")
     assert row["label"] in ("ОГРН", "ОГРН/ОГРНИП")
@@ -157,12 +176,13 @@ def test_build_review_rows_all_sixteen_fields_with_russian_labels():
 
     for row in rows:
         assert isinstance(row["label"], str) and row["label"].strip()
-        assert any("а" <= ch.lower() <= "я" or ch.lower() == "ё" for ch in row["label"]), (
-            f"label for {row['key']} does not look Russian: {row['label']!r}"
-        )
+        assert any(
+            "а" <= ch.lower() <= "я" or ch.lower() == "ё" for ch in row["label"]
+        ), f"label for {row['key']} does not look Russian: {row['label']!r}"
 
 
 # ── upload() с подменённым pipeline ──────────────────────────────────────────
+
 
 def test_upload_renders_review_form_using_mocked_pipeline(client, monkeypatch):
     import app.web.routes as routes
@@ -182,7 +202,9 @@ def test_upload_renders_review_form_using_mocked_pipeline(client, monkeypatch):
         docx_path=None,
         processing_meta={},
     )
-    monkeypatch.setattr(routes, "run_pipeline", lambda file_path, original_filename: fake_result)
+    monkeypatch.setattr(
+        routes, "run_pipeline", lambda file_path, original_filename: fake_result
+    )
 
     response = client.post(
         "/upload",
@@ -196,7 +218,10 @@ def test_upload_renders_review_form_using_mocked_pipeline(client, monkeypatch):
 
 # ── POST /generate ────────────────────────────────────────────────────────────
 
-def test_generate_with_valid_edited_fields_returns_docx_with_paragraph_and_table_substitution(client, docx_template):
+
+def test_generate_with_valid_edited_fields_returns_docx_with_paragraph_and_table_substitution(
+    client, docx_template
+):
     response = client.post("/generate", data=_valid_form_data())
     assert response.status_code == 200
     assert "attachment" in response.headers.get("Content-Disposition", "")
@@ -212,16 +237,22 @@ def test_generate_with_valid_edited_fields_returns_docx_with_paragraph_and_table
     assert "'INN'" not in table_text
 
 
-def test_generate_blocked_without_confirm_invalid_keeps_form_values(client, docx_template):
+def test_generate_blocked_without_confirm_invalid_keeps_form_values(
+    client, docx_template
+):
     response = client.post("/generate", data=_valid_form_data(inn="1234567890"))
     assert response.status_code == 422
     assert "attachment" not in response.headers.get("Content-Disposition", "")
     body = response.get_data(as_text=True)
     assert "1234567890" in body
-    assert not (docx_template / "exports").exists() or not list((docx_template / "exports").glob("*.docx"))
+    assert not (docx_template / "exports").exists() or not list(
+        (docx_template / "exports").glob("*.docx")
+    )
 
 
-def test_generate_with_confirm_invalid_allows_docx_with_invalid_value(client, docx_template):
+def test_generate_with_confirm_invalid_allows_docx_with_invalid_value(
+    client, docx_template
+):
     response = client.post(
         "/generate",
         data=_valid_form_data(inn="1234567890", confirm_invalid="on"),
@@ -241,7 +272,9 @@ def test_generate_empty_optional_field_does_not_block(client, docx_template):
     assert "attachment" in response.headers.get("Content-Disposition", "")
 
 
-def test_generate_missing_required_field_is_not_same_as_invalid_and_does_not_block(client, docx_template):
+def test_generate_missing_required_field_is_not_same_as_invalid_and_does_not_block(
+    client, docx_template
+):
     """Пустой bik (не введён) — это не то же самое, что введённый неверный bik,
     и не требует confirm_invalid."""
     response = client.post("/generate", data=_valid_form_data(bik=""))

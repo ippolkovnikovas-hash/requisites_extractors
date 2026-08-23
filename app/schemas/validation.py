@@ -44,27 +44,27 @@ class ValidationReport(BaseModel):
     """
 
     # Все 16 полей RequisitesData
-    company_name:          FieldValidation | None = None
-    short_name:            FieldValidation | None = None
-    legal_address:         FieldValidation | None = None
-    postal_address:        FieldValidation | None = None
-    ogrn:                  FieldValidation | None = None
-    inn:                   FieldValidation | None = None
-    kpp:                   FieldValidation | None = None
-    bank_name:             FieldValidation | None = None
-    checking_account:      FieldValidation | None = None
+    company_name: FieldValidation | None = None
+    short_name: FieldValidation | None = None
+    legal_address: FieldValidation | None = None
+    postal_address: FieldValidation | None = None
+    ogrn: FieldValidation | None = None
+    inn: FieldValidation | None = None
+    kpp: FieldValidation | None = None
+    bank_name: FieldValidation | None = None
+    checking_account: FieldValidation | None = None
     correspondent_account: FieldValidation | None = None
-    bik:                   FieldValidation | None = None
-    ceo_position:          FieldValidation | None = None
-    ceo_fio_full:          FieldValidation | None = None
-    ceo_fio:               FieldValidation | None = None
-    phone:                 FieldValidation | None = None
-    email:                 FieldValidation | None = None
+    bik: FieldValidation | None = None
+    ceo_position: FieldValidation | None = None
+    ceo_fio_full: FieldValidation | None = None
+    ceo_fio: FieldValidation | None = None
+    phone: FieldValidation | None = None
+    email: FieldValidation | None = None
 
-    cross_checks:          list[str] = []
-    errors:                list[str] = []
-    warnings:              list[str] = []
-    review_reasons:        list[str] = []
+    cross_checks: list[str] = []
+    errors: list[str] = []
+    warnings: list[str] = []
+    review_reasons: list[str] = []
 
     model_config = {"arbitrary_types_allowed": True}
 

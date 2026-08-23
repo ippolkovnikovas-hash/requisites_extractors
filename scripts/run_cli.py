@@ -61,7 +61,7 @@ def process(file_path: Path, prompt_version: str | None, no_docx: bool, show_res
 
     click.echo(f"\n📄 Файл:    {file_path.name}")
     click.echo(f"🔧 Промпт:  {settings.prompt_version}")
-    _model = settings.ollama_model if settings.llm_provider == "ollama" else settings.openai_model
+    _model = settings.ollama_model if settings.llm_provider == "ollama" else "—"
     click.echo(f"🤖 LLM:     {settings.llm_provider} / {_model}\n")
 
     try:
@@ -196,7 +196,7 @@ def validate(value: str, field_type: str):
 def info():
     """Показать текущие настройки (из .env)."""
     provider = settings.llm_provider
-    model = settings.ollama_model if provider == "ollama" else settings.openai_model
+    model = settings.ollama_model if provider == "ollama" else "—"
 
     click.echo("\n⚙️  Текущие настройки:")
     click.echo("─" * 40)

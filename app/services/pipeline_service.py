@@ -41,23 +41,17 @@ _REQUISITES_FIELDS: frozenset[str] = frozenset(RequisitesData.model_fields.keys(
 
 
 def _build_llm_client():
-    """Выбираем LLM-клиент по настройке LLM_PROVIDER из .env."""
+    """
+    Выбираем LLM-клиент по настройке LLM_PROVIDER из .env.
+
+    Доступны только локальные провайдеры: ollama (локальный endpoint) и mock
+    (тесты/CI). Внешние LLM-сервисы в проекте запрещены — см. CLAUDE.md.
+    """
     provider = settings.llm_provider.lower()
 
     if provider == LLMProvider.OLLAMA:
         from app.llm.ollama_client import OllamaClient
         return OllamaClient()
-
-    if provider == LLMProvider.OPENAI:
-        api_key = settings.openai_api_key
-        if not api_key or api_key.lower() in ("none", ""):
-            logger.warning(
-                "LLM_PROVIDER=openai but OPENAI_API_KEY is missing — falling back to mock"
-            )
-            from app.llm.mock_client import MockLLMClient
-            return MockLLMClient()
-        from app.llm.openai_client import OpenAIClient
-        return OpenAIClient()
 
     if provider == LLMProvider.MOCK:
         from app.llm.mock_client import MockLLMClient

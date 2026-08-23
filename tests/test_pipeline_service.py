@@ -4,6 +4,7 @@ from pathlib import Path
 from app.services.pipeline_service import run_pipeline
 from app.core.exceptions import UnsupportedFileTypeError
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PDF_FIXTURE = Path("tests/fixtures/sample_requisites.pdf")
 DOCX_FIXTURE = Path("tests/fixtures/sample_requisites.docx")
 
@@ -105,15 +106,19 @@ def test_build_llm_unknown_falls_back_to_mock():
         assert isinstance(client, MockLLMClient)
 
 
-def test_build_llm_openai_no_key_falls_back_to_mock():
+def test_build_llm_external_provider_is_not_supported():
+    """Внешние LLM-провайдеры запрещены (CLAUDE.md, «Приватность»): имя такого
+    провайдера не должно давать ничего, кроме локального mock."""
     with patch("app.services.pipeline_service.settings") as s:
         s.llm_provider = "openai"
-        s.openai_api_key = ""
         client = _build_llm_client()
         from app.llm.mock_client import MockLLMClient
         assert isinstance(client, MockLLMClient)
 
 
+def test_no_external_llm_provider_in_enum():
+    from app.core.enums import LLMProvider
+    assert {p.value for p in LLMProvider} == {"mock", "ollama"}
 
 
 
@@ -161,14 +166,10 @@ def test_build_llm_ollama(monkeypatch):
             assert client is not None
 
 
-def test_build_llm_openai_with_key(monkeypatch):
-    with patch("app.services.pipeline_service.settings") as s:
-        s.llm_provider = "openai"
-        s.openai_api_key = "sk-test-key"
-        with patch("app.llm.openai_client.OpenAIClient") as MockOpenAI:
-            MockOpenAI.return_value = object()
-            client = _build_llm_client()
-            assert client is not None
+def test_openai_client_module_does_not_exist():
+    """Модуль внешнего провайдера должен отсутствовать в репозитории."""
+    import importlib.util
+    assert importlib.util.find_spec("app.llm.openai_client") is None
 
 
 def test_pipeline_warnings_truncation(tmp_path, monkeypatch):
@@ -207,8 +208,10 @@ def test_pipeline_fills_docx_template(tmp_path, monkeypatch):
     pdf = tmp_path / "sample.pdf"
     shutil.copy(PDF_FIXTURE, pdf)
 
-    # Копируем shablon.docx в рабочую директорию pipeline
-    monkeypatch.chdir(Path("C:/Users/Admin/Desktop/MyProjects/requisites_extractor"))
+    # pipeline ищет shablon.docx в cwd — кладём копию шаблона в tmp_path
+    # и переходим туда, чтобы не трогать рабочую копию проекта.
+    shutil.copy(PROJECT_ROOT / "shablon.docx", tmp_path / "shablon.docx")
+    monkeypatch.chdir(tmp_path)
 
     result = run_pipeline(pdf, "sample.pdf")
     assert result.docx_path is not None

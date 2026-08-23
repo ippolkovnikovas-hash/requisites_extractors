@@ -22,7 +22,6 @@ class ExtractorType(StrEnum):
 
 class LLMProvider(StrEnum):
     MOCK   = "mock"
-    OPENAI = "openai"
     OLLAMA = "ollama"
 
 

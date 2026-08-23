@@ -1,4 +1,4 @@
-﻿click
+click
 loguru
 pydantic
 pydantic-settings
@@ -6,7 +6,6 @@ python-docx
 pdfplumber
 openpyxl
 httpx
-openai
 flask
 werkzeug
 pytesseract

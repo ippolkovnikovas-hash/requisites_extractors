@@ -325,5 +325,14 @@ Docker из проекта убран сознательно: для локал�
 
 ## Документация
 
+- [`docs/architecture.md`](docs/architecture.md) — устройство приложения: слои,
+  pipeline, контракт валидации, точки расширения
+- [`docs/extraction-notes.md`](docs/extraction-notes.md) — как ведут себя слои
+  извлечения, где ломаются, что уже находили
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — порядок работы: TDD, проверки, коммиты
 - [`CLAUDE.md`](CLAUDE.md) — правила проекта: приватность, валидация, работа с Git
 - [`ROADMAP.md`](ROADMAP.md) — фактическое состояние кода и план работ
+
+Историческое: [`docs/plan-14.06.26.md`](docs/plan-14.06.26.md) и
+[`docs/plan-21.06.26.txt`](docs/plan-21.06.26.txt) — исходные планы, из которых
+вырос текущий ROADMAP.

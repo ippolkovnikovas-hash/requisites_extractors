@@ -1,133 +1,285 @@
 # requisites_extractor
 
-Сервис для извлечения реквизитов организации из DOCX, PDF и изображений с помощью комбинации routing, OCR, нормализации, LLM, fallback-regex и валидации.[file:232]
+Локальное приложение для извлечения реквизитов организации из документов
+(PDF, DOCX, изображения) и заполнения ими договорного шаблона `shablon.docx`.
 
-## Что умеет проект
+Работает целиком на твоей машине: OCR локальный, LLM локальная (Ollama),
+никаких внешних сервисов.
 
-- Обрабатывает DOCX, PDF с текстовым слоем, PDF-сканы и изображения.[file:232]
-- Использует pipeline: routing → extraction → normalization → LLM → fallback regex → validation → export.[file:232]
-- Поддерживает экспорт результата в JSON, XLSX и заполненный DOCX-шаблон.[file:232]
-- Поднимает Flask-приложение с health endpoint `/api/health`.[file:231][file:232]
+---
 
-## Текущее состояние
+## Приватность
 
-- Docker runtime настроен: контейнер собирается, сервис поднимается на `localhost:5000`, healthcheck проходит.[file:231][web:154]
-- Flask API отвечает по `/api/health` JSON-ответом вида `{"status": "ok", "version": "1.0.0"}`.[file:231][web:154]
-- Интеграция с Ollama по схеме «Ollama на хосте, приложение в Docker» зависит от сетевых настроек WSL/Windows (host.docker.internal/172.17.0.1). Сейчас приложение работает, но доступ к Ollama из контейнера требует дополнительной настройки firewall/сетей.[file:231][web:208][web:212]
+Это не «фича», а жёсткое ограничение проекта:
 
-## Архитектура
+- **Реквизиты никогда не покидают машину.** Внешние API и облачные
+  LLM-провайдеры исключены из кода и зависимостей.
+- **LLM — только локальный Ollama** (`http://localhost:11434`) или `mock`
+  (тесты/CI). Других провайдеров в проекте нет.
+- Приложение слушает `127.0.0.1` и не требует интернета для работы.
 
-Основной pipeline проекта:[file:232]
+Правила целиком — в [`CLAUDE.md`](CLAUDE.md).
 
-1. Routing документа по типу входа (DOCX / PDF-text / PDF-scan / image / unsupported).[file:232]
-2. Извлечение текста через нативные экстракторы или OCR (Tesseract + Poppler).[file:232][file:231]
-3. Нормализация текста и числовых реквизитов.[file:231][file:232]
-4. Извлечение через LLM-провайдера (`mock`, `openai`, `ollama`).[file:232]
-5. Fallback regex для критичных реквизитов (ИНН, КПП, ОГРН, БИК, счета, контакты).[file:232]
-6. Валидация и кросс-проверка реквизитов с контрольными суммами.[file:232]
-7. Экспорт результата в JSON/XLSX/шаблон DOCX.[file:232]
+---
 
-## Быстрый старт (локально)
+## Основной сценарий
 
-### Требования
-
-- Python 3.11+[file:231][file:232]
-- Tesseract OCR (с русским языком)
-- Poppler utils для работы с PDF-сканами[file:231][file:232]
-
-### Установка
-
-```bash
-python -m venv .venv
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-# или Linux/macOS
-source .venv/bin/activate
-
-pip install -r requirements/dev.txt
+```
+документ  →  распознавание  →  review-форма  →  «Сформировать DOCX»
+ PDF/DOCX/JPG    OCR + LLM +      ручная            заполненный
+                 regex            проверка          shablon.docx
 ```
 
-### Запуск dev-сервера
+Смысл в шаге «review-форма»: распознавание не бывает идеальным, поэтому
+результат не уходит в документ автоматически. Ты видишь каждое из 16 полей,
+рядом с полем — предупреждение или ошибка валидации, и правишь то, что нужно,
+перед генерацией.
+
+> **Статус:** review-форма и кнопка «Сформировать DOCX» **пока не реализованы** —
+> это ближайшая крупная задача (см. [ROADMAP](ROADMAP.md), эпик Э7). Сейчас
+> доступны сквозной pipeline через CLI и REST API, а веб-страница показывает
+> результат в режиме «только чтение».
+
+---
+
+## Что уже работает
+
+- **Маршрутизация форматов** — DOCX, PDF с текстовым слоем, PDF-скан,
+  изображения (JPG/PNG/TIFF).
+- **Извлечение текста** — `python-docx`, `pdfplumber`, Tesseract OCR с
+  построчной сборкой через `image_to_data` и предобработкой изображений.
+- **LLM-извлечение** — локальная Ollama, три версии промпта (`v1` базовый,
+  `v2` chain-of-thought для договоров, `v3` для малых моделей).
+- **Fallback regex** — контекстный поиск ИНН/КПП/ОГРН/БИК/р.с/к.с, разбор
+  карточки контрагента, извлечение ФИО руководителя с нормализацией порядка
+  слов и краткой формой. Результаты LLM и regex объединяются с пометкой
+  источника (`extracted_by`).
+- **Валидация** — контрольные суммы ИНН и ОГРН, форматные проверки КПП, БИК,
+  счетов, кросс-проверка БИК ↔ корр. счёт.
+- **Экспорт** — JSON, XLSX и заполнение `shablon.docx`.
+- **CLI** — обработка одного файла, пакетная обработка папки с отчётом,
+  проверка отдельного реквизита.
+- **REST API** — загрузка, получение результата, скачивание.
+
+Честный список того, что **не** доделано, — в [ROADMAP.md](ROADMAP.md), §1.2.
+
+---
+
+## Требования
+
+- **Python 3.13+** (проверено на 3.13 и 3.14)
+- **Tesseract OCR** с русским языковым пакетом — для сканов и изображений
+- **Poppler** — для растеризации PDF-сканов
+- **Ollama** с локальной моделью — для LLM-извлечения
+  (без неё можно работать на `LLM_PROVIDER=mock`, но качество будет никакое)
+
+### Установка системных зависимостей (Windows)
+
+```powershell
+winget install UB-Mannheim.TesseractOCR
+winget install oschwartz10612.Poppler
+winget install Ollama.Ollama
+```
+
+Пути к Tesseract и Poppler пропиши в `.env`, если они не в `PATH`.
+
+### Модель для Ollama
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+---
+
+## Установка
+
+```powershell
+py -3.13 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements/dev.txt
+copy .env.example .env
+```
+
+Linux/macOS:
+
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements/dev.txt
+cp .env.example .env
+```
+
+Затем отредактируй `.env` под свою машину. `.env` в Git не попадает.
+
+---
+
+## Запуск
+
+### Веб-интерфейс
+
+```bash
+python scripts/run_web.py
+```
+
+Открой `http://127.0.0.1:5000/`.
+
+### REST API
 
 ```bash
 python scripts/run_dev.py
 ```
 
-### Проверка health endpoint
+> **Известная проблема:** сейчас это два **разных** Flask-приложения с
+> независимыми фабриками — веб-интерфейс и API нельзя поднять одной командой.
+> Они объединяются в рамках эпика Э7. Оба скрипта к тому же слушают `0.0.0.0`
+> вместо `127.0.0.1` — для локального приложения это лишнее и будет исправлено.
+
+### CLI
 
 ```bash
-curl http://localhost:5000/api/health
+# Один файл
+python scripts/run_cli.py process путь/к/документу.pdf --show-result
+
+# С другой версией промпта
+python scripts/run_cli.py process документ.pdf --prompt-version v2
+
+# Вся папка
+python scripts/run_cli.py batch путь/к/папке -e pdf -e docx
+
+# Папка с отчётом CSV/JSON
+python scripts/batch_process.py путь/к/папке -e pdf -e docx
+
+# Проверить одно значение
+python scripts/run_cli.py validate 7744012347 --type inn
+
+# Текущие настройки
+python scripts/run_cli.py info
 ```
 
-Ожидаемый ответ:
+---
 
-```json
-{"status": "ok", "version": "1.0.0"}
-```
+## REST API
 
-## Запуск через Docker
+| Метод | Путь | Назначение |
+|-------|------|-----------|
+| `GET` | `/api/health` | Проверка живости: `{"status": "ok", "version": "1.0.0"}` |
+| `POST` | `/api/extract` | Загрузка файла (`multipart/form-data`, поле `file`) |
+| `GET` | `/api/result/<document_id>` | Результат обработки |
+| `GET` | `/api/download/<document_id>/<fmt>` | Скачивание: `json`, `xlsx`, `docx` |
+| `GET` | `/test` | Статическая страница для ручной проверки API |
 
-### Сборка и запуск
+Ошибки возвращаются единым форматом: `{"error": ..., "code": ..., "details": ...}`.
 
 ```bash
-docker compose up --build
+curl -F "file=@документ.pdf" http://127.0.0.1:5000/api/extract
 ```
 
-Проверка:
-
-```bash
-curl http://localhost:5000/api/health
-```
-
-Контейнерный healthcheck настроен на `/api/health`, при успешном запуске контейнер переходит в состояние `healthy`.[file:231][web:154]
-
-### Ollama
-
-- **Вариант A** — Ollama установлен на хостовой машине, приложение в Docker обращается к `http://host.docker.internal:11434`. Это текущий приоритетный сценарий, не раздувает образ, но в WSL/Windows может упираться в firewall/маршрутизацию.[file:231][web:208][web:212]
-- **Вариант B** — отдельный сервис `ollama` в `docker-compose.yml` для полностью воспроизводимого стенда (пока в планах).[file:231]
-- **Вариант C** — `LLM_PROVIDER=mock` для тестов и CI, без зависимости от внешнего LLM.[file:231]
+---
 
 ## Переменные окружения
 
-Минимальный набор задаётся в `.env` (см. `.env.example`):[file:231][file:232]
+Полный список с комментариями — в [`.env.example`](.env.example).
 
-- `FLASK_ENV` — режим работы Flask.
-- `LLM_PROVIDER` — `mock` / `openai` / `ollama`.
-- `OPENAI_API_KEY` — при использовании OpenAI.
-- `OLLAMA_BASE_URL` — базовый URL Ollama.
-- Настройки OCR backend’ов.
-- Ограничения размеров входных файлов.
+| Переменная | По умолчанию | Назначение |
+|------------|--------------|-----------|
+| `LLM_PROVIDER` | `mock` | `ollama` или `mock`. Других значений нет |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Локальный endpoint Ollama |
+| `OLLAMA_MODEL` | `qwen2.5:3b` | Имя модели |
+| `PROMPT_VERSION` | `v1` | `v1`, `v2` или `v3` |
+| `LLM_TIMEOUT_SECONDS` | `120.0` | Таймаут запроса к LLM |
+| `TESSERACT_CMD` | из `PATH` | Путь к `tesseract` |
+| `POPPLER_PATH` | из `PATH` | Путь к Poppler |
+| `OCR_BACKEND` | `tesseract` | `tesseract` или `easyocr` |
+| `MAX_UPLOAD_SIZE_MB` | `20` | Лимит размера файла |
+| `FLASK_HOST` / `FLASK_PORT` | `127.0.0.1` / `5000` | Адрес веб-сервера |
+| `FLASK_SECRET_KEY` | — | Обязательно поменять |
 
-## Тесты
+---
 
-Проект содержит тесты для:[file:231][file:232]
+## Архитектура
 
-- валидаторов (ИНН, КПП, ОГРН, БИК, счета),
-- fallback regex,
-- normalization и routing,
-- docx/pdf_text extractor’ов,
-- полного pipeline на mock LLM.
-
-Запуск:
-
-```bash
-pytest
+```
+app/
+├── api/          REST-эндпоинты (health, upload/extract/download)
+├── core/         константы, enum'ы, исключения, утилиты
+├── exporters/    JSON, XLSX, заполнение DOCX-шаблона
+├── extractors/   DOCX, PDF-текст, PDF-OCR, изображения
+├── llm/          базовый интерфейс, mock, ollama, промпты
+├── ocr/          интерфейс OCR-бэкенда, Tesseract, EasyOCR
+├── schemas/      pydantic-модели (документ, реквизиты, валидация)
+├── services/     routing, извлечение текста, нормализация,
+│                 fallback regex, валидация, оркестратор pipeline
+├── validators/   ИНН, КПП, ОГРН, БИК, счета, кросс-проверки
+└── web/          Flask-роуты и шаблоны интерфейса
 ```
 
-## Web UI и API тесты
+Порядок обработки в `services/pipeline_service.py`:
 
-В `app/static/test_ui.html` есть простой тестовый UI для ручной проверки:[file:232]
+1. **DocumentInput** — файл, sha256, расширение, MIME
+2. **Routing** — определение типа: DOCX / PDF-текст / PDF-скан / изображение
+3. **Extraction** — извлечение текста нужным экстрактором
+4. **Normalization** — очистка текста перед LLM
+5. **LLM** — структурированный JSON от Ollama
+6. **Fallback regex + merge** — добор полей регулярками, слияние с пометкой источника
+7. **Validation** — контрольные суммы, форматы, кросс-проверки
+8. **Export** — JSON, XLSX, заполненный DOCX
+9. **PipelineResult** — итог с `fill_rate`, `needs_review`, `warnings`
 
-- `GET /api/health`
-- `POST /api/extract` (загрузка файла)
-- `GET /api/download/...` (скачивание результата)
+---
 
-Он собирается как статический файл и не требует отдельной сборки фронтенда.
+## Шаблон DOCX
 
-## План развития (high-level)
+`shablon.docx` в корне проекта. Плейсхолдеры — имена в **одинарных кавычках**,
+например `'FULL_ORG_NAME'`, `'INN'`. Работают и в обычных параграфах, и в
+ячейках таблиц; разбиение плейсхолдера по runs обрабатывается корректно.
 
-- Усиление валидаторов и fallback regex (validator hardening).[file:231][file:232]
-- Улучшение OCR: структурный OCR, разные backends.[file:231][file:232]
-- Расширение схемы результата (`extracted_by`, `review_reasons`, `fill_rate`).[file:231][file:232]
-- CI/CD на базе GitHub Actions (lint + tests).[file:231][file:232]
-- Документация и CONTRIBUTING для новых разработчиков.[file:232]
+16 полей: `FULL_ORG_NAME`, `ORG_NAME`, `LEGAL_ADDRES`, `POST_ADDRES`, `OGRN`,
+`INN`, `KPP`, `BANK_NAME`, `RS`, `KS`, `BIK`, `CEO_POSITION`, `CEO_FIO_FULL`,
+`CEO_FIO`, `TEL`, `E-MAIL`.
+
+Чтобы использовать свой шаблон, замени файл, сохранив имена плейсхолдеров.
+
+---
+
+## Разработка
+
+Порядок работы — TDD: сначала тест, затем реализация, затем прогон.
+
+```bash
+pytest                       # весь набор с coverage
+pytest --no-cov tests/test_validators_inn.py   # отдельный модуль
+ruff check app/
+black app/
+```
+
+Часть тестов написана **вперёд реализации** — они падают с `ImportError`, и это
+ожидаемое состояние, а не поломка. Такие тесты задают контракт для эпиков Э3–Э7
+из [ROADMAP.md](ROADMAP.md).
+
+Порог coverage и список исключений (`omit` в `pyproject.toml`) снижать нельзя —
+только сокращать `omit` и поднимать порог.
+
+---
+
+## Ограничения
+
+- Review-формы и генерации DOCX из неё пока нет (Э7).
+- Валидаторы ещё не приведены к правилам из `CLAUDE.md`: не разделены «пусто» и
+  «неверно», предупреждения и ошибки (Э3–Э6).
+- Веб-интерфейс и API — два независимых приложения (Э7).
+- Веб-шаблоны тянут Bootstrap с CDN, то есть без интернета выглядят голо;
+  это будет исправлено локальной копией.
+- Pipeline пока пишет промежуточные файлы в `processed/` и `exports/`; станет
+  опциональным (Э8).
+- CI нет.
+
+Docker из проекта убран сознательно: для локального десктопного приложения он
+добавлял установку Docker Desktop и проблемы с доступом к Ollama на хосте,
+не решая ни одной реальной задачи.
+
+---
+
+## Документация
+
+- [`CLAUDE.md`](CLAUDE.md) — правила проекта: приватность, валидация, работа с Git
+- [`ROADMAP.md`](ROADMAP.md) — фактическое состояние кода и план работ

@@ -217,6 +217,7 @@ curl -F "file=@документ.pdf" http://127.0.0.1:5000/api/extract
 | `TESSERACT_CMD` | из `PATH` | Путь к `tesseract` |
 | `POPPLER_PATH` | из `PATH` | Путь к Poppler |
 | `OCR_BACKEND` | `tesseract` | `tesseract` или `easyocr` |
+| `OCR_PROMPT_VERSION` | `image` | Профиль промпта для распознанного текста |
 | `MAX_UPLOAD_SIZE_MB` | `20` | Лимит размера файла |
 | `PERSIST_ARTIFACTS` | `false` | Сохранять ли результаты обработки на диск |
 | `FLASK_HOST` / `FLASK_PORT` | `127.0.0.1` / `5000` | Адрес веб-сервера |
@@ -294,10 +295,11 @@ black --check app/ scripts/ tests/
 
 ## Ограничения
 
-- Переключение OCR-бэкенда через `OCR_BACKEND` пока не работает: оба
-  экстрактора жёстко используют Tesseract (Э11).
+- Качество извлечения не измерялось на реальных документах: `fill_rate`
+  проверялся только на синтетических фикстурах.
 - Версии зависимостей не закреплены — сборка может сломаться от обновления
   внешнего пакета.
+- Нет `docs/architecture.md` и `CONTRIBUTING.md`.
 
 ## Файлы на диске
 

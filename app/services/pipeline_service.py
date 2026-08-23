@@ -177,11 +177,15 @@ def run_pipeline(
         raw_text_path.write_text(extraction.text, encoding="utf-8")
 
     # ── 4. Normalization ─────────────────────────────────────────────────
-    norm = normalize_text(extraction.text)
+    # Для распознанного текста включается дополнительная чистка: склейка цифр
+    # в номерах реквизитов и отделение блока классификаторов. Документам с
+    # текстовым слоем она не нужна и там даже вредна.
+    norm = normalize_text(extraction.text, ocr=extraction.ocr_used)
     logger.info(
         "Step 4/9 normalization done",
         before=norm.char_count_before,
         after=norm.char_count_after,
+        ocr_cleanup=extraction.ocr_used,
     )
 
     if persist:
@@ -190,8 +194,14 @@ def run_pipeline(
         )
 
     # ── 5. LLM extraction ────────────────────────────────────────────────
+    # Для распознанного текста берём профиль промпта, написанный под OCR:
+    # он объясняет модели, что цифры могут быть с пробелами внутри, строки —
+    # слитными, а символы — подменёнными.
+    prompt_version = (
+        settings.ocr_prompt_version if extraction.ocr_used else settings.prompt_version
+    )
     llm_client = _build_llm_client()
-    llm_result = llm_client.extract(norm.normalized_text, settings.prompt_version)
+    llm_result = llm_client.extract(norm.normalized_text, prompt_version)
     logger.info(
         "Step 5/9 LLM done",
         provider=llm_result.provider,

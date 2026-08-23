@@ -6,9 +6,8 @@ from pdf2image import convert_from_path
 from PIL import Image, ImageFilter, ImageOps
 
 from app.config import settings
-from app.core.enums import ExtractorType
 from app.core.exceptions import TextExtractionError
-from app.ocr.tesseract_backend import TesseractBackend
+from app.ocr.factory import get_ocr_backend
 from app.schemas.extraction import TextExtractionResult
 
 
@@ -20,7 +19,7 @@ def _preprocess_image(image: Image.Image) -> Image.Image:
 
 
 def extract_pdf_ocr(path: Path) -> TextExtractionResult:
-    backend = TesseractBackend(tesseract_cmd=settings.tesseract_cmd or None)
+    backend = get_ocr_backend()
     warnings: list[str] = []
     pages_text: list[str] = []
     total_pages = 0
@@ -56,7 +55,7 @@ def extract_pdf_ocr(path: Path) -> TextExtractionResult:
 
     return TextExtractionResult(
         text=full_text,
-        extractor_used=ExtractorType.TESSERACT,
+        extractor_used=backend.name(),
         ocr_used=True,
         pages=total_pages,
         warnings=warnings,

@@ -92,6 +92,11 @@ CEO_FULL_NAME_RE = re.compile(
 
 _PATRONYMIC_SUFFIXES = ("ич", "на", "вна", "евна", "овна", "евич", "ович")
 
+# Символы, которыми в документах отделяют подпись поля от значения. Вертикальная
+# черта и табуляция сюда входят обязательно: в распознанных таблицах строка
+# выглядит как «Директор | Иванов И.И.», и без них разделитель уезжал в значение.
+_LABEL_SEPARATORS = " :;-—–|\t"
+
 
 def _make_short_fio(full_fio: str) -> str | None:
     parts = full_fio.strip().split()
@@ -443,7 +448,7 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
         # Затем текстовые поля
         for label, field in text_fields.items():
             if lowered.startswith(label):
-                tail = line[len(label) :].strip(" :;-—")
+                tail = line[len(label) :].strip(_LABEL_SEPARATORS)
                 value = (
                     tail if tail else (lines[idx + 1] if idx + 1 < len(lines) else None)
                 )
@@ -481,18 +486,28 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
             result[field] = _digits_only(result[field])
 
     if result.get("ceo_fio_full"):
-        result["ceo_fio_full"] = re.sub(
+        fio_full = re.sub(
             r"\s+Действует\s+на\s+основании\s+Устава.*$",
             "",
             result["ceo_fio_full"],
             flags=re.IGNORECASE,
         ).strip()
 
+        # Порядок слов приводим здесь же. Раньше этого не делалось, и результат
+        # карточки перекрывал корректно переставленное ФИО из _extract_ceo():
+        # «Иван Иванович Петров» так и уходил в документ.
+        parts = fio_full.split()
+        if len(parts) == 3:
+            fio_full = _normalize_fio_order(parts)
+
+        result["ceo_fio_full"] = fio_full
+
         # Не перезаписываем позицию если уже установлена
         result.setdefault("ceo_position", "Директор")
 
-        if not result.get("ceo_fio"):
-            result["ceo_fio"] = _make_short_fio(result["ceo_fio_full"])
+        # Краткую форму пересобираем всегда: если порядок изменился, ранее
+        # найденная краткая форма относится к другой фамилии.
+        result["ceo_fio"] = _make_short_fio(fio_full) or result.get("ceo_fio")
 
     return result
 

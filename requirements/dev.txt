@@ -1,6 +1,13 @@
-﻿-r base.txt
+-r base.txt
+
+# Тесты
 pytest
 pytest-cov
+# reportlab нужен паре тестов, которые генерируют PDF без текстового слоя
+# (проверка ветки PDF-скана). В рантайме проекта не используется.
+reportlab
+
+# Линтеры и типы
 ruff
 black
 mypy

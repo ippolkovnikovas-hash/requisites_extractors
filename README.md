@@ -1,5 +1,7 @@
 # requisites_extractor
 
+[![CI](https://github.com/ippolkovnikovas-hash/requisites_extractors/actions/workflows/ci.yml/badge.svg)](https://github.com/ippolkovnikovas-hash/requisites_extractors/actions/workflows/ci.yml)
+
 Локальное приложение для извлечения реквизитов организации из документов
 (PDF, DOCX, изображения) и заполнения ими договорного шаблона `shablon.docx`.
 
@@ -115,6 +117,14 @@ python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements/dev.txt
 cp .env.example .env
+```
+
+EasyOCR вынесен в отдельный файл: он тянет torch (~500 МБ), а по умолчанию
+используется Tesseract. Ставьте, только если собираетесь переключить
+`OCR_BACKEND=easyocr`:
+
+```bash
+pip install -r requirements/easyocr.txt
 ```
 
 Затем отредактируй `.env` под свою машину. `.env` в Git не попадает.
@@ -270,7 +280,8 @@ ruff check app/ scripts/ tests/
 black --check app/ scripts/ tests/
 ```
 
-Все три проверки должны проходить чисто — они же пойдут в CI.
+Все три проверки должны проходить чисто — ровно они и запускаются в CI
+(`.github/workflows/ci.yml`) на Python 3.13 и 3.14, с `LLM_PROVIDER=mock`.
 
 Часть тестов написана **вперёд реализации** — они падают с `ImportError`, и это
 ожидаемое состояние, а не поломка. Такие тесты задают контракт для эпиков Э3–Э7
@@ -285,7 +296,8 @@ black --check app/ scripts/ tests/
 
 - Переключение OCR-бэкенда через `OCR_BACKEND` пока не работает: оба
   экстрактора жёстко используют Tesseract (Э11).
-- CI нет.
+- Версии зависимостей не закреплены — сборка может сломаться от обновления
+  внешнего пакета.
 
 ## Файлы на диске
 

@@ -437,33 +437,45 @@ pipeline использовали реальные `settings.exports_folder` и
 Порог `--cov-fail-under` поднимается вместе с каждым шагом. Расширение `omit` и
 снижение порога — только с отдельного явного подтверждения.
 
-### Э10. CI/CD
+### Э10. CI/CD *(сделано 23.08.2026)*
 
-- `.github/workflows/ci.yml`: matrix **Python 3.13 / 3.14** (Р8), кэш pip,
-  `apt install tesseract-ocr tesseract-ocr-rus poppler-utils`,
-  затем `ruff` → `black --check` → `pytest` с `LLM_PROVIDER=mock`.
+- [x] `pyproject.toml` переведён на 3.13 — `requires-python = ">=3.13"`,
+      `ruff.target-version = "py313"`, `black.target-version = ["py313"]`,
+      `mypy.python_version = "3.13"`.
+- [x] `black` разово прогнан по всему коду (53 файла из 91). `ruff` и `black`
+      между собой не конфликтуют — оба на line-length 88.
+- [x] `.github/workflows/ci.yml` — два джоба:
+      **`lint`** (один прогон, только `ruff` и `black`, без системных
+      зависимостей — быстрая обратная связь) и **`test`** (matrix Python
+      3.13 / 3.14, apt-установка Tesseract + rus, Poppler и libmagic,
+      `pytest` с `LLM_PROVIDER=mock`). Кэш pip по `requirements/*.txt`,
+      `concurrency` отменяет прогон для устаревшего коммита.
+- [x] Бейдж статуса CI в README.
+- [x] `.github/dependabot.yml` — только `github-actions`, ежемесячно. Для pip
+      не включён намеренно: версии в `requirements/*.txt` не закреплены, и
+      Dependabot создавал бы шум. Имеет смысл включить после пиннинга.
+- [ ] pre-commit — не делали: требует установки на стороне разработчика.
 
-**Блокер снят 23.08.2026.** `black` разово прогнан по всему коду
-(53 файла из 91 переформатированы). Сейчас все три проверки проходят чисто и
-готовы к переносу в workflow:
+**`easyocr` вынесен из `base.txt`** в `requirements/easyocr.txt` (заметка из
+прошлой версии этого раздела закрыта). Он тянет torch (~500 МБ), при этом
+`EasyOcrBackend` ничем не импортируется, а тесты OCR не запускают вовсе.
+Импорты в бэкенде сделаны ленивыми: модуль импортируется и без зависимости, а
+при попытке создать бэкенд выдаётся подсказка, что ставить. Чистое окружение
+похудело с ~700 МБ до 208 МБ.
 
-```
-pytest                       404 passed, покрытие 95%
-ruff check app/ scripts/ tests/    All checks passed
-black --check app/ scripts/ tests/ 91 files would be left unchanged
-```
+**Проверено симуляцией, а не на глаз.** Собрано чистое venv, поставлен
+`requirements/dev.txt`, прогнаны все три проверки — и это поймало реальную
+поломку: тесты `test_pdf_scan_detected_empty_pdf` и
+`test_scan_warning_on_empty_pdf` импортируют `reportlab`, которого не было ни в
+одном requirements-файле. Локально он оказался в окружении случайно, в CI
+сборка упала бы на первом же запуске. `reportlab` добавлен в `dev.txt`.
 
-`ruff` и `black` не конфликтуют между собой (оба настроены на line-length 88).
-- Бейджи в README.
-- Опционально: pre-commit, Dependabot.
+**DoD:** выполнен — в чистом окружении `404 passed`, покрытие 95%, `ruff` и
+`black` чисты.
 
-**Сделано 23.08.2026:** `pyproject.toml` переведён на 3.13 —
-`requires-python = ">=3.13"`, `ruff.target-version = "py313"`,
-`black.target-version = ["py313"]`, `mypy.python_version = "3.13"`.
-
-**Заметка:** `easyocr` тянет `torch` (~2 ГБ). В CI это либо долгая установка,
-либо повод вынести `easyocr` в optional-extra — решить при написании workflow
-(перекликается с Э11.2).
+**Известное ограничение:** версии зависимостей нигде не закреплены, поэтому
+сборка может сломаться от обновления внешнего пакета. Пиннинг — отдельная
+задача.
 
 ### Э11. Качество извлечения
 
@@ -515,10 +527,13 @@ black --check app/ scripts/ tests/ 91 files would be left unchanged
 **Состояние на 23.08.2026:** Э1, Э2, Э3, Э4, Э5, Э6, Э7, Э8 и шаги 1-4
 (частично) эпика Э9 — сделаны. **404 теста, покрытие 95%, `ruff` чист.**
 
-**Ближайший шаг: Э10 (CI)** — блокеров больше нет, `pytest`, `ruff` и `black`
-проходят чисто. Дальше по объёму работ — Э11 (качество извлечения) и Э12
-(документация), плюс остаток шага 4 в Э9: тесты на `fallback_regex`,
+**Состояние: Э1-Э10 закрыты.** Осталось: Э11 (качество извлечения), Э12
+(документация) и остаток шага 4 в Э9 — тесты на `fallback_regex`,
 `text_extraction` и `text_normalization`.
+
+**Ближайший шаг: Э11.** Первым делом — два места, где код написан, но не
+подключён: `normalize_ocr_text()` и соседи не вызываются из pipeline, а фабрики
+OCR-бэкендов нет, из-за чего `OCR_BACKEND=easyocr` ни на что не влияет.
 
 ---
 

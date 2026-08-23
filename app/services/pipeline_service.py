@@ -22,7 +22,7 @@ from loguru import logger
 from app.config import settings
 from app.core.constants import NORMALIZE_MAX_CHARS
 from app.core.enums import DocumentType, LLMProvider
-from app.core.exceptions import UnsupportedFileTypeError
+from app.core.exceptions import ConfigError, UnsupportedFileTypeError
 from app.exporters.json_exporter import export_json
 from app.exporters.xlsx_exporter import export_xlsx
 from app.schemas.document import DocumentInput
@@ -46,6 +46,10 @@ def _build_llm_client():
 
     Доступны только локальные провайдеры: ollama (локальный endpoint) и mock
     (тесты/CI). Внешние LLM-сервисы в проекте запрещены — см. CLAUDE.md.
+
+    Неизвестное значение — жёсткая ошибка конфигурации. Молчаливый откат на
+    mock здесь недопустим: опечатка в имени провайдера приводила бы к тому, что
+    пользователь получает выдуманные реквизиты и не догадывается об этом.
     """
     provider = settings.llm_provider.lower()
 
@@ -57,9 +61,13 @@ def _build_llm_client():
         from app.llm.mock_client import MockLLMClient
         return MockLLMClient()
 
-    logger.warning("Unknown LLM_PROVIDER={}, falling back to mock", provider)
-    from app.llm.mock_client import MockLLMClient
-    return MockLLMClient()
+    supported = ", ".join(sorted(p.value for p in LLMProvider))
+    logger.error("Unknown LLM_PROVIDER", provider=provider, supported=supported)
+    raise ConfigError(
+        f"Неизвестный LLM_PROVIDER={provider!r}. Допустимые значения: {supported}. "
+        f"Внешние LLM-провайдеры в проекте не поддерживаются.",
+        {"provider": provider, "supported": supported},
+    )
 
 
 def _guess_mime(path: Path) -> str:

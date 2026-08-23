@@ -1,8 +1,6 @@
 ﻿"""Тесты fallback regex-экстрактора на тестовом PDF."""
-import pytest
-from pathlib import Path
-from app.services.fallback_regex_service import extract_fallback_fields
 
+from app.services.fallback_regex_service import extract_fallback_fields
 
 SAMPLE_TEXT = """
 ООО Тестовая Организация
@@ -16,7 +14,6 @@ SAMPLE_TEXT = """
 Тел.: +7 (495) 123-45-67
 E-mail: test@testorg.ru
 """
-
 
 
 def test_extracts_inn():
@@ -65,10 +62,6 @@ def test_empty_text_returns_empty():
     assert result["ogrn"] is None
 
 
-
-
-
-
 def test_phone_formats_normalized():
     formats = [
         "8 (495) 123-45-67",
@@ -79,4 +72,8 @@ def test_phone_formats_normalized():
     for fmt in formats:
         result = extract_fallback_fields(f"Тел.: {fmt}")
         assert result["phone"] is not None, f"phone not extracted from: {fmt}"
-        assert result["phone"].replace("+7", "8").replace("8", "", 1).isdigit() or result["phone"].startswith(("+7", "8")), f"unexpected format: {result['phone']}"
+        assert result["phone"].replace("+7", "8").replace(
+            "8", "", 1
+        ).isdigit() or result["phone"].startswith(
+            ("+7", "8")
+        ), f"unexpected format: {result['phone']}"

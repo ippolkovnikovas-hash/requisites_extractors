@@ -1,4 +1,4 @@
-﻿"""
+﻿r"""
 Batch-обработка документов + отчёт (CSV/JSON).
 
 Пример:
@@ -8,7 +8,6 @@ Batch-обработка документов + отчёт (CSV/JSON).
 import csv
 import json
 import sys
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -19,14 +18,16 @@ from loguru import logger
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import settings
-from app.logging_config import setup_logging
-from app.services.pipeline_service import run_pipeline
 from app.core.exceptions import AppException
+from app.logging_config import setup_logging
 from app.schemas.validation import PipelineResult  # тип для подсказок, не обязателен
+from app.services.pipeline_service import run_pipeline
 
 
 @click.command()
-@click.argument("folder_path", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.argument(
+    "folder_path", type=click.Path(exists=True, file_okay=False, path_type=Path)
+)
 @click.option(
     "--ext",
     "-e",
@@ -78,10 +79,11 @@ def main(
         click.echo(f"[{i}/{len(files)}] {file_path.name} ... ", nl=False)
 
         try:
-            result: PipelineResult = run_pipeline(file_path, file_path.name)
+            result: PipelineResult = run_pipeline(
+                file_path, file_path.name, persist=True
+            )
 
             needs_review = result.needs_review
-            status_icon = "⚠️" if needs_review else "✅"
 
             if needs_review:
                 click.secho("⚠️  needs_review", fg="yellow")

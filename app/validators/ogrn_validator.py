@@ -1,42 +1,69 @@
+"""
+Проверка ОГРН и ОГРНИП.
+
+ОГРН   — 13 цифр, контрольная 13-я: остаток от деления первых 12 цифр на 11.
+ОГРНИП — 15 цифр, контрольная 15-я: остаток от деления первых 14 цифр на 13.
+
+Отдельно отсекаются классификаторы, которые OCR и LLM регулярно подставляют в
+поле ОГРН: ОКПО (8 цифр для ИП и 10 для ЮЛ) и ОКТМО (11 цифр). Формально это
+«неверная длина», но пользователю полезнее знать, что в поле попал другой код,
+а не просто «не то количество цифр».
+"""
+
+from app.core.utils import fold_numeric_confusables
 from app.schemas.validation import FieldValidation
 
-_OKPO_LENGTHS = {8, 10}
-_OKTMO_LENGTHS = {8, 11}
-_CLASSIFIER_LENGTHS = _OKPO_LENGTHS | _OKTMO_LENGTHS  # 8, 10, 11
+# Длины кодов, которые чаще всего ошибочно попадают в поле ОГРН.
+_CLASSIFIER_LENGTHS = {
+    8: "OKPO (8-digit)",
+    10: "OKPO (10-digit)",
+    11: "OKTMO",
+}
 
-
-def _ogrn_check(digits_str: str, mod: int) -> bool:
-    n = int(digits_str[:-1])
-    check = n % mod % 10
-    return check == int(digits_str[-1])
+_FOLD_WARNING = "В значении заменены символы, похожие на цифры (O→0, I→1) — проверьте"
 
 
 def validate_ogrn(value: str | None) -> FieldValidation:
-    if not value:
-        return FieldValidation(valid=False, value=value, reason="field is null")
-
-    v = value.strip().replace(" ", "")
-
-    if not v.isdigit():
-        return FieldValidation(valid=False, value=value, reason="contains non-digit chars")
-
-    if len(v) in _CLASSIFIER_LENGTHS:
+    if value is None or not value.strip():
         return FieldValidation(
-            valid=False, value=value,
-            reason=f"likely OKPO/OKTMO classifier, not OGRN (length={len(v)})"
+            valid=False, is_missing=True, raw_value=value, reason="field is null"
         )
 
-    if len(v) == 13:
-        if not _ogrn_check(v, 11):
-            return FieldValidation(valid=False, value=value, reason="invalid OGRN checksum")
-        return FieldValidation(valid=True, value=v)
+    normalized, folded = fold_numeric_confusables(value)
+    warning = _FOLD_WARNING if folded else None
 
-    if len(v) == 15:
-        if not _ogrn_check(v, 13):
-            return FieldValidation(valid=False, value=value, reason="invalid OGRNIP checksum")
-        return FieldValidation(valid=True, value=v)
+    def _fail(reason: str) -> FieldValidation:
+        return FieldValidation(
+            valid=False,
+            raw_value=value,
+            normalized_value=normalized,
+            reason=reason,
+            warning=warning,
+        )
+
+    if not normalized.isdigit():
+        return _fail("contains non-digit chars")
+
+    length = len(normalized)
+
+    if length in _CLASSIFIER_LENGTHS:
+        return _fail(
+            f"looks like OKPO/OKTMO, not OGRN: {length} digits "
+            f"({_CLASSIFIER_LENGTHS[length]})"
+        )
+
+    if length == 13:
+        if int(normalized[:12]) % 11 % 10 != int(normalized[12]):
+            return _fail("invalid checksum (13-digit OGRN)")
+    elif length == 15:
+        if int(normalized[:14]) % 13 % 10 != int(normalized[14]):
+            return _fail("invalid checksum (15-digit OGRNIP)")
+    else:
+        return _fail(f"wrong length: {length}, expected 13 or 15")
 
     return FieldValidation(
-        valid=False, value=value,
-        reason=f"wrong length: {len(v)}, expected 13 or 15"
+        valid=True,
+        raw_value=value,
+        normalized_value=normalized,
+        warning=warning,
     )

@@ -22,7 +22,7 @@ from loguru import logger
 from app.config import settings
 from app.core.constants import NORMALIZE_MAX_CHARS
 from app.core.enums import DocumentType, LLMProvider
-from app.core.exceptions import UnsupportedFileTypeError
+from app.core.exceptions import ConfigError, UnsupportedFileTypeError
 from app.exporters.json_exporter import export_json
 from app.exporters.xlsx_exporter import export_xlsx
 from app.schemas.document import DocumentInput
@@ -41,36 +41,41 @@ _REQUISITES_FIELDS: frozenset[str] = frozenset(RequisitesData.model_fields.keys(
 
 
 def _build_llm_client():
-    """Выбираем LLM-клиент по настройке LLM_PROVIDER из .env."""
+    """
+    Выбираем LLM-клиент по настройке LLM_PROVIDER из .env.
+
+    Доступны только локальные провайдеры: ollama (локальный endpoint) и mock
+    (тесты/CI). Внешние LLM-сервисы в проекте запрещены — см. CLAUDE.md.
+
+    Неизвестное значение — жёсткая ошибка конфигурации. Молчаливый откат на
+    mock здесь недопустим: опечатка в имени провайдера приводила бы к тому, что
+    пользователь получает выдуманные реквизиты и не догадывается об этом.
+    """
     provider = settings.llm_provider.lower()
 
     if provider == LLMProvider.OLLAMA:
         from app.llm.ollama_client import OllamaClient
-        return OllamaClient()
 
-    if provider == LLMProvider.OPENAI:
-        api_key = settings.openai_api_key
-        if not api_key or api_key.lower() in ("none", ""):
-            logger.warning(
-                "LLM_PROVIDER=openai but OPENAI_API_KEY is missing — falling back to mock"
-            )
-            from app.llm.mock_client import MockLLMClient
-            return MockLLMClient()
-        from app.llm.openai_client import OpenAIClient
-        return OpenAIClient()
+        return OllamaClient()
 
     if provider == LLMProvider.MOCK:
         from app.llm.mock_client import MockLLMClient
+
         return MockLLMClient()
 
-    logger.warning("Unknown LLM_PROVIDER={}, falling back to mock", provider)
-    from app.llm.mock_client import MockLLMClient
-    return MockLLMClient()
+    supported = ", ".join(sorted(p.value for p in LLMProvider))
+    logger.error("Unknown LLM_PROVIDER", provider=provider, supported=supported)
+    raise ConfigError(
+        f"Неизвестный LLM_PROVIDER={provider!r}. Допустимые значения: {supported}. "
+        f"Внешние LLM-провайдеры в проекте не поддерживаются.",
+        {"provider": provider, "supported": supported},
+    )
 
 
 def _guess_mime(path: Path) -> str:
     try:
         import magic
+
         return magic.from_file(str(path), mime=True)
     except Exception:
         mapping = {
@@ -93,7 +98,9 @@ def _build_review_warnings(
     warnings = extraction_warnings.copy()
 
     if normalized_char_count_before > NORMALIZE_MAX_CHARS:
-        warnings.append(f"Text truncated: {normalized_char_count_before} → {NORMALIZE_MAX_CHARS} chars")
+        warnings.append(
+            f"Text truncated: {normalized_char_count_before} → {NORMALIZE_MAX_CHARS} chars"
+        )
 
     if validation_report.errors:
         warnings.extend(validation_report.errors)
@@ -105,7 +112,23 @@ def _build_review_warnings(
     return list(dict.fromkeys(warnings))
 
 
-def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
+def run_pipeline(
+    file_path: Path,
+    original_filename: str,
+    persist: bool | None = None,
+) -> PipelineResult:
+    """
+    Прогоняет документ через весь pipeline.
+
+    `persist` управляет сохранением артефактов на диск. `None` — брать значение
+    из настройки `PERSIST_ARTIFACTS` (по умолчанию выключено). При выключенном
+    сохранении сырой текст, JSON, XLSX и DOCX не пишутся вовсе, а поля
+    `*_path` в результате остаются `None`: реквизиты не должны переживать
+    обработку (CLAUDE.md).
+    """
+    if persist is None:
+        persist = settings.persist_artifacts
+
     document_id = str(uuid.uuid4())[:8]
 
     logger.info(
@@ -147,25 +170,38 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         warnings=len(extraction.warnings),
     )
 
-    settings.processed_folder.mkdir(parents=True, exist_ok=True)
-    raw_text_path = settings.processed_folder / f"{document_id}_raw.txt"
-    raw_text_path.write_text(extraction.text, encoding="utf-8")
+    raw_text_path: Path | None = None
+    if persist:
+        settings.processed_folder.mkdir(parents=True, exist_ok=True)
+        raw_text_path = settings.processed_folder / f"{document_id}_raw.txt"
+        raw_text_path.write_text(extraction.text, encoding="utf-8")
 
     # ── 4. Normalization ─────────────────────────────────────────────────
-    norm = normalize_text(extraction.text)
+    # Для распознанного текста включается дополнительная чистка: склейка цифр
+    # в номерах реквизитов и отделение блока классификаторов. Документам с
+    # текстовым слоем она не нужна и там даже вредна.
+    norm = normalize_text(extraction.text, ocr=extraction.ocr_used)
     logger.info(
         "Step 4/9 normalization done",
         before=norm.char_count_before,
         after=norm.char_count_after,
+        ocr_cleanup=extraction.ocr_used,
     )
 
-    (settings.processed_folder / f"{document_id}_normalized.txt").write_text(
-        norm.normalized_text, encoding="utf-8"
-    )
+    if persist:
+        (settings.processed_folder / f"{document_id}_normalized.txt").write_text(
+            norm.normalized_text, encoding="utf-8"
+        )
 
     # ── 5. LLM extraction ────────────────────────────────────────────────
+    # Для распознанного текста берём профиль промпта, написанный под OCR:
+    # он объясняет модели, что цифры могут быть с пробелами внутри, строки —
+    # слитными, а символы — подменёнными.
+    prompt_version = (
+        settings.ocr_prompt_version if extraction.ocr_used else settings.prompt_version
+    )
     llm_client = _build_llm_client()
-    llm_result = llm_client.extract(norm.normalized_text, settings.prompt_version)
+    llm_result = llm_client.extract(norm.normalized_text, prompt_version)
     logger.info(
         "Step 5/9 LLM done",
         provider=llm_result.provider,
@@ -175,9 +211,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
 
     # ── 6. Parse → merge LLM + fallback regex → RequisitesData ──────────
     safe_data = {
-        k: v
-        for k, v in llm_result.parsed_data.items()
-        if k in _REQUISITES_FIELDS
+        k: v for k, v in llm_result.parsed_data.items() if k in _REQUISITES_FIELDS
     }
 
     fallback_data = extract_fallback_fields(norm.normalized_text)
@@ -210,44 +244,53 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     )
 
     # ── 8. Export ────────────────────────────────────────────────────────
-    settings.exports_folder.mkdir(parents=True, exist_ok=True)
-
-    json_path = export_json(
-        document_id,
-        requisites,
-        validation_report,
-        needs_review,
-        extracted_by=extracted_by,
-        processing_meta={
-            "extractor": extraction.extractor_used,
-            "ocr_used": extraction.ocr_used,
-            "llm_provider": llm_result.provider,
-            "llm_model": llm_result.model_name,
-            "prompt_version": llm_result.prompt_version,
-            "sha256": sha256,
-            "fallback_used": bool(extracted_by),
-            "fallback_count": len(extracted_by),
-        },
-    )
-    logger.info("Step 8/9 JSON saved", path=json_path.name)
-
-    xlsx_path = export_xlsx(document_id, requisites, validation_report)
-    logger.info("Step 8/9 XLSX saved", path=xlsx_path.name)
-
+    # Пишем на диск только по явному запросу. По умолчанию результат живёт в
+    # памяти и уходит вызывающему коду — API отдаёт его в ответе, веб-форма
+    # рендерит, а `/generate` собирает DOCX уже из отредактированных значений.
+    json_path: Path | None = None
+    xlsx_path: Path | None = None
     docx_path: str | None = None
-    template_path = Path("shablon.docx")
-    if template_path.exists():
-        try:
-            from app.exporters.docx_exporter import fill_template
 
-            out_docx = settings.exports_folder / f"{document_id}_result.docx"
-            fill_template(template_path, requisites, out_docx)
-            docx_path = str(out_docx)
-            logger.info("Step 8/9 DOCX filled", path=out_docx.name)
-        except Exception as e:
-            logger.warning("DOCX export failed", reason=str(e))
+    if persist:
+        settings.exports_folder.mkdir(parents=True, exist_ok=True)
+
+        json_path = export_json(
+            document_id,
+            requisites,
+            validation_report,
+            needs_review,
+            extracted_by=extracted_by,
+            processing_meta={
+                "extractor": extraction.extractor_used,
+                "ocr_used": extraction.ocr_used,
+                "llm_provider": llm_result.provider,
+                "llm_model": llm_result.model_name,
+                "prompt_version": llm_result.prompt_version,
+                "sha256": sha256,
+                "fallback_used": bool(extracted_by),
+                "fallback_count": len(extracted_by),
+            },
+        )
+        logger.info("Step 8/9 JSON saved", path=json_path.name)
+
+        xlsx_path = export_xlsx(document_id, requisites, validation_report)
+        logger.info("Step 8/9 XLSX saved", path=xlsx_path.name)
+
+        template_path = Path("shablon.docx")
+        if template_path.exists():
+            try:
+                from app.exporters.docx_exporter import fill_template
+
+                out_docx = settings.exports_folder / f"{document_id}_result.docx"
+                fill_template(template_path, requisites, out_docx)
+                docx_path = str(out_docx)
+                logger.info("Step 8/9 DOCX filled", path=out_docx.name)
+            except Exception as e:
+                logger.warning("DOCX export failed", reason=str(e))
+        else:
+            logger.debug("shablon.docx not found, DOCX export skipped")
     else:
-        logger.debug("shablon.docx not found, DOCX export skipped")
+        logger.debug("Step 8/9 export skipped: persist_artifacts disabled")
 
     # ── 9. Result ────────────────────────────────────────────────────────
     all_warnings = _build_review_warnings(
@@ -268,9 +311,9 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         warnings=all_warnings,
         status=status,
         fill_rate=requisites.fill_rate(),
-        raw_text_path=str(raw_text_path),
-        json_path=str(json_path),
-        xlsx_path=str(xlsx_path),
+        raw_text_path=str(raw_text_path) if raw_text_path else None,
+        json_path=str(json_path) if json_path else None,
+        xlsx_path=str(xlsx_path) if xlsx_path else None,
         docx_path=docx_path,
         processing_meta={
             "extractor": extraction.extractor_used,
@@ -291,8 +334,9 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         status=result.status,
         fill_rate=result.fill_rate,
         needs_review=needs_review,
-        json=json_path.name,
-        xlsx=xlsx_path.name,
+        persisted=persist,
+        json=json_path.name if json_path else None,
+        xlsx=xlsx_path.name if xlsx_path else None,
         docx=Path(docx_path).name if docx_path else None,
     )
 

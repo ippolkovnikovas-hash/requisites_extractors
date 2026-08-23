@@ -1,46 +1,80 @@
-from flask import Flask, jsonify
+"""
+Единая фабрика Flask-приложения.
+
+Раньше фабрик было две — `app.main` только с API и `app.web` только с
+интерфейсом, — и поднять их одной командой было нельзя. Теперь регистрируются
+оба блюпринта: веб-интерфейс на `/`, JSON API на `/api`.
+
+Обработчики ошибок отдают JSON только для запросов к `/api`. Веб-формы
+возвращают свои коды статуса напрямую из view (например, 422 при неподтверждённой
+жёсткой ошибке в `/generate`), поэтому до обработчиков не доходят — но если
+что-то упадёт в веб-части, пользователь увидит страницу, а не JSON.
+"""
+
+import os
+
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from app.api.routes_health import health_bp
 from app.api.routes_upload import upload_bp
+from app.config import settings
+from app.web.routes import web_bp
+
+_ERROR_TITLES = {
+    400: "Некорректный запрос",
+    404: "Страница не найдена",
+    413: "Файл слишком большой",
+    422: "Данные не прошли проверку",
+    500: "Внутренняя ошибка",
+    503: "Сервис недоступен",
+}
 
 
 def create_app() -> Flask:
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(os.path.dirname(__file__), "web", "templates"),
+    )
 
-    # Blueprints
+    app.config["SECRET_KEY"] = settings.flask_secret_key
+    app.config["UPLOAD_FOLDER"] = str(settings.upload_folder.resolve())
+    app.config["EXPORT_FOLDER"] = str(settings.exports_folder.resolve())
+    app.config["MAX_CONTENT_LENGTH"] = settings.max_upload_size_mb * 1024 * 1024
+
+    app.register_blueprint(web_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(upload_bp)
 
-    # Единый обработчик ошибок
-    @app.errorhandler(400)
-    def bad_request(e):
-        return jsonify({"error": "Bad request", "code": 400, "details": str(e)}), 400
-
-    @app.errorhandler(404)
-    def not_found(e):
-        return jsonify({"error": "Not found", "code": 404, "details": str(e)}), 404
-
-    @app.errorhandler(413)
-    def too_large(e):
-        return jsonify({"error": "File too large", "code": 413, "details": str(e)}), 413
-
-    @app.errorhandler(422)
-    def unprocessable(e):
-        return jsonify({"error": "Unprocessable entity", "code": 422, "details": str(e)}), 422
-
-    @app.errorhandler(500)
-    def internal_error(e):
-        return jsonify({"error": "Internal server error", "code": 500, "details": str(e)}), 500
-
-
-    import os
-    from flask import send_from_directory
+    for code in _ERROR_TITLES:
+        app.register_error_handler(code, _make_error_handler(code))
 
     @app.route("/test")
     def test_ui():
         return send_from_directory(
-            os.path.join(os.path.dirname(__file__), "static"),
-            "test_ui.html"
+            os.path.join(os.path.dirname(__file__), "static"), "test_ui.html"
         )
 
     return app
+
+
+def _make_error_handler(code: int):
+    def handler(error):
+        if request.path.startswith("/api"):
+            return (
+                jsonify(
+                    {
+                        "error": _ERROR_TITLES[code],
+                        "code": code,
+                        "details": str(error),
+                    }
+                ),
+                code,
+            )
+        return (
+            render_template(
+                "error.html", code=code, title=_ERROR_TITLES[code], details=str(error)
+            ),
+            code,
+        )
+
+    return handler

@@ -1,0 +1,8 @@
+# Опциональный OCR-бэкенд EasyOCR.
+#
+# Вынесен из base.txt намеренно: easyocr тянет за собой torch (~500 МБ), а по
+# умолчанию проект использует Tesseract. Ставьте, только если действительно
+# собираетесь переключить OCR_BACKEND=easyocr.
+#
+#   pip install -r requirements/easyocr.txt
+easyocr

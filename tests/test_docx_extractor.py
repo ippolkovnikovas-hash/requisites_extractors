@@ -1,8 +1,11 @@
 ﻿"""Тесты DOCX-экстрактора."""
-import pytest
+
 from pathlib import Path
-from app.extractors.docx_extractor import extract_docx
+
+import pytest
+
 from app.core.exceptions import TextExtractionError
+from app.extractors.docx_extractor import extract_docx
 
 FIXTURE = Path("tests/fixtures/sample_requisites.docx")
 
@@ -30,6 +33,7 @@ def test_contains_bik():
 
 def test_extractor_type():
     from app.core.enums import ExtractorType
+
     result = extract_docx(FIXTURE)
     assert result.extractor_used == ExtractorType.PYTHON_DOCX
 
@@ -51,6 +55,7 @@ def test_raises_on_missing_file():
 
 def test_empty_docx_has_warning(tmp_path):
     from docx import Document
+
     empty = tmp_path / "empty.docx"
     Document().save(str(empty))
     result = extract_docx(empty)
@@ -59,7 +64,6 @@ def test_empty_docx_has_warning(tmp_path):
 
 
 def test_extracts_table_content():
-    from docx import Document
     fixture = Path("tests/fixtures/sample_with_table.docx")
     result = extract_docx(fixture)
     assert "7744012347" in result.text

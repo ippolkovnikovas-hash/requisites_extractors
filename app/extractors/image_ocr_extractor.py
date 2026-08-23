@@ -2,8 +2,7 @@ from pathlib import Path
 
 from PIL import Image, ImageFilter, ImageOps
 
-from app.config import settings
-from app.ocr.tesseract_backend import TesseractBackend
+from app.ocr.factory import get_ocr_backend
 from app.schemas.extraction import TextExtractionResult
 
 
@@ -19,13 +18,13 @@ def _preprocess_image(image: Image.Image) -> Image.Image:
 
 
 def extract_image_ocr(path: Path) -> TextExtractionResult:
-    backend = TesseractBackend(tesseract_cmd=settings.tesseract_cmd or None)
+    backend = get_ocr_backend()
     image = _preprocess_image(Image.open(path))
     lines = backend.image_to_lines(image)
     text = "\n".join(lines).strip()
     return TextExtractionResult(
         text=text,
-        extractor_used="tesseract",
+        extractor_used=backend.name(),
         ocr_used=True,
         pages=1,
     )

@@ -1,9 +1,10 @@
 ﻿"""Тесты сервиса маршрутизации документов."""
-import pytest
+
 from pathlib import Path
+
+from app.core.enums import DocumentType
 from app.schemas.document import DocumentInput
 from app.services.routing_service import detect_document_type
-from app.core.enums import DocumentType
 
 
 def make_doc(**kwargs) -> DocumentInput:
@@ -27,6 +28,7 @@ def test_pdf_text_detected():
 
 def test_pdf_scan_detected_empty_pdf(tmp_path):
     from reportlab.pdfgen import canvas
+
     empty = tmp_path / "scan.pdf"
     canvas.Canvas(str(empty)).save()
     doc = make_doc(storage_path=empty)

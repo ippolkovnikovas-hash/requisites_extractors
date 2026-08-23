@@ -41,7 +41,9 @@ def extract_pdf_text(file_path: Path) -> TextExtractionResult:
                     for table in tables:
                         table_lines = []
                         for row in table:
-                            cells = [str(cell).strip() for cell in row if cell is not None]
+                            cells = [
+                                str(cell).strip() for cell in row if cell is not None
+                            ]
                             if any(cells):
                                 table_lines.append(" | ".join(cells))
                         if table_lines:
@@ -50,7 +52,9 @@ def extract_pdf_text(file_path: Path) -> TextExtractionResult:
                     warnings.append(f"Page {page_num}: table extraction failed — {te}")
 
                 if page_parts:
-                    pages_text.append(f"[Страница {page_num}]\n" + "\n".join(page_parts))
+                    pages_text.append(
+                        f"[Страница {page_num}]\n" + "\n".join(page_parts)
+                    )
 
     except Exception as e:
         raise TextExtractionError(f"Cannot open PDF: {e}", {"path": str(file_path)})

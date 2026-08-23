@@ -4,13 +4,10 @@
 
 Пример .env:
   LLM_PROVIDER=ollama
-  OPENAI_API_KEY=none
-  OPENAI_BASE_URL=https://api.openai.com/v1
-  OPENAI_MODEL=gpt-4o-mini
   OLLAMA_BASE_URL=http://localhost:11434
   OLLAMA_MODEL=qwen2.5:3b
   PROMPT_VERSION=v1
-    TESSERACT_CMD=C:\\Program Files\\Tesseract-OCR\\tesseract.exe
+  TESSERACT_CMD=C:\\Program Files\\Tesseract-OCR\\tesseract.exe
   LLM_TIMEOUT_SECONDS=120.0
 """
 
@@ -28,13 +25,9 @@ class Settings(BaseSettings):
     )
 
     # ── LLM ─────────────────────────────────────────────────────────────
-    llm_provider: str = "mock"           # mock | openai | ollama
-    openai_api_key: str = ""
-    openai_base_url: str = "https://api.openai.com/v1"
-    openai_model: str = "gpt-4o-mini"    # используется в OpenAIClient
-    llm_model: str = "gpt-4o-mini"       # алиас для обратной совместимости
-    llm_temperature: float = 0.0
-    llm_max_tokens: int = 1024
+    # Только локальные провайдеры: ollama — локальный endpoint, mock — тесты/CI.
+    # Внешние LLM-сервисы в проекте запрещены (см. CLAUDE.md, раздел «Приватность»).
+    llm_provider: str = "mock"  # mock | ollama
     llm_timeout_seconds: float = 120.0
 
     # ── Ollama ───────────────────────────────────────────────────────────
@@ -42,11 +35,16 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5:3b"
 
     # ── Промпт ──────────────────────────────────────────────────────────
-    prompt_version: str = "v1"           # v1 | v2 | v3
+    prompt_version: str = "v1"
+
+    # Профиль промпта для распознанного текста. У OCR своя специфика — цифры с
+    # пробелами внутри, слитные строки, подмены символов, — и профиль `image`
+    # написан именно под неё.
+    ocr_prompt_version: str = "image"  # v1 | v2 | v3
 
     # ── OCR ─────────────────────────────────────────────────────────────
-    tesseract_cmd: str = ""              # путь к tesseract.exe, пусто = системный PATH
-    ocr_backend: str = "tesseract"       # tesseract | easyocr
+    tesseract_cmd: str = ""  # путь к tesseract.exe, пусто = системный PATH
+    ocr_backend: str = "tesseract"  # tesseract | easyocr
     ocr_min_text_chars: int = 50
 
     # ── Файлы ────────────────────────────────────────────────────────────
@@ -58,6 +56,12 @@ class Settings(BaseSettings):
     upload_folder: Path = Path("uploads")
     exports_folder: Path = Path("exports")
     processed_folder: Path = Path("processed")
+
+    # ── Артефакты ────────────────────────────────────────────────────────
+    # По умолчанию pipeline не оставляет на диске ни сырой текст, ни
+    # результаты: реквизиты не должны переживать обработку (CLAUDE.md).
+    # Включается осознанно — для CLI и пакетной обработки, где отчёты нужны.
+    persist_artifacts: bool = False
 
     # ── Flask ────────────────────────────────────────────────────────────
     flask_secret_key: str = "change-me-in-production"

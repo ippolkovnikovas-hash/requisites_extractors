@@ -13,7 +13,7 @@ from app.core.enums import DocumentType
 class DocumentInput(BaseModel):
     document_id: str
     original_filename: str
-    extension: str                  # pdf | docx | jpg | png | tiff
+    extension: str  # pdf | docx | jpg | png | tiff
     mime_type: str
     size_bytes: int
     storage_path: Path

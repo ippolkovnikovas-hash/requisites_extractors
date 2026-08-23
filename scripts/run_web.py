@@ -1,12 +1,19 @@
+"""
+Устаревшая точка входа. Оставлена для совместимости — используйте
+`python scripts/run_app.py`.
+
+Раньше здесь поднималось отдельное приложение только с веб-интерфейсом, на
+`0.0.0.0` и с включённым debug. Теперь приложение одно (веб-интерфейс + API),
+слушает `127.0.0.1` и запускается через `run_app`.
+"""
+
 import sys
-import os
+from pathlib import Path
 
-# Добавляем корень проекта в путь поиска модулей
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.web import create_app
-
-app = create_app()
+from scripts.run_app import app, main  # noqa: E402,F401
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    print("run_web.py устарел — используйте: python scripts/run_app.py")
+    main()

@@ -92,6 +92,11 @@ CEO_FULL_NAME_RE = re.compile(
 
 _PATRONYMIC_SUFFIXES = ("ич", "на", "вна", "евна", "овна", "евич", "ович")
 
+# Символы, которыми в документах отделяют подпись поля от значения. Вертикальная
+# черта и табуляция сюда входят обязательно: в распознанных таблицах строка
+# выглядит как «Директор | Иванов И.И.», и без них разделитель уезжал в значение.
+_LABEL_SEPARATORS = " :;-—–|\t"
+
 
 def _make_short_fio(full_fio: str) -> str | None:
     parts = full_fio.strip().split()
@@ -115,9 +120,7 @@ def _normalize_fio_order(parts: list[str]) -> str:
     if len(parts) != 3:
         return " ".join(parts)
 
-    patronymic_idx = next(
-        (i for i, p in enumerate(parts) if _is_patronymic(p)), None
-    )
+    patronymic_idx = next((i for i, p in enumerate(parts) if _is_patronymic(p)), None)
 
     if patronymic_idx is None:
         return " ".join(parts)
@@ -445,14 +448,22 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
         # Затем текстовые поля
         for label, field in text_fields.items():
             if lowered.startswith(label):
-                tail = line[len(label):].strip(" :;-—")
-                value = tail if tail else (lines[idx + 1] if idx + 1 < len(lines) else None)
+                tail = line[len(label) :].strip(_LABEL_SEPARATORS)
+                value = (
+                    tail if tail else (lines[idx + 1] if idx + 1 < len(lines) else None)
+                )
                 if value:
                     result[field] = value.strip()
                 break
 
     # Постобработка
-    for field in ("company_name", "short_name", "legal_address", "postal_address", "bank_name"):
+    for field in (
+        "company_name",
+        "short_name",
+        "legal_address",
+        "postal_address",
+        "bank_name",
+    ):
         if result.get(field):
             result[field] = _clean_spaces(result[field])
 
@@ -463,23 +474,40 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
     if result.get("email"):
         result["email"] = _extract_email(result["email"])
 
-    for field in ("inn", "kpp", "ogrn", "bik", "checking_account", "correspondent_account"):
+    for field in (
+        "inn",
+        "kpp",
+        "ogrn",
+        "bik",
+        "checking_account",
+        "correspondent_account",
+    ):
         if result.get(field):
             result[field] = _digits_only(result[field])
 
     if result.get("ceo_fio_full"):
-        result["ceo_fio_full"] = re.sub(
+        fio_full = re.sub(
             r"\s+Действует\s+на\s+основании\s+Устава.*$",
             "",
             result["ceo_fio_full"],
             flags=re.IGNORECASE,
         ).strip()
 
+        # Порядок слов приводим здесь же. Раньше этого не делалось, и результат
+        # карточки перекрывал корректно переставленное ФИО из _extract_ceo():
+        # «Иван Иванович Петров» так и уходил в документ.
+        parts = fio_full.split()
+        if len(parts) == 3:
+            fio_full = _normalize_fio_order(parts)
+
+        result["ceo_fio_full"] = fio_full
+
         # Не перезаписываем позицию если уже установлена
         result.setdefault("ceo_position", "Директор")
 
-        if not result.get("ceo_fio"):
-            result["ceo_fio"] = _make_short_fio(result["ceo_fio_full"])
+        # Краткую форму пересобираем всегда: если порядок изменился, ранее
+        # найденная краткая форма относится к другой фамилии.
+        result["ceo_fio"] = _make_short_fio(fio_full) or result.get("ceo_fio")
 
     return result
 
@@ -525,16 +553,21 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
     ceo_position, ceo_fio_full, ceo_fio = _extract_ceo(text)
 
     result = {
-        "company_name": partner_card_data.get("company_name") or _extract_company_name(text),
+        "company_name": partner_card_data.get("company_name")
+        or _extract_company_name(text),
         "short_name": partner_card_data.get("short_name") or _extract_short_name(text),
-        "legal_address": partner_card_data.get("legal_address") or _extract_legal_address(text),
-        "postal_address": partner_card_data.get("postal_address") or _extract_postal_address(text),
+        "legal_address": partner_card_data.get("legal_address")
+        or _extract_legal_address(text),
+        "postal_address": partner_card_data.get("postal_address")
+        or _extract_postal_address(text),
         "inn": partner_card_data.get("inn") or inn,
         "kpp": partner_card_data.get("kpp") or kpp,
         "ogrn": partner_card_data.get("ogrn") or ogrn,
         "bik": partner_card_data.get("bik") or bik,
-        "checking_account": partner_card_data.get("checking_account") or checking_account,
-        "correspondent_account": partner_card_data.get("correspondent_account") or correspondent_account,
+        "checking_account": partner_card_data.get("checking_account")
+        or checking_account,
+        "correspondent_account": partner_card_data.get("correspondent_account")
+        or correspondent_account,
         "bank_name": partner_card_data.get("bank_name") or _extract_bank_name(text),
         "email": partner_card_data.get("email") or _extract_email(text),
         "phone": partner_card_data.get("phone") or phone_value,
@@ -605,8 +638,10 @@ def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool
 
     if field == "bik":
         if llm_digits and regex_digits:
-            if len(regex_digits) == 9 and regex_digits.startswith("04") and (
-                len(llm_digits) != 9 or not llm_digits.startswith("04")
+            if (
+                len(regex_digits) == 9
+                and regex_digits.startswith("04")
+                and (len(llm_digits) != 9 or not llm_digits.startswith("04"))
             ):
                 return True
 

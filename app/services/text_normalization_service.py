@@ -19,15 +19,27 @@ from app.core.constants import NORMALIZE_MAX_CHARS
 from app.schemas.extraction import NormalizedText
 
 
-def normalize_text(raw_text: str) -> NormalizedText:
+def normalize_text(raw_text: str, ocr: bool = False) -> NormalizedText:
+    """
+    Приводит сырой текст к виду, пригодному для LLM.
+
+    `ocr=True` дополнительно включает чистку, специфичную для распознанного
+    текста: склейку цифр в номерах реквизитов и отделение блока классификаторов.
+    Для документов с текстовым слоем это применять нельзя — там пробелы внутри
+    чисел осмысленны (даты, суммы, номера договоров).
+    """
     original = raw_text
     text = raw_text
+
+    # 0. Чистка артефактов распознавания — только для OCR-пути
+    if ocr:
+        text = normalize_ocr_text(text)
 
     # 1. Unicode normalization — NFKC приводит лигатуры и "странные" символы к базовым
     text = unicodedata.normalize("NFKC", text)
 
     # 2. Удаляем управляющие символы кроме \n и \t
-    text = re.sub(r"[^\S\n\t ]+", " ", text)          # прочие whitespace → пробел
+    text = re.sub(r"[^\S\n\t ]+", " ", text)  # прочие whitespace → пробел
     text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
 
     # 3. Неразрывные пробелы и похожие → обычный пробел
@@ -89,29 +101,46 @@ def normalize_text(raw_text: str) -> NormalizedText:
     )
 
 
+# Метки, рядом с которыми число заведомо должно быть слитным.
+_NUMERIC_LABELS = re.compile(
+    r"(ИНН|КПП|ОГРН|БИК|расчётн|корр|счёт|счет|[Рр]/[Сс]|[Кк]/[Сс])",
+    re.IGNORECASE,
+)
+
+# Классификаторы, которые OCR регулярно приклеивает к предыдущей строке.
+_CLASSIFIERS = re.compile(
+    r"(?<!\n)(ОКПО|ОКТМО|ОКВЭД|ОКАТО|ОКОПФ|ОКФС|КБК)", re.IGNORECASE
+)
 
 
 def normalize_requisite_numbers(text: str) -> str:
-    import re as _re
-    NUMERIC_LABELS = _re.compile(
-        r"(ИНН|КПП|ОГРН|БИК|расчётн|корр|счёт|счет|[Рр]/[Сс]|[Кк]/[Сс])",
-        _re.IGNORECASE,
-    )
+    """
+    Склеивает цифры, разорванные пробелами, но только в строках с меткой
+    реквизита: «ИНН 7744 012347» → «ИНН 7744012347».
+
+    Ограничение по метке принципиально: в произвольной строке «12 05 2026» —
+    это дата, и склеивать её нельзя.
+    """
     result_lines = []
     for line in text.splitlines():
-        if NUMERIC_LABELS.search(line):
-            line = _re.sub(r"(?<=\d) (?=\d)", "", line)
+        if _NUMERIC_LABELS.search(line):
+            line = re.sub(r"(?<=\d) (?=\d)", "", line)
         result_lines.append(line)
     return "\n".join(result_lines)
 
 
 def split_classifiers_block(text: str) -> str:
-    import re as _re
-    pat = _re.compile(r"(?<!\n)(ОКПО|ОКТМО|ОКВЭД|ОКАТО|ОКОПФ|ОКФС|КБК)", _re.IGNORECASE)
-    return pat.sub(r"\n\1", text)
+    """
+    Переносит ОКПО/ОКТМО/ОКВЭД и прочие классификаторы на новую строку.
+
+    Нужно, чтобы они не слипались с ОГРН и не утаскивались regex-слоем в поле
+    ОГРН как продолжение числа.
+    """
+    return _CLASSIFIERS.sub(r"\n\1", text)
 
 
 def normalize_ocr_text(raw_text: str) -> str:
+    """Чистка, специфичная для распознанного текста."""
     text = split_classifiers_block(raw_text)
     text = normalize_requisite_numbers(text)
     return text

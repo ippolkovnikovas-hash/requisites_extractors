@@ -1,17 +1,6 @@
-.idea
-**/__pycache__
-*.pyc
-processed/
-uploads/
-
-.env
-uploads/
-processed/
-*.docx
-*.pdf
-
 # Python
 __pycache__/
+**/__pycache__
 *.py[cod]
 *.pyo
 *.pyd
@@ -22,20 +11,40 @@ __pycache__/
 venv/
 env/
 
+# Секреты
+.env
+
 # IDE
 .idea/
 .vscode/
 *.iml
 
-# Project runtime folders
+# Кэши инструментов
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Рабочие папки: реальные документы и результаты обработки в Git не хранятся
+uploads/
+processed/
 exports/*
 !exports/.gitkeep
-logs/*.log
 storage/*
 !storage/.gitkeep
+logs/*.log
 
-# Documents � ���������� ��� �������
+# Документы.
+# Реальные загруженные документы и сгенерированные результаты в Git не попадают,
+# поэтому .docx/.pdf игнорируются по умолчанию. Исключения — только шаблон
+# договора и синтетические тестовые фикстуры (выдуманные реквизиты).
+*.docx
+*.pdf
 !shablon.docx
+!tests/fixtures/*.docx
+!tests/fixtures/*.pdf
 
 # OS
 .DS_Store

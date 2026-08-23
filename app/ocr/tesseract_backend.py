@@ -1,5 +1,5 @@
-from PIL import Image
 import pytesseract
+from PIL import Image
 from pytesseract import Output
 
 from app.ocr.base import OcrBackend
@@ -20,7 +20,9 @@ class TesseractBackend(OcrBackend):
 
     def image_to_lines(self, image: Image.Image, lang: str = "rus+eng") -> list[str]:
         data = pytesseract.image_to_data(
-            image, lang=lang, config=_CONFIG_STRUCTURED,
+            image,
+            lang=lang,
+            config=_CONFIG_STRUCTURED,
             output_type=Output.DICT,
         )
         lines: dict[tuple, list[str]] = {}

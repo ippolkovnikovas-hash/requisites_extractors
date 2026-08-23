@@ -5,14 +5,14 @@ build-backend = "setuptools.backends.legacy:build"
 [project]
 name = "requisites_extractor"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [tool.setuptools.packages.find]
 where = ["."]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
@@ -20,10 +20,10 @@ ignore = ["E501"]
 
 [tool.black]
 line-length = 88
-target-version = ["py311"]
+target-version = ["py313"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 ignore_missing_imports = true
 warn_unused_ignores = true
 
@@ -31,21 +31,25 @@ warn_unused_ignores = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "--tb=short -q --cov=app --cov-fail-under=70"
+addopts = "--tb=short -q --cov=app --cov-fail-under=78"
 
 [tool.coverage.run]
 source = ["app"]
+# Список сокращается по мере покрытия (эпик Э9 в ROADMAP.md) и никогда не
+# расширяется. Уже под измерением: validators/, core/, schemas/,
+# services/validation_service.py.
 omit = [
-    "app/services/*",
+    "app/services/fallback_regex_service.py",
+    "app/services/pipeline_service.py",
+    "app/services/routing_service.py",
+    "app/services/text_extraction_service.py",
+    "app/services/text_normalization_service.py",
     "app/extractors/*",
     "app/llm/*",
     "app/web/*",
-    "app/validators/*",
+    "app/ocr/*",
     "app/exporters/docx_exporter.py",
     "app/exporters/xlsx_exporter.py",
-    "app/core/constants.py",
-    "app/core/enums.py",
-    "app/core/exceptions.py",
     "app/logging_config.py",
     "app/schemas/document.py",
     "app/schemas/extraction.py",

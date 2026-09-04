@@ -66,6 +66,28 @@ def test_image_prompt_mentions_ocr_specific_problems():
     assert "пробел" in lowered
 
 
+@pytest.mark.parametrize("version", ["v1", "v2", "v3", "image"])
+def test_prompt_asks_to_keep_bank_branch_number(version):
+    """
+    Регрессия: все профили просто просили «наименование банка», ничего не
+    говоря про номер отделения/филиала. На реальных документах (ROADMAP,
+    эпик Э16) LLM систематически обрезала «№5230» и подобные идентификаторы
+    отделения — воспроизведено на двух независимых картах контрагента.
+    """
+    prompt = get_prompt(version, "текст").lower()
+    assert "отделени" in prompt or "филиал" in prompt
+
+
+def test_v3_example_shows_bank_name_with_branch_number():
+    """
+    Пример в v3 показывал `"bank_name": "ПАО Сбербанк"` — упрощённый
+    few-shot-пример без номера отделения мог сам по себе подталкивать модель
+    к такому же упрощению реальных значений.
+    """
+    prompt = get_prompt("v3", "текст")
+    assert '"bank_name": "ПАО Сбербанк"' not in prompt
+
+
 # ── Mock-клиент ──────────────────────────────────────────────────────────────
 
 

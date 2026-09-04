@@ -81,6 +81,16 @@ POSTAL_ADDRESS_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Подпись поля перед названием банка — только на самом старте строки:
+# `_extract_bank_name()` уже отобрал строку по признаку «упоминает банк», это
+# просто снимает подпись, если она там есть. Без якоря `^` риск нет — строка
+# на входе всегда одна, а не весь текст.
+BANK_LABEL_RE = re.compile(
+    r"^(?:наименование\s+(?:полное\s+)?(?:учреждения\s+)?банка|"
+    r"банковские\s+реквизиты|банк)" + _LABEL_TAIL,
+    re.IGNORECASE,
+)
+
 CEO_ROW_RE = re.compile(
     r"(Генеральный\s+директор|Директор|Исполнительный\s+директор|Президент|Руководитель|ИП)"
     r"[^|\n]{0,80}[|\t]\s*([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2})",
@@ -105,6 +115,22 @@ _PATRONYMIC_SUFFIXES = ("ич", "на", "вна", "евна", "овна", "ев�
 # черта и табуляция сюда входят обязательно: в распознанных таблицах строка
 # выглядит как «Директор | Иванов И.И.», и без них разделитель уезжал в значение.
 _LABEL_SEPARATORS = " :;-—–|\t"
+
+
+def _starts_with_label(lowered: str, label: str) -> bool:
+    """
+    `startswith`, но с проверкой границы слова.
+
+    Без неё `label="банк"` совпадал бы и внутри «банковские реквизиты» —
+    слово начинается с тех же букв, но это не подпись поля. Сразу после
+    подписи должен идти разделитель или конец строки, иначе значение
+    нарежется с середины слова. Найдено на реальном документе при замере
+    accuracy (Э16): «Банковские реквизиты | ...» превращалось в bank_name
+    «овские реквизиты | ...».
+    """
+    if not lowered.startswith(label):
+        return False
+    return len(lowered) == len(label) or lowered[len(label)] in _LABEL_SEPARATORS
 
 
 def _make_short_fio(full_fio: str) -> str | None:
@@ -249,10 +275,19 @@ def _extract_postal_address(text: str) -> str | None:
             continue
         lowered = line.lower()
         if "почтовый адрес" in lowered:
-            value = re.sub(r"(?i)^.*почтовый\s+адрес[:\s]*", "", line).strip(" ,;:")
+            # `[:\s]*` снимал только пробел и двоеточие после подписи, но не
+            # «|» — разделитель соседних ячеек PDF-таблицы (Э13). В значении
+            # оставался осиротевший «|» в начале. Найдено на реальном
+            # документе при замере accuracy (Э16).
+            value = re.sub(r"(?i)^.*почтовый\s+адрес", "", line).strip(
+                _LABEL_SEPARATORS + ","
+            )
             return value or None
         if "отделение почтовой связи" in lowered:
-            return line
+            value = re.sub(r"(?i)^.*отделение\s+почтовой\s+связи", "", line).strip(
+                _LABEL_SEPARATORS + ","
+            )
+            return value or line
 
     match = POSTAL_ADDRESS_RE.search(text)
     if match:
@@ -392,7 +427,12 @@ def _extract_bank_name(text: str) -> str | None:
         ):
             cleaned = _clean_spaces(line)
             if cleaned and len(cleaned) >= 5:
-                return cleaned
+                # Строка вида «Банковские реквизиты | ПАО Сбербанк» —
+                # склеенные через " | " ячейки таблицы (Э13). Отрезаем
+                # распознанную подпись поля, если она есть; если нет —
+                # строка и так была просто названием банка без подписи.
+                value = BANK_LABEL_RE.sub("", cleaned, count=1).strip()
+                return value if len(value) >= 5 else cleaned
 
     match = BANK_LINE_RE.search(text)
     if match:
@@ -444,7 +484,7 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
         # Сначала проверяем строгие инлайн-поля
         matched_inline = False
         for label, (field, pattern) in strict_inline_fields.items():
-            if lowered.startswith(label):
+            if _starts_with_label(lowered, label):
                 match = re.search(pattern, line, flags=re.IGNORECASE)
                 if match:
                     result[field] = match.group(1).strip()
@@ -456,7 +496,7 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
 
         # Затем текстовые поля
         for label, field in text_fields.items():
-            if lowered.startswith(label):
+            if _starts_with_label(lowered, label):
                 tail = line[len(label) :].strip(_LABEL_SEPARATORS)
                 value = (
                     tail if tail else (lines[idx + 1] if idx + 1 < len(lines) else None)
@@ -741,6 +781,15 @@ def merge_llm_and_fallback(
         if _is_better_regex_value(key, llm_value, fallback_value):
             merged[key] = fallback_value
             extracted_by[key] = "regex"
+
+    # `_normalize_phone()` до сих пор применялась только внутри regex-слоя
+    # (`_extract_phones`). Когда телефон побеждал от LLM, в результате
+    # оставалось исходное форматирование документа — промпт не просит
+    # нормализовать телефон, в отличие от ИНН/КПП/счетов. Функция
+    # идемпотентна на уже нормализованном значении, поэтому применяем её
+    # здесь один раз, независимо от источника.
+    if not _is_empty(merged.get("phone")):
+        merged["phone"] = _normalize_phone(merged["phone"])
 
     logger.debug("merge done", extracted_by=extracted_by)
 

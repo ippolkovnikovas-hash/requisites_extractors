@@ -8,7 +8,12 @@
 
 from PIL import Image, ImageDraw
 
-from app.ocr.image_preprocessing import binarize_otsu, deskew, detect_skew_angle, otsu_threshold
+from app.ocr.image_preprocessing import (
+    binarize_otsu,
+    deskew,
+    detect_skew_angle,
+    otsu_threshold,
+)
 
 
 def _striped_image(width: int = 240, height: int = 320) -> Image.Image:

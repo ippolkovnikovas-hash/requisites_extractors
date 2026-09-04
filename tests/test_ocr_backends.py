@@ -374,9 +374,7 @@ def test_image_preprocess_calls_deskew_then_otsu(monkeypatch):
     import app.extractors.image_ocr_extractor as extractor
 
     calls = []
-    monkeypatch.setattr(
-        extractor, "deskew", lambda img: calls.append("deskew") or img
-    )
+    monkeypatch.setattr(extractor, "deskew", lambda img: calls.append("deskew") or img)
     monkeypatch.setattr(
         extractor, "binarize_otsu", lambda img: calls.append("otsu") or img
     )
@@ -394,9 +392,7 @@ def test_pdf_ocr_preprocess_calls_deskew(monkeypatch):
     import app.extractors.pdf_ocr_extractor as extractor
 
     calls = []
-    monkeypatch.setattr(
-        extractor, "deskew", lambda img: calls.append("deskew") or img
-    )
+    monkeypatch.setattr(extractor, "deskew", lambda img: calls.append("deskew") or img)
 
     extractor._preprocess_image(Image.new("L", (20, 20), color=255))
 

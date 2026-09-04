@@ -8,11 +8,17 @@ from PIL import Image, ImageFilter, ImageOps
 from app.config import settings
 from app.core.exceptions import TextExtractionError
 from app.ocr.factory import get_ocr_backend
+from app.ocr.image_preprocessing import deskew
 from app.schemas.extraction import TextExtractionResult
 
 
 def _preprocess_image(image: Image.Image) -> Image.Image:
+    # Бинаризация здесь намеренно не применяется — у растеризованного PDF
+    # другой профиль шума, чем у фото с телефона, и до сих пор проблем не
+    # вызывала. Наклон же возможен и у скана: страница могла лечь в сканер
+    # не строго прямо.
     image = image.convert("L")
+    image = deskew(image)
     image = ImageOps.autocontrast(image, cutoff=2)
     image = image.filter(ImageFilter.SHARPEN)
     return image

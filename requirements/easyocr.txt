@@ -5,4 +5,7 @@
 # собираетесь переключить OCR_BACKEND=easyocr.
 #
 #   pip install -r requirements/easyocr.txt
-easyocr
+#
+# Версия проверена локально (импортируется, тянет torch/numpy/opencv без
+# конфликтов) — CI её не ставит и не тестирует (см. requirements/dev.txt).
+easyocr==1.7.2

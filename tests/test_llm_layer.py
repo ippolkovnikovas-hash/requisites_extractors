@@ -134,14 +134,69 @@ def test_ollama_calls_local_generate_endpoint(ollama):
     assert captured["url"].startswith("http://localhost")
 
 
-def test_ollama_requests_json_format_without_streaming(ollama):
+def test_ollama_requests_structured_json_schema_without_streaming(ollama):
+    """
+    Регрессия: `format: "json"` только принуждает Ollama выдать синтаксически
+    валидный JSON — имена и состав полей модель по-прежнему может придумать
+    сама. Схема `RequisitesData` задаёт их точно, и дрейф имён полей исчезает.
+    """
     module, captured = ollama
     captured["reply"] = "{}"
 
     module.OllamaClient().extract("текст")
 
     assert captured["json"]["stream"] is False
-    assert captured["json"]["format"] == "json"
+    fmt = captured["json"]["format"]
+    assert fmt["type"] == "object"
+    assert set(fmt["properties"]) == {
+        "company_name",
+        "short_name",
+        "legal_address",
+        "postal_address",
+        "ogrn",
+        "inn",
+        "kpp",
+        "bank_name",
+        "checking_account",
+        "correspondent_account",
+        "bik",
+        "ceo_position",
+        "ceo_fio_full",
+        "ceo_fio",
+        "phone",
+        "email",
+    }
+
+
+def test_ollama_uses_deterministic_temperature_and_explicit_context(ollama):
+    """
+    Регрессия: запрос уходил без `options` вовсе — на дефолтной temperature
+    0.8 экстракция реквизитов недетерминирована, а без явного `num_ctx`
+    версия Ollama с меньшим дефолтом контекста молча обрезала бы начало
+    промпта, то есть все инструкции.
+    """
+    from app.config import settings
+
+    module, captured = ollama
+    captured["reply"] = "{}"
+
+    module.OllamaClient().extract("текст")
+
+    assert captured["json"]["options"]["temperature"] == settings.ollama_temperature
+    assert captured["json"]["options"]["num_ctx"] == settings.ollama_num_ctx
+
+
+def test_ollama_temperature_and_context_are_configurable(ollama, monkeypatch):
+    module, captured = ollama
+    captured["reply"] = "{}"
+
+    monkeypatch.setattr(module.settings, "ollama_temperature", 0.3)
+    monkeypatch.setattr(module.settings, "ollama_num_ctx", 16384)
+
+    module.OllamaClient().extract("текст")
+
+    assert captured["json"]["options"]["temperature"] == 0.3
+    assert captured["json"]["options"]["num_ctx"] == 16384
 
 
 def test_ollama_sends_rendered_prompt_not_raw_text(ollama):

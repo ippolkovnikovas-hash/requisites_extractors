@@ -14,6 +14,7 @@
 """
 
 import hashlib
+import time
 import uuid
 from pathlib import Path
 
@@ -147,6 +148,19 @@ def run_pipeline(
 
     document_id = str(uuid.uuid4())[:8]
 
+    # Время по этапам — остаток эпика Э12. `_stage_ms()` меряет время с
+    # предыдущей проверки и сбрасывает точку отсчёта, `t_start` держит время
+    # старта для итогового `total_duration_ms`.
+    t_start = time.perf_counter()
+    t_stage = t_start
+
+    def _stage_ms() -> float:
+        nonlocal t_stage
+        now = time.perf_counter()
+        elapsed = round((now - t_stage) * 1000, 1)
+        t_stage = now
+        return elapsed
+
     logger.info(
         "═══ Pipeline started ═══",
         document_id=document_id,
@@ -174,7 +188,7 @@ def run_pipeline(
             f"Unsupported file type: .{doc.extension}",
             {"file": original_filename},
         )
-    logger.info("Step 2/9 routing done", doc_type=doc.doc_type)
+    logger.info("Step 2/9 routing done", doc_type=doc.doc_type, duration_ms=_stage_ms())
 
     # ── 3. Text extraction ───────────────────────────────────────────────
     extraction = extract_text(doc)
@@ -184,6 +198,7 @@ def run_pipeline(
         chars=len(extraction.text),
         ocr=extraction.ocr_used,
         warnings=len(extraction.warnings),
+        duration_ms=_stage_ms(),
     )
 
     raw_text_path: Path | None = None
@@ -202,6 +217,7 @@ def run_pipeline(
         before=norm.char_count_before,
         after=norm.char_count_after,
         ocr_cleanup=extraction.ocr_used,
+        duration_ms=_stage_ms(),
     )
 
     if persist:
@@ -229,8 +245,11 @@ def run_pipeline(
     try:
         llm_result = llm_client.extract(norm.normalized_text, prompt_version)
     except (LLMError, LLMParseError) as e:
+        duration_ms = _stage_ms()
         logger.warning(
-            "Step 5/9 LLM unavailable, falling back to regex-only", error=str(e)
+            "Step 5/9 LLM unavailable, falling back to regex-only",
+            error=str(e),
+            duration_ms=duration_ms,
         )
         llm_failed = True
         llm_result = LLMExtractionResult(
@@ -246,6 +265,7 @@ def run_pipeline(
             provider=llm_result.provider,
             model=llm_result.model_name,
             prompt_version=llm_result.prompt_version,
+            duration_ms=_stage_ms(),
         )
 
     # ── 6. Parse → merge LLM + fallback regex → RequisitesData ──────────
@@ -274,6 +294,7 @@ def run_pipeline(
         missing=len(requisites.missing_fields()),
         fill_rate=requisites.fill_rate(),
         extracted_by=extracted_by,
+        duration_ms=_stage_ms(),
     )
 
     if not requisites.company_name and requisites.short_name:
@@ -286,7 +307,15 @@ def run_pipeline(
         "Step 7/9 validation done",
         needs_review=needs_review,
         errors=validation_report.errors,
+        # Читаемые причины: почему форму вообще стоит смотреть глазами, а не
+        # просто список кодов ошибок — второй остаток эпика Э12.
+        review_reasons=validation_report.review_reasons,
+        duration_ms=_stage_ms(),
     )
+
+    # Момент до необязательного экспорта — время самого pipeline (routing,
+    # OCR, LLM, regex, валидация), без времени записи файлов на диск.
+    duration_ms = round((time.perf_counter() - t_start) * 1000, 1)
 
     # ── 8. Export ────────────────────────────────────────────────────────
     # Пишем на диск только по явному запросу. По умолчанию результат живёт в
@@ -315,6 +344,7 @@ def run_pipeline(
                 "sha256": sha256,
                 "fallback_used": bool(extracted_by),
                 "fallback_count": len(extracted_by),
+                "duration_ms": duration_ms,
             },
         )
         logger.info("Step 8/9 JSON saved", path=json_path.name)
@@ -373,6 +403,7 @@ def run_pipeline(
             "fallback_used": bool(extracted_by),
             "fallback_fields": extracted_by,
             "fallback_count": len(extracted_by),
+            "duration_ms": duration_ms,
         },
     )
 
@@ -386,6 +417,7 @@ def run_pipeline(
         json=json_path.name if json_path else None,
         xlsx=xlsx_path.name if xlsx_path else None,
         docx=Path(docx_path).name if docx_path else None,
+        total_duration_ms=round((time.perf_counter() - t_start) * 1000, 1),
     )
 
     return result

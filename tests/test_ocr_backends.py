@@ -360,3 +360,44 @@ def test_pdf_ocr_extractor_uses_factory(monkeypatch, tmp_path):
     assert "7744012347" in result.text
     assert result.pages == 1
     assert result.ocr_used is True
+
+
+# ── Предобработка: экстракторы вызывают deskew/бинаризацию Оцу ──────────────
+
+
+def test_image_preprocess_calls_deskew_then_otsu(monkeypatch):
+    """
+    Регрессия: устранение наклона и адаптивная бинаризация подключены не
+    везде, где готовится изображение под OCR — фиксируем сам факт вызова и
+    порядок (сначала выравнивание, потом бинаризация уже выровненного кадра).
+    """
+    import app.extractors.image_ocr_extractor as extractor
+
+    calls = []
+    monkeypatch.setattr(
+        extractor, "deskew", lambda img: calls.append("deskew") or img
+    )
+    monkeypatch.setattr(
+        extractor, "binarize_otsu", lambda img: calls.append("otsu") or img
+    )
+
+    extractor._preprocess_image(Image.new("L", (20, 20), color=255))
+
+    assert calls == ["deskew", "otsu"]
+
+
+def test_pdf_ocr_preprocess_calls_deskew(monkeypatch):
+    """
+    PDF-сканы бинаризацию не проходят (у них другой профиль шума, см.
+    docstring `_preprocess_image`) — но наклон устраняется точно так же.
+    """
+    import app.extractors.pdf_ocr_extractor as extractor
+
+    calls = []
+    monkeypatch.setattr(
+        extractor, "deskew", lambda img: calls.append("deskew") or img
+    )
+
+    extractor._preprocess_image(Image.new("L", (20, 20), color=255))
+
+    assert calls == ["deskew"]

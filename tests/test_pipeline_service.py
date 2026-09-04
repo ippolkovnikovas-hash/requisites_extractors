@@ -104,6 +104,53 @@ def test_pipeline_processing_meta(tmp_path):
     assert meta["llm_failed"] is False
 
 
+def test_pipeline_processing_meta_includes_duration(tmp_path):
+    """
+    Остаток Э12: без общего времени обработки в `processing_meta` понять,
+    какой этап (OCR? LLM?) на самом деле замедляет обработку конкретного
+    документа, можно было только по разнице таймстемпов в текстовом логе.
+    """
+    import shutil
+
+    pdf = tmp_path / "sample.pdf"
+    shutil.copy(PDF_FIXTURE, pdf)
+    result = run_pipeline(pdf, "sample.pdf")
+
+    duration = result.processing_meta["duration_ms"]
+    assert isinstance(duration, (int, float))
+    assert duration >= 0
+
+
+def test_pipeline_logs_duration_and_review_reasons(tmp_path):
+    """
+    Регрессия: формат loguru уже печатает `extra` (спринт 1), но сами поля
+    `duration_ms` и `review_reasons` в шаги pipeline никогда не добавлялись —
+    время по этапам и причина `needs_review` не были видны даже при
+    включённом DEBUG-логе.
+    """
+    import shutil
+
+    from loguru import logger
+
+    records = []
+    sink_id = logger.add(lambda msg: records.append(msg.record), level="DEBUG")
+    try:
+        pdf = tmp_path / "sample.pdf"
+        shutil.copy(PDF_FIXTURE, pdf)
+        run_pipeline(pdf, "sample.pdf")
+    finally:
+        logger.remove(sink_id)
+
+    by_message = {r["message"]: r["extra"] for r in records}
+
+    assert "duration_ms" in by_message["Step 3/9 text extracted"]
+    assert "duration_ms" in by_message["Step 4/9 normalization done"]
+    assert "duration_ms" in by_message["Step 6/9 parsed"]
+    assert "duration_ms" in by_message["Step 7/9 validation done"]
+    assert "review_reasons" in by_message["Step 7/9 validation done"]
+    assert "total_duration_ms" in by_message["═══ Pipeline completed ═══"]
+
+
 # ── Устойчивость к недоступной LLM ───────────────────────────────────────────
 #
 # Regex-слой в одиночку заполняет большинство полей самостоятельно (это и

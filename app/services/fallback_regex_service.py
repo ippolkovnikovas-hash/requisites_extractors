@@ -1,9 +1,7 @@
-import logging
 import re
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
+from loguru import logger
 
 EMAIL_RE = re.compile(
     r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}",
@@ -52,23 +50,34 @@ BANK_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Хвост подписи поля: необязательное уточнение в скобках плюс разделитель —
+# либо перевод строки, если значение стоит следующей строкой. Ключевое отличие
+# от прежнего `[^\n]{0,30}`: сюда не может попасть начало значения, потому что
+# разделитель обязателен, когда метка и значение стоят в одной строке. Раньше
+# жадный квантификатор съедал тридцать символов самого значения.
+_LABEL_TAIL = r"(?:\s*\([^)\n]{0,40}\))?[ \t]*(?:[:|—–\-]+[ \t]*|\n[ \t]*)"
+
 COMPANY_FULL_RE = re.compile(
-    r"(?:Полное\s+наименование|наименование\s+контрагента|Полное\s+наименование\s+организации)[^\n]{0,30}\n?\s*(.{10,200})",
+    r"(?:Полное\s+наименование(?:\s+организации)?|наименование\s+контрагента)"
+    + _LABEL_TAIL
+    + r"(.{10,200})",
     re.IGNORECASE,
 )
 
 SHORT_NAME_RE = re.compile(
-    r"(?:Краткое\s+наименование|Сокращ[её]нное\s+наименование)[^\n]{0,30}\n?\s*(.{3,150})",
+    r"(?:Краткое|Сокращ[её]нное)\s+наименование(?:\s+организации)?"
+    + _LABEL_TAIL
+    + r"(.{3,150})",
     re.IGNORECASE,
 )
 
 LEGAL_ADDRESS_RE = re.compile(
-    r"(?:Юридический\s+адрес)[^\n]{0,10}\n?\s*(.{10,250})",
+    r"(?:Юридический\s+адрес)" + _LABEL_TAIL + r"(.{10,250})",
     re.IGNORECASE,
 )
 
 POSTAL_ADDRESS_RE = re.compile(
-    r"(?:Почтовый\s+адрес)[^\n]{0,10}\n?\s*(.{10,250})",
+    r"(?:Почтовый\s+адрес)" + _LABEL_TAIL + r"(.{10,250})",
     re.IGNORECASE,
 )
 
@@ -520,17 +529,27 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
     checking_account = _extract_rs(text)
     correspondent_account = _extract_ks(text)
 
-    logger.debug("=== fallback debug start ===")
-    logger.debug("RAW TEXT PREVIEW:\n%s", text[:4000])
-    logger.debug("partner_card_data=%s", partner_card_data)
-    logger.debug("regex inn=%s", inn)
-    logger.debug("regex kpp=%s", kpp)
-    logger.debug("regex ogrn=%s", ogrn)
-    logger.debug("regex bik=%s", bik)
-    logger.debug("regex checking_account=%s", checking_account)
-    logger.debug("regex correspondent_account=%s", correspondent_account)
-    logger.debug("regex email=%s", _extract_email(text))
-    logger.debug("=== fallback debug end ===")
+    # Только имена найденных полей, без значений. Прежние строки печатали
+    # четыре тысячи символов документа и все реквизиты целиком; пока модуль
+    # писал в неподключённый stdlib-логгер, это никуда не уходило, но после
+    # перехода на loguru попало бы прямиком в logs/app.log (CLAUDE.md).
+    logger.debug(
+        "fallback scan",
+        chars=len(text),
+        card_fields=sorted(k for k, v in partner_card_data.items() if v),
+        found=sorted(
+            name
+            for name, value in (
+                ("inn", inn),
+                ("kpp", kpp),
+                ("ogrn", ogrn),
+                ("bik", bik),
+                ("checking_account", checking_account),
+                ("correspondent_account", correspondent_account),
+            )
+            if value
+        ),
+    )
 
     if inn:
         inn_digits = re.sub(r"\D", "", inn)
@@ -576,12 +595,35 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
         "ceo_fio": partner_card_data.get("ceo_fio") or ceo_fio,
     }
 
-    logger.debug("fallback result=%s", result)
+    logger.debug("fallback result", fields=sorted(k for k, v in result.items() if v))
     return result
 
 
 def _is_empty(value: Any) -> bool:
     return value is None or value == ""
+
+
+# Метки чужих полей. Если они оказались внутри наименования или адреса — это
+# не значение, а склейка двух строк документа в одну.
+_FOREIGN_LABEL_RE = re.compile(
+    r"\b(ИНН|КПП|ОГРН|ОГРНИП|БИК|Р/с|К/с|расч[её]тн|корреспондентск"
+    r"|телефон|e-?mail|директор)\b|сч[её]т",
+    re.IGNORECASE,
+)
+
+# Организационно-правовая форма — признак того, что в значении действительно
+# наименование организации, а не обрывок соседней строки.
+_OPF_RE = re.compile(
+    r"(\bООО\b|\bОАО\b|\bЗАО\b|\bПАО\b|\bАО\b|\bНАО\b|\bИП\b|\bАНО\b"
+    r"|\bГУП\b|\bМУП\b|Обществ\w*\s+с\s+ограниченной|Акционерн\w*\s+обществ\w*"
+    r"|Индивидуальн\w*\s+предпринимател\w*)",
+    re.IGNORECASE,
+)
+
+
+def _looks_contaminated(value: str) -> bool:
+    """Внутри значения метка чужого поля или длинное число — признак склейки."""
+    return bool(_FOREIGN_LABEL_RE.search(value)) or bool(re.search(r"\d{9,}", value))
 
 
 def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool:
@@ -598,17 +640,26 @@ def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool
     regex_digits = _digits_only(regex_str)
 
     if field == "company_name":
-        return len(regex_str) > len(llm_str)
+        # Прежнее правило «длиннее — значит лучше» работало обратно
+        # задуманному: чем больше регекс перехватил соседних строк, тем
+        # увереннее он побеждал корректное значение LLM.
+        if _looks_contaminated(regex_str):
+            return False
+        return bool(_OPF_RE.search(regex_str)) and not _OPF_RE.search(llm_str)
 
     if field == "short_name":
-        return len(regex_str) <= len(llm_str) and any(
-            x in regex_str.upper() for x in ("ООО", "АО", "ИП", "ПАО")
-        )
+        if _looks_contaminated(regex_str):
+            return False
+        return len(regex_str) <= len(llm_str) and bool(_OPF_RE.search(regex_str))
 
     if field == "legal_address":
+        if _looks_contaminated(regex_str):
+            return False
         return len(regex_str) > len(llm_str)
 
     if field == "postal_address":
+        if _looks_contaminated(regex_str):
+            return False
         return len(regex_str) > len(llm_str) or regex_str != llm_str
 
     if field == "email":
@@ -666,9 +717,11 @@ def merge_llm_and_fallback(
     llm_data: dict[str, Any],
     fallback_data: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, str]]:
-    logger.debug("=== merge debug start ===")
-    logger.debug("llm_data=%s", llm_data)
-    logger.debug("fallback_data=%s", fallback_data)
+    logger.debug(
+        "merge start",
+        llm_fields=sorted(k for k, v in llm_data.items() if not _is_empty(v)),
+        regex_fields=sorted(k for k, v in fallback_data.items() if not _is_empty(v)),
+    )
 
     merged = dict(llm_data)
     extracted_by: dict[str, str] = {}
@@ -689,8 +742,6 @@ def merge_llm_and_fallback(
             merged[key] = fallback_value
             extracted_by[key] = "regex"
 
-    logger.debug("merged=%s", merged)
-    logger.debug("extracted_by=%s", extracted_by)
-    logger.debug("=== merge debug end ===")
+    logger.debug("merge done", extracted_by=extracted_by)
 
     return merged, extracted_by

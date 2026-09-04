@@ -31,7 +31,16 @@ class TesseractBackend(OcrBackend):
             word = data["text"][i].strip()
             if not word:
                 continue
-            key = (data["block_num"][i], data["line_num"][i])
+            # Полный адрес строки. `line_num` нумеруется внутри параграфа, а
+            # не внутри блока: без `par_num` строки разных параграфов с
+            # одинаковым номером сливались в одну, и документ схлопывался в
+            # пару строк вместо полутора десятков.
+            key = (
+                data["page_num"][i],
+                data["block_num"][i],
+                data["par_num"][i],
+                data["line_num"][i],
+            )
             lines.setdefault(key, []).append(word)
         return [" ".join(words) for words in lines.values()]
 

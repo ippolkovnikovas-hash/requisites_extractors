@@ -219,9 +219,15 @@ def run_pipeline(
 
     requisites = RequisitesData(**merged_data)
 
-    logger.debug("LLM safe_data", safe_data=safe_data)
-    logger.debug("Fallback data", fallback_data=fallback_data)
-    logger.debug("Merged data", merged_data=merged_data)
+    # Имена заполненных полей, а не значения: с этого момента `extra`
+    # действительно доезжает до logs/app.log, а логи с реквизитами проект
+    # хранить не должен (CLAUDE.md).
+    logger.debug(
+        "Step 6/9 sources",
+        llm_fields=sorted(k for k, v in safe_data.items() if v),
+        regex_fields=sorted(k for k, v in fallback_data.items() if v),
+        merged_fields=sorted(k for k, v in merged_data.items() if v),
+    )
 
     logger.info(
         "Step 6/9 parsed",

@@ -5,7 +5,12 @@ from unittest.mock import patch
 
 import pytest
 
-from app.core.exceptions import ConfigError, LLMError, LLMParseError, UnsupportedFileTypeError
+from app.core.exceptions import (
+    ConfigError,
+    LLMError,
+    LLMParseError,
+    UnsupportedFileTypeError,
+)
 from app.services.pipeline_service import _build_llm_client, run_pipeline
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -107,7 +112,9 @@ def test_pipeline_processing_meta(tmp_path):
 # голое сообщение об ошибке вместо review-формы с тем, что нашёл regex.
 
 
-def test_pipeline_falls_back_to_regex_only_when_ollama_unreachable(tmp_path, monkeypatch):
+def test_pipeline_falls_back_to_regex_only_when_ollama_unreachable(
+    tmp_path, monkeypatch
+):
     import shutil
 
     import app.services.pipeline_service as ps
@@ -128,7 +135,9 @@ def test_pipeline_falls_back_to_regex_only_when_ollama_unreachable(tmp_path, mon
     assert any("LLM недоступна" in w for w in result.warnings)
 
 
-def test_pipeline_falls_back_to_regex_only_on_unparsable_llm_response(tmp_path, monkeypatch):
+def test_pipeline_falls_back_to_regex_only_on_unparsable_llm_response(
+    tmp_path, monkeypatch
+):
     """Битый JSON от модели — тот же класс проблемы, что и обрыв связи: от
     LLM нет пригодных данных, но regex-слой всё равно может отработать."""
     import shutil

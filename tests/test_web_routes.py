@@ -217,7 +217,9 @@ def test_upload_renders_review_form_using_mocked_pipeline(client, monkeypatch):
     assert "7744012347" in body
 
 
-def test_upload_removes_saved_file_after_successful_processing(client, app, monkeypatch):
+def test_upload_removes_saved_file_after_successful_processing(
+    client, app, monkeypatch
+):
     """
     Регрессия: загруженный документ сохранялся в UPLOAD_FOLDER и никогда не
     удалялся — реквизиты переживали обработку на диске, хотя CLAUDE.md этого

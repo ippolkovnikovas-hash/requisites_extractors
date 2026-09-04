@@ -246,6 +246,31 @@ def test_phone_llm_kept_when_it_has_eleven_digits():
     assert merged["phone"] == "+79161234567"
 
 
+def test_phone_from_llm_is_normalized_even_though_llm_wins():
+    """
+    Регрессия: `_normalize_phone()` применялась только внутри regex-слоя
+    (`_extract_phones`). Когда телефон побеждал от LLM, в merged-результате
+    оставалось исходное форматирование документа — LLM просто повторяет
+    телефон в том виде, в каком он был в тексте, промпт не просит его
+    нормализовать (в отличие от ИНН/КПП/счетов). Найдено на реальных
+    документах при замере accuracy (Э16): большинство расхождений по полю
+    `phone` были именно такими — не выдумка, а формат.
+    """
+    merged, source = merge_llm_and_fallback(
+        {"phone": "8 (928) 741-58-85"}, {"phone": None}
+    )
+    assert merged["phone"] == "+79287415885"
+    assert source["phone"] == "llm"
+
+
+def test_phone_from_llm_without_eleven_digits_is_left_as_is():
+    """Нормализация не должна выдумывать формат там, где цифр не 11 —
+    `_normalize_phone()` в этом случае возвращает только цифры, не ломая
+    и не домысливая значение."""
+    merged, _ = merge_llm_and_fallback({"phone": "123-45"}, {"phone": None})
+    assert merged["phone"] == "12345"
+
+
 def test_phone_regex_wins_when_llm_value_has_no_digits():
     merged, source = merge_llm_and_fallback(
         {"phone": "не указан"}, {"phone": "+79161234567"}

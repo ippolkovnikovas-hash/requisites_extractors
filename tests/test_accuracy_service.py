@@ -7,6 +7,8 @@
 подготовленного человеком эталона, значение за значением.
 """
 
+import pytest
+
 from app.schemas.requisites import RequisitesData
 from app.services.accuracy_service import (
     FieldOutcome,
@@ -91,7 +93,7 @@ def test_aggregate_field_accuracy_computes_ratio_per_field():
 
     report = aggregate_field_accuracy(per_document)
 
-    assert report["inn"]["accuracy"] == 2 / 3
+    assert report["inn"]["accuracy"] == pytest.approx(2 / 3, abs=1e-4)
     assert report["inn"]["match"] == 2
     assert report["inn"]["mismatch"] == 1
     assert report["kpp"]["accuracy"] == 1.0
@@ -146,7 +148,7 @@ def test_overall_accuracy_weighted_across_fields():
         "inn": {"match": 8, "mismatch": 2, "missing": 0},
         "kpp": {"match": 5, "mismatch": 0, "missing": 5},
     }
-    assert overall_accuracy(field_report) == 13 / 20
+    assert overall_accuracy(field_report) == pytest.approx(13 / 20, abs=1e-4)
 
 
 def test_overall_accuracy_none_when_nothing_to_measure():

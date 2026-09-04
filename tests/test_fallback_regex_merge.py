@@ -133,13 +133,37 @@ def test_correspondent_account_llm_kept_when_correct():
 # ── Текстовые поля ───────────────────────────────────────────────────────────
 
 
-def test_company_name_longer_value_wins():
+def test_company_name_with_opf_beats_bare_name():
+    """Признак победы regex — организационно-правовая форма, а не длина."""
     merged, source = merge_llm_and_fallback(
         {"company_name": "Ромашка"},
         {"company_name": "Общество с ограниченной ответственностью Ромашка"},
     )
     assert merged["company_name"].startswith("Общество")
     assert source["company_name"] == "regex"
+
+
+def test_company_name_glued_with_next_field_loses():
+    """
+    Регрессия: правило «длиннее — значит лучше» работало обратно задуманному.
+    Чем больше регекс перехватил соседних строк, тем увереннее он побеждал
+    корректное значение LLM — и склейка уходила в DOCX.
+    """
+    merged, source = merge_llm_and_fallback(
+        {"company_name": "ООО Ромашка"},
+        {"company_name": "ООО Ромашка Юридический адрес: г. Москва ИНН 7744012347"},
+    )
+    assert merged["company_name"] == "ООО Ромашка"
+    assert source["company_name"] == "llm"
+
+
+def test_legal_address_with_glued_requisites_loses():
+    merged, source = merge_llm_and_fallback(
+        {"legal_address": "119019, г. Москва, ул. Волхонка, д. 15"},
+        {"legal_address": "г. Москва, ул. Волхонка ИНН 7744012347 ОГРН 1027700132195"},
+    )
+    assert "ИНН" not in merged["legal_address"]
+    assert source["legal_address"] == "llm"
 
 
 def test_company_name_shorter_regex_value_loses():
@@ -315,6 +339,49 @@ def test_pipe_and_tab_separators_are_stripped(line, field, expected):
     значение уходило в документ как «| ООО Ромашка».
     """
     assert extract_fallback_fields(line)[field] == expected
+
+
+# ── Метка поля не должна съедать начало значения ─────────────────────────────
+
+
+def test_company_label_does_not_eat_the_value():
+    """
+    Регрессия: `[^\n]{0,30}` после метки задумывался как «пропустить хвост
+    подписи», но он жадный и ничем не ограничен — съедал 30 символов самого
+    значения. «Общество с ограниченной ответственностью Ромашка» приходило в
+    форму как «тственностью Ромашка».
+    """
+    result = extract_fallback_fields(
+        "Полное наименование: Общество с ограниченной ответственностью Ромашка"
+    )
+    assert result["company_name"] == "Общество с ограниченной ответственностью Ромашка"
+
+
+def test_short_name_label_does_not_leak_to_the_next_line():
+    """Метка съедала свою строку целиком, `\n?` перешагивал перевод, и в
+    краткое наименование попадала следующая строка документа."""
+    text = (
+        "Сокращённое наименование: ООО Ромашка\n"
+        "Юридический адрес: 119019, г. Москва, ул. Волхонка, д. 15\n"
+    )
+    result = extract_fallback_fields(text)
+
+    assert result["short_name"] == "ООО Ромашка"
+    assert result["legal_address"] == "119019, г. Москва, ул. Волхонка, д. 15"
+
+
+def test_label_on_its_own_line_still_matches():
+    """Подпись поля отдельной строкой — обычный вид карточки, и он не должен
+    сломаться от требования разделителя."""
+    result = extract_fallback_fields("Полное наименование\nАкционерное общество Север")
+    assert result["company_name"] == "Акционерное общество Север"
+
+
+def test_label_with_parenthetical_qualifier_still_matches():
+    result = extract_fallback_fields(
+        "Полное наименование (по уставу): Акционерное общество Север"
+    )
+    assert result["company_name"] == "Акционерное общество Север"
 
 
 def test_ceo_signature_form_initials_before_surname():

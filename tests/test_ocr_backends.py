@@ -183,10 +183,15 @@ def tesseract(monkeypatch):
 
     def fake_image_to_data(image, lang=None, config=None, output_type=None):
         calls["to_data"] = {"lang": lang, "config": config}
+        # Раскладка настоящего Tesseract: ИНН и КПП лежат в одном блоке, но в
+        # разных параграфах, и line_num у обоих равен 1 — он нумеруется внутри
+        # параграфа, а не внутри блока.
         return {
             "text": ["ИНН", "7744012347", "", "КПП", "774401001", "   "],
+            "page_num": [1, 1, 1, 1, 1, 1],
             "block_num": [1, 1, 1, 1, 1, 2],
-            "line_num": [1, 1, 1, 2, 2, 1],
+            "par_num": [1, 1, 1, 2, 2, 1],
+            "line_num": [1, 1, 1, 1, 1, 1],
         }
 
     monkeypatch.setattr(module.pytesseract, "image_to_string", fake_image_to_string)
@@ -206,10 +211,26 @@ def test_tesseract_passes_language_through(tesseract, image):
 
 
 def test_tesseract_groups_words_into_lines(tesseract, image):
-    """Слова собираются в строки по паре (block_num, line_num) — это и есть
+    """Слова собираются в строки по полному адресу строки — это и есть
     структурный OCR вместо плоского image_to_string."""
     backend, _ = tesseract
     assert backend.image_to_lines(image) == ["ИНН 7744012347", "КПП 774401001"]
+
+
+def test_tesseract_does_not_merge_lines_from_different_paragraphs(tesseract, image):
+    """
+    Регрессия: `line_num` уникален внутри параграфа, а не внутри блока. Пока в
+    ключе группировки не было `par_num`, строки разных параграфов с одинаковым
+    номером сливались в одну. На реальной карточке контрагента документ
+    схлопывался в две строки вместо пятнадцати, после чего построчный
+    regex-слой начинал затаскивать в поле содержимое соседних строк.
+    """
+    backend, _ = tesseract
+    lines = backend.image_to_lines(image)
+
+    assert len(lines) == 2
+    assert lines[0] == "ИНН 7744012347"
+    assert lines[1] == "КПП 774401001"
 
 
 def test_tesseract_skips_empty_recognised_words(tesseract, image):

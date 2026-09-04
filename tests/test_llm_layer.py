@@ -43,6 +43,21 @@ def test_get_prompt_rejects_unknown_version():
     assert "v1" in message
 
 
+@pytest.mark.parametrize("version", ["v1", "v3", "image"])
+def test_get_prompt_unescapes_json_example_braces(version):
+    """
+    Шаблоны написаны под `.format()` и хранят экранированные `{{` / `}}`, а
+    подстановка делается через `.replace()`. Пока экранирование не снималось,
+    модель получала пример ответа с двойными скобками — то есть синтаксически
+    битый JSON в роли образца.
+    """
+    prompt = get_prompt(version, "ИНН 7744012347")
+
+    assert "{{" not in prompt
+    assert "}}" not in prompt
+    assert '{\n  "company_name"' in prompt
+
+
 def test_image_prompt_mentions_ocr_specific_problems():
     """Профиль для OCR должен отличаться по существу, а не только именем."""
     prompt = get_prompt("image", "текст")

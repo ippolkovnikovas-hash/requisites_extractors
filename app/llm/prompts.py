@@ -197,7 +197,12 @@ def get_prompt(version: str, document_text: str) -> str:
             f"Unknown prompt version: '{version}'. "
             f"Available: {list(PROMPTS.keys())}"
         )
-    return PROMPTS[version].replace("{document_text}", document_text)
+    # Шаблоны написаны под `.format()` и хранят экранированные `{{` / `}}`, а
+    # подставляем мы через `.replace()` — экранирование надо снять руками,
+    # иначе модель получает пример ответа с двойными скобками. Снимаем до
+    # подстановки: текст документа при этом не трогается.
+    template = PROMPTS[version].replace("{{", "{").replace("}}", "}")
+    return template.replace("{document_text}", document_text)
 
 
 def list_versions() -> list[str]:

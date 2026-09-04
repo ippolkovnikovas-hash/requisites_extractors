@@ -5,7 +5,11 @@
   1. Пробуем извлечь текст с каждой страницы через pdfplumber.
   2. Если суммарное число символов < OCR_MIN_TEXT_CHARS — документ считается
      scan-like, возвращаем пустой результат с флагом is_scan_like=True в warnings.
-  3. Таблицы на странице извлекаются отдельно и добавляются после текста страницы.
+  3. Таблицы на странице находятся заранее и извлекаются структурно
+     (`" | "`-разделённые ячейки), а их прямоугольники исключаются из обычного
+     текста — иначе `extract_text()` уже включает содержимое ячеек в поток
+     чтения, и оно попадало бы в результат дважды: один раз как проза, второй
+     раз как табличный блок.
 """
 
 from pathlib import Path
@@ -30,26 +34,33 @@ def extract_pdf_text(file_path: Path) -> TextExtractionResult:
             for page_num, page in enumerate(pdf.pages, start=1):
                 page_parts: list[str] = []
 
-                # --- Обычный текст страницы ---
-                raw_text = page.extract_text(x_tolerance=3, y_tolerance=3)
+                # --- Таблицы находятся заранее: их прямоугольники нужно
+                # исключить из обычного текста, иначе ячейки попадут в
+                # результат дважды ---
+                tables = []
+                try:
+                    tables = page.find_tables()
+                except Exception as te:
+                    warnings.append(f"Page {page_num}: table extraction failed — {te}")
+
+                # --- Обычный текст страницы, за вычетом области таблиц ---
+                text_source = page
+                for table in tables:
+                    text_source = text_source.outside_bbox(table.bbox)
+
+                raw_text = text_source.extract_text(x_tolerance=3, y_tolerance=3)
                 if raw_text:
                     page_parts.append(raw_text.strip())
 
-                # --- Таблицы на странице ---
-                try:
-                    tables = page.extract_tables()
-                    for table in tables:
-                        table_lines = []
-                        for row in table:
-                            cells = [
-                                str(cell).strip() for cell in row if cell is not None
-                            ]
-                            if any(cells):
-                                table_lines.append(" | ".join(cells))
-                        if table_lines:
-                            page_parts.append("\n".join(table_lines))
-                except Exception as te:
-                    warnings.append(f"Page {page_num}: table extraction failed — {te}")
+                # --- Структурные блоки таблиц ---
+                for table in tables:
+                    table_lines = []
+                    for row in table.extract():
+                        cells = [str(cell).strip() for cell in row if cell is not None]
+                        if any(cells):
+                            table_lines.append(" | ".join(cells))
+                    if table_lines:
+                        page_parts.append("\n".join(table_lines))
 
                 if page_parts:
                     pages_text.append(

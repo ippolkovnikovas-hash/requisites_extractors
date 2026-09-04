@@ -5,7 +5,12 @@ from unittest.mock import patch
 
 import pytest
 
-from app.core.exceptions import UnsupportedFileTypeError
+from app.core.exceptions import (
+    ConfigError,
+    LLMError,
+    LLMParseError,
+    UnsupportedFileTypeError,
+)
 from app.services.pipeline_service import _build_llm_client, run_pipeline
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -96,6 +101,84 @@ def test_pipeline_processing_meta(tmp_path):
     assert meta["llm_provider"] == "mock"
     assert meta["ocr_used"] is False
     assert "sha256" in meta
+    assert meta["llm_failed"] is False
+
+
+# ── Устойчивость к недоступной LLM ───────────────────────────────────────────
+#
+# Regex-слой в одиночку заполняет большинство полей самостоятельно (это и
+# есть его назначение), но раньше LLMError из недоступной Ollama выходил из
+# run_pipeline необработанным и ронял всю обработку — пользователь получал
+# голое сообщение об ошибке вместо review-формы с тем, что нашёл regex.
+
+
+def test_pipeline_falls_back_to_regex_only_when_ollama_unreachable(
+    tmp_path, monkeypatch
+):
+    import shutil
+
+    import app.services.pipeline_service as ps
+
+    class UnreachableClient:
+        def extract(self, text, prompt_version="v1"):
+            raise LLMError("Ollama call failed: connection refused")
+
+    monkeypatch.setattr(ps, "_build_llm_client", lambda: UnreachableClient())
+
+    pdf = tmp_path / "sample.pdf"
+    shutil.copy(PDF_FIXTURE, pdf)
+    result = run_pipeline(pdf, "sample.pdf")
+
+    # regex-слой находит ИНН в фикстуре самостоятельно, без участия LLM
+    assert result.data.inn == "7744012347"
+    assert result.processing_meta["llm_failed"] is True
+    assert any("LLM недоступна" in w for w in result.warnings)
+
+
+def test_pipeline_falls_back_to_regex_only_on_unparsable_llm_response(
+    tmp_path, monkeypatch
+):
+    """Битый JSON от модели — тот же класс проблемы, что и обрыв связи: от
+    LLM нет пригодных данных, но regex-слой всё равно может отработать."""
+    import shutil
+
+    import app.services.pipeline_service as ps
+
+    class GarbledClient:
+        def extract(self, text, prompt_version="v1"):
+            raise LLMParseError("не удалось разобрать JSON")
+
+    monkeypatch.setattr(ps, "_build_llm_client", lambda: GarbledClient())
+
+    pdf = tmp_path / "sample.pdf"
+    shutil.copy(PDF_FIXTURE, pdf)
+    result = run_pipeline(pdf, "sample.pdf")
+
+    assert result.processing_meta["llm_failed"] is True
+    assert any("LLM недоступна" in w for w in result.warnings)
+
+
+def test_pipeline_does_not_swallow_llm_provider_config_error(tmp_path, monkeypatch):
+    """
+    Опечатка в LLM_PROVIDER — ошибка конфигурации, а не временная
+    недоступность Ollama. Молчаливый откат на regex-only здесь недопустим:
+    пользователь должен узнать, что настройка сломана, а не получить
+    неполный результат без объяснения. try/except в pipeline оборачивает
+    только вызов extract(), а не _build_llm_client().
+    """
+    import shutil
+
+    import app.services.pipeline_service as ps
+
+    def raise_config_error():
+        raise ConfigError("Неизвестный LLM_PROVIDER='olama'")
+
+    monkeypatch.setattr(ps, "_build_llm_client", raise_config_error)
+
+    pdf = tmp_path / "sample.pdf"
+    shutil.copy(PDF_FIXTURE, pdf)
+    with pytest.raises(ConfigError):
+        run_pipeline(pdf, "sample.pdf")
 
 
 # ── Вспомогательные функции pipeline_service ────────────────────────────────

@@ -172,6 +172,13 @@ def upload():
         current_app.logger.exception("Ошибка при обработке файла")
         flash(f"Ошибка при обработке файла: {exc}", "error")
         return redirect(url_for("web.index"))
+    finally:
+        # Загруженный файл не должен переживать обработку — реквизиты
+        # остаются только в PipelineResult, который живёт в памяти на время
+        # запроса (CLAUDE.md). Раньше файл сохранялся в UPLOAD_FOLDER и
+        # никогда не удалялся; finally гарантирует чистку и при успехе, и
+        # при ошибке pipeline.
+        file_path.unlink(missing_ok=True)
 
     rows = _build_review_rows(
         result.data,

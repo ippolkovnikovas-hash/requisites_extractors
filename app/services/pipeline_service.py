@@ -22,10 +22,16 @@ from loguru import logger
 from app.config import settings
 from app.core.constants import NORMALIZE_MAX_CHARS
 from app.core.enums import DocumentType, LLMProvider
-from app.core.exceptions import ConfigError, UnsupportedFileTypeError
+from app.core.exceptions import (
+    ConfigError,
+    LLMError,
+    LLMParseError,
+    UnsupportedFileTypeError,
+)
 from app.exporters.json_exporter import export_json
 from app.exporters.xlsx_exporter import export_xlsx
 from app.schemas.document import DocumentInput
+from app.schemas.extraction import LLMExtractionResult
 from app.schemas.requisites import RequisitesData
 from app.schemas.validation import PipelineResult
 from app.services.fallback_regex_service import (
@@ -94,8 +100,18 @@ def _build_review_warnings(
     validation_report,
     extraction_warnings: list[str],
     normalized_char_count_before: int,
+    llm_failed: bool = False,
 ) -> list[str]:
     warnings = extraction_warnings.copy()
+
+    if llm_failed:
+        # Первым в списке: это контекст, без которого остальные
+        # предупреждения читаются неверно — поля заполнены не «почти всё
+        # хорошо», а тем, что смог найти один только regex-слой.
+        warnings.append(
+            "LLM недоступна: реквизиты заполнены только по regex-правилам — "
+            "проверьте все поля внимательнее обычного"
+        )
 
     if normalized_char_count_before > NORMALIZE_MAX_CHARS:
         warnings.append(
@@ -201,13 +217,36 @@ def run_pipeline(
         settings.ocr_prompt_version if extraction.ocr_used else settings.prompt_version
     )
     llm_client = _build_llm_client()
-    llm_result = llm_client.extract(norm.normalized_text, prompt_version)
-    logger.info(
-        "Step 5/9 LLM done",
-        provider=llm_result.provider,
-        model=llm_result.model_name,
-        prompt_version=llm_result.prompt_version,
-    )
+
+    # Недоступная Ollama или неразбираемый ответ не должны ронять весь
+    # pipeline: regex-слой заполняет большинство полей самостоятельно, и
+    # пользователь должен получить review-форму с этими значениями, а не
+    # голое сообщение об ошибке. Неизвестный LLM_PROVIDER — другое дело: это
+    # ошибка конфигурации, а не временная недоступность, и она должна
+    # долетать до вызывающего кода — поэтому try/except не охватывает
+    # _build_llm_client().
+    llm_failed = False
+    try:
+        llm_result = llm_client.extract(norm.normalized_text, prompt_version)
+    except (LLMError, LLMParseError) as e:
+        logger.warning(
+            "Step 5/9 LLM unavailable, falling back to regex-only", error=str(e)
+        )
+        llm_failed = True
+        llm_result = LLMExtractionResult(
+            raw_response="",
+            parsed_data={},
+            model_name="unavailable",
+            provider="unavailable",
+            prompt_version=prompt_version,
+        )
+    else:
+        logger.info(
+            "Step 5/9 LLM done",
+            provider=llm_result.provider,
+            model=llm_result.model_name,
+            prompt_version=llm_result.prompt_version,
+        )
 
     # ── 6. Parse → merge LLM + fallback regex → RequisitesData ──────────
     safe_data = {
@@ -272,6 +311,7 @@ def run_pipeline(
                 "llm_provider": llm_result.provider,
                 "llm_model": llm_result.model_name,
                 "prompt_version": llm_result.prompt_version,
+                "llm_failed": llm_failed,
                 "sha256": sha256,
                 "fallback_used": bool(extracted_by),
                 "fallback_count": len(extracted_by),
@@ -304,6 +344,7 @@ def run_pipeline(
         validation_report=validation_report,
         extraction_warnings=extraction.warnings,
         normalized_char_count_before=norm.char_count_before,
+        llm_failed=llm_failed,
     )
 
     status = "needs_review" if needs_review else "done"
@@ -327,6 +368,7 @@ def run_pipeline(
             "llm_provider": llm_result.provider,
             "llm_model": llm_result.model_name,
             "prompt_version": llm_result.prompt_version,
+            "llm_failed": llm_failed,
             "sha256": sha256,
             "fallback_used": bool(extracted_by),
             "fallback_fields": extracted_by,

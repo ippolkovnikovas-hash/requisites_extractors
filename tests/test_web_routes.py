@@ -13,6 +13,7 @@ shablon.docx проекта не читается и не изменяется �
 """
 
 import io
+from pathlib import Path
 
 import pytest
 from docx import Document
@@ -214,6 +215,62 @@ def test_upload_renders_review_form_using_mocked_pipeline(client, monkeypatch):
     body = response.get_data(as_text=True)
     assert "ООО Тест" in body
     assert "7744012347" in body
+
+
+def test_upload_removes_saved_file_after_successful_processing(
+    client, app, monkeypatch
+):
+    """
+    Регрессия: загруженный документ сохранялся в UPLOAD_FOLDER и никогда не
+    удалялся — реквизиты переживали обработку на диске, хотя CLAUDE.md этого
+    не допускает. API-ветка (`routes_upload.py`) устроена правильно, через
+    NamedTemporaryFile + unlink; веб-ветка была исключением.
+    """
+    import app.web.routes as routes
+
+    fake_result = PipelineResult(
+        document_id="abc12345",
+        original_filename="test.pdf",
+        data=RequisitesData(),
+        validation=ValidationReport(),
+        needs_review=False,
+        warnings=[],
+        status="done",
+        fill_rate=0.0,
+        processing_meta={},
+    )
+    monkeypatch.setattr(
+        routes, "run_pipeline", lambda file_path, original_filename: fake_result
+    )
+
+    client.post(
+        "/upload",
+        data={"file": (io.BytesIO(b"fake pdf bytes"), "test.pdf")},
+        content_type="multipart/form-data",
+    )
+
+    upload_folder = Path(app.config["UPLOAD_FOLDER"])
+    assert list(upload_folder.iterdir()) == []
+
+
+def test_upload_removes_saved_file_even_when_pipeline_raises(client, app, monkeypatch):
+    """Файл не должен остаться на диске и в случае, когда обработка упала —
+    иначе каждая ошибка pipeline оставляет за собой реквизиты в uploads/."""
+    import app.web.routes as routes
+
+    def boom(file_path, original_filename):
+        raise RuntimeError("pipeline boom")
+
+    monkeypatch.setattr(routes, "run_pipeline", boom)
+
+    client.post(
+        "/upload",
+        data={"file": (io.BytesIO(b"fake pdf bytes"), "test.pdf")},
+        content_type="multipart/form-data",
+    )
+
+    upload_folder = Path(app.config["UPLOAD_FOLDER"])
+    assert list(upload_folder.iterdir()) == []
 
 
 # ── POST /generate ────────────────────────────────────────────────────────────

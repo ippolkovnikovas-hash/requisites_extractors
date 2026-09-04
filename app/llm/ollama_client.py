@@ -8,6 +8,13 @@ from app.core.exceptions import LLMError, LLMParseError
 from app.llm.base import BaseLLMClient
 from app.llm.prompts import get_prompt
 from app.schemas.extraction import LLMExtractionResult
+from app.schemas.requisites import RequisitesData
+
+# Схема ответа по именам python-полей (`by_alias=False`), а не по алиасам
+# шаблона ('FULL_ORG_NAME' и т.п.) — промпты просят модель вернуть именно
+# `company_name`, `inn` и так далее. Вычисляется один раз при импорте: схема
+# не зависит от запроса.
+_RESPONSE_SCHEMA = RequisitesData.model_json_schema(by_alias=False)
 
 
 class OllamaClient(BaseLLMClient):
@@ -24,7 +31,15 @@ class OllamaClient(BaseLLMClient):
                     "model": settings.ollama_model,
                     "prompt": prompt,
                     "stream": False,
-                    "format": "json",
+                    # JSON Schema вместо голого `"json"`: раньше это лишь
+                    # принуждало модель к синтаксически валидному JSON, но не
+                    # фиксировало состав и имена полей — она могла придумать
+                    # свои.
+                    "format": _RESPONSE_SCHEMA,
+                    "options": {
+                        "temperature": settings.ollama_temperature,
+                        "num_ctx": settings.ollama_num_ctx,
+                    },
                 },
                 timeout=settings.llm_timeout_seconds,
             )

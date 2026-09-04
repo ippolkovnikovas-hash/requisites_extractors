@@ -1,15 +1,15 @@
-click
-loguru
-pydantic
-pydantic-settings
-python-docx
-pdfplumber
-openpyxl
-httpx
-flask
-werkzeug
-pytesseract
-Pillow
-python-magic-bin; platform_system == "Windows"
-python-magic; platform_system != "Windows"
-pdf2image
+click==8.5.0
+loguru==0.7.3
+pydantic==2.13.5
+pydantic-settings==2.15.0
+python-docx==1.2.0
+pdfplumber==0.11.10
+openpyxl==3.1.5
+httpx==0.28.1
+flask==3.1.3
+werkzeug==3.1.8
+pytesseract==0.3.13
+Pillow==12.3.0
+python-magic-bin==0.4.14; platform_system == "Windows"
+python-magic==0.4.27; platform_system != "Windows"
+pdf2image==1.17.0

@@ -967,6 +967,55 @@ regex-only режиме при недоступной LLM (Э14) — сейча�
 
 ---
 
+### Э20. Dependabot для pip: миграция зависимостей на PEP 621 *(сделано 04.09.2026)*
+
+Инфраструктурный эпик внутри спринта 8 — делался параллельно со скачиванием
+`qwen2.5:7b-instruct` для замера. Условие из Э19: версии закреплены, значит
+Dependabot'у есть что осмысленно обновлять. Но Dependabot для
+`package-ecosystem: pip` читает только стандартные имена манифестов
+(`pyproject.toml`, `requirements.txt`, `setup.py`/`setup.cfg`), а не кастомный
+layout `requirements/{base,dev,prod,easyocr}.txt`. Одной строкой в
+`.github/dependabot.yml` не обойтись: зависимости нужно было перенести в
+`pyproject.toml` по PEP 621.
+
+- [x] **Зависимости перенесены в `pyproject.toml`.** `[project].dependencies`
+      — 15 runtime-пакетов; `[project.optional-dependencies]` — `dev`
+      (pytest/coverage/reportlab/ruff/black/mypy), `prod` (gunicorn) и
+      `easyocr`. Разделение «Windows / остальные» сделано маркером PEP 508:
+      `python-magic-bin==0.4.14; platform_system == 'Windows'` против
+      `python-magic==0.4.27; platform_system != 'Windows'`.
+- [x] **Исправлен сломанный `build-backend`.** Предсуществующий
+      `setuptools.backends.legacy:build` — невалидный путь в современных
+      setuptools: `pip install -e ".[dev]"` падал с
+      `BackendUnavailable: Cannot import 'setuptools.backends.legacy'`. Баг
+      был латентным — до миграции CI ставил зависимости через
+      `pip install -r requirements/dev.txt` и никогда не вызывал `-e .`.
+      Заменён на `setuptools.build_meta` (PEP 621/660, работает без
+      `setup.py`).
+- [x] **`requirements/{base,dev,prod,easyocr}.txt` удалены** — единый
+      источник истины теперь `pyproject.toml`.
+- [x] **Dependabot включён для pip** — ежемесячно, `commit-message.prefix:
+      chore`, label `dependencies`, рядом с уже настроенным
+      `github-actions`.
+- [x] **CI и документация переведены на `pip install -e ".[dev]"`.** В
+      `ci.yml` `cache-dependency-path` смотрит в `pyproject.toml`; README,
+      CONTRIBUTING и подсказка в easyocr-бэкенде обновлены на `.[dev]`,
+      `.[easyocr]`, `.[prod]`.
+
+**Проверка переустановкой с нуля** (обязательна при трогании зависимостей,
+CONTRIBUTING): чистое venv на Python 3.13, `pip install -e ".[dev]"` резолвит
+все пины без конфликтов, **599 passed + 2 skipped** (два easyocr-теста честно
+пропущены — `numpy` приходит только вместе с extra `easyocr`), покрытие
+95.40% при пороге 93, `ruff` и `black` чисты. В рабочем venv с установленным
+`numpy` — **601 passed**.
+
+**Результат:** по существу новых тестов нет (инфраструктурная правка), но весь
+набор зелёный на новой схеме установки; покрытие не понижено, `ruff`/`black`
+чисты. В `app/` затронут только `easyocr_backend.py` — смена строки подсказки
+про установку extra.
+
+---
+
 ## 4. Порядок работ
 
 ```
@@ -993,28 +1042,26 @@ regex-only режиме при недоступной LLM (Э14) — сейча�
 PR [#1](https://github.com/ippolkovnikovas-hash/requisites_extractors/pull/1)
 влит в `master` (`4c9fedc`).
 
-**Состояние на 04.09.2026: закрыты Э13–Э19** — спринты 1–7 разбора
-пайплайна. **601 тест, покрытие не понижено**, `ruff` и `black` чисты. PR
-#4–#9 влиты в `master` по цепочке. `requirements/*.txt` закреплены точными
-версиями (Э19).
+**Состояние на 04.09.2026: закрыты Э13–Э20** — спринты 1–7 разбора
+пайплайна, пиннинг зависимостей (Э19) и миграция на PEP 621 с включением
+Dependabot для pip (Э20). **601 тест, покрытие не понижено**, `ruff` и
+`black` чисты. PR #4–#10 влиты в `master` по цепочке. Зависимости теперь в
+`pyproject.toml` (PEP 621), `requirements/*.txt` удалены.
 
 ### С чего продолжить
 
-Спринт 8:
+Спринт 8 (осталось):
 
-1. **Замер на `qwen2.5:7b-instruct`** — требует `ollama pull` (~4.7 ГБ),
-   отдельное решение автора перед тем, как тянуть модель. Тот же набор из
-   18 документов (Э16), сравнить отчёт с текущим (`qwen2.5:3b`).
-2. **Dependabot для pip** — теперь, когда версии закреплены (Э19), есть что
-   обновлять осмысленно. Сейчас Dependabot настроен только для
-   `github-actions`.
-3. **`accuracy_service` не различает «неверное содержимое» и «верное
+1. **Замер на `qwen2.5:7b-instruct`** — `ollama pull` уже идёт в фоне
+   (~4.7 ГБ). Тот же набор из 18 документов (Э16), сравнить отчёт с текущим
+   (`qwen2.5:3b`).
+2. **`accuracy_service` не различает «неверное содержимое» и «верное
    содержимое в другом порядке/формате».** Найдено в Э18 на `bank_name` и
    ранее в Э16 на `legal_address`: LLM переставляет слова или меняет
    «№»→«No» — по смыслу верно, но строгое сравнение строк засчитывает
    mismatch. Решение продуктовое, не только инженерное — как и
    «рассмотрено и отклонено» в Э15, взвесить, не спешить с реализацией.
-4. **Повторное распознавание числовых полей с `char_whitelist`** — нужна
+3. **Повторное распознавание числовых полей с `char_whitelist`** — нужна
    новая архитектура (bbox по строке из `image_to_data`, обрезка региона,
    повторный вызов Tesseract только на нём). Реальные документы для проверки
    есть — набор из Э16, включая ООО «НЕГА» (Э18), где OCR потерял метки

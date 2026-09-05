@@ -13,7 +13,7 @@ py -3.13 -m venv .venv
 .venv\Scripts\Activate.ps1        # Windows
 # source .venv/bin/activate       # Linux/macOS
 
-pip install -r requirements/dev.txt
+pip install -e ".[dev]"
 copy .env.example .env
 ```
 
@@ -21,7 +21,7 @@ copy .env.example .env
 необязательна: тесты идут на `LLM_PROVIDER=mock`.
 
 `easyocr` ставить не нужно, если не собираетесь его использовать: он тянет torch
-(~500 МБ) и вынесен в `requirements/easyocr.txt`.
+(~500 МБ) и вынесен в extra `easyocr`.
 
 ---
 
@@ -82,7 +82,7 @@ pytest --no-cov tests/test_validators_inn.py
 
 ```bash
 python -m venv /tmp/civ
-/tmp/civ/bin/pip install -r requirements/dev.txt
+/tmp/civ/bin/pip install -e ".[dev]"
 /tmp/civ/bin/pytest
 ```
 

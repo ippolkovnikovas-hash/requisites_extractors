@@ -106,7 +106,7 @@ ollama pull qwen2.5:3b
 ```powershell
 py -3.13 -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements/dev.txt
+pip install -e ".[dev]"
 copy .env.example .env
 ```
 
@@ -115,16 +115,16 @@ Linux/macOS:
 ```bash
 python3.13 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements/dev.txt
+pip install -e ".[dev]"
 cp .env.example .env
 ```
 
-EasyOCR вынесен в отдельный файл: он тянет torch (~500 МБ), а по умолчанию
+EasyOCR вынесен в отдельный extra: он тянет torch (~500 МБ), а по умолчанию
 используется Tesseract. Ставьте, только если собираетесь переключить
 `OCR_BACKEND=easyocr`:
 
 ```bash
-pip install -r requirements/easyocr.txt
+pip install -e ".[easyocr]"
 ```
 
 Затем отредактируй `.env` под свою машину. `.env` в Git не попадает.

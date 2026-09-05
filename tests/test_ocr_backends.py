@@ -164,7 +164,7 @@ def test_easyocr_instantiation_without_package_gives_install_hint(monkeypatch):
     with pytest.raises(ImportError) as exc_info:
         EasyOcrBackend()
 
-    assert "requirements/easyocr.txt" in str(exc_info.value)
+    assert ".[easyocr]" in str(exc_info.value)
 
 
 # ── TesseractBackend: структурный разбор строк ───────────────────────────────

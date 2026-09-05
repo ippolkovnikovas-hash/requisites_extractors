@@ -1,10 +1,18 @@
 version: 2
 
 updates:
-  # Только GitHub Actions. Для pip обновления не включаем: версии в
-  # requirements/*.txt не закреплены, и Dependabot создавал бы шум без пользы.
-  # Имеет смысл включить, когда версии будут запинены.
   - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore"
+    labels:
+      - dependencies
+
+  # Версии закреплены в pyproject.toml (PEP 621): Dependabot читает
+  # [project].dependencies и [project.optional-dependencies].
+  - package-ecosystem: pip
     directory: "/"
     schedule:
       interval: monthly

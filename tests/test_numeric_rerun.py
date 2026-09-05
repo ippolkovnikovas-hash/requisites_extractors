@@ -68,6 +68,23 @@ def test_candidate_label_and_value_skipped():
     assert is_numeric_candidate("ИНН 7744012347") is False
 
 
+def test_candidate_classifier_code_glued_label_skipped():
+    # Регрессия реального замера (05.09.2026): «ОКТМО:07727000» проходила как
+    # числовой кандидат — LABEL_WORDS не знал про коды классификаторов, только
+    # про ИНН/КПП/БИК/ОГРН/счета. Whitelist-прогон стирал метку «ОКТМО:»
+    # целиком, что меняло контекст документа и уводило ответ LLM по никак не
+    # связанным полям (bank_name, ceo_fio, company_name) на конкретном
+    # документе. Коды классификаторов — тот же класс меток, что и у ОГРН,
+    # который проект уже отдельно бережёт от путаницы (ogrn_validator).
+    assert is_numeric_candidate("ОКТМО:07727000") is False
+    assert is_numeric_candidate("ОКПО:28451997") is False
+    assert is_numeric_candidate("ОКАТО:07427000000") is False
+    assert is_numeric_candidate("ОКОГУ:4210014") is False
+    assert is_numeric_candidate("ОКФС:16") is False
+    assert is_numeric_candidate("ОКОПФ:12300") is False
+    assert is_numeric_candidate("ОКВЭД:42.11") is False
+
+
 def test_candidate_multiple_tokens_rejected():
     # Два числа через пробел не перераспознаём: digits-only whitelist склеил бы
     # их в один длинный, а regex-слой и так умеет нормализовать пробелы.

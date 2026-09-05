@@ -24,5 +24,33 @@ class OcrBackend(ABC):
         text = self.image_to_text(image, lang=lang)
         return [line.strip() for line in text.splitlines() if line.strip()]
 
+    def image_to_lines_with_boxes(
+        self, image: Image.Image, lang: str = "rus+eng"
+    ) -> list[tuple[str, tuple[int, int, int, int] | None]]:
+        """
+        Строки с прямоугольниками, в порядке появления.
+
+        Базовая реализация не даёт геометрии (`bbox=None`): бэкенд,
+        переопределяющий `image_to_lines`, по-прежнему работает, но повторное
+        распознавание регионов для него невозможно. Tesseract отдаёт реальные
+        bbox.
+        """
+        return [(line, None) for line in self.image_to_lines(image, lang=lang)]
+
+    def recognize_region(
+        self,
+        image: Image.Image,
+        bbox: tuple[int, int, int, int],
+        whitelist: str,
+        lang: str = "rus+eng",
+    ) -> str:
+        """
+        Повторное распознавание обрезанного региона с `char_whitelist`.
+
+        Есть только у бэкендов с поддержкой геометрии и повторного прогона;
+        в базе не реализовано и вызывается лишь при `bbox is not None`.
+        """
+        raise NotImplementedError
+
     def name(self) -> str:
         return self.__class__.__name__

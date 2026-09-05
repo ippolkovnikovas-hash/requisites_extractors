@@ -4,6 +4,7 @@ from PIL import Image, ImageFilter, ImageOps
 
 from app.ocr.factory import get_ocr_backend
 from app.ocr.image_preprocessing import binarize_otsu, deskew
+from app.ocr.numeric_rerun import rerun_numeric_lines
 from app.schemas.extraction import TextExtractionResult
 
 
@@ -24,7 +25,7 @@ def _preprocess_image(image: Image.Image) -> Image.Image:
 def extract_image_ocr(path: Path) -> TextExtractionResult:
     backend = get_ocr_backend()
     image = _preprocess_image(Image.open(path))
-    lines = backend.image_to_lines(image)
+    lines = rerun_numeric_lines(backend, image)
     text = "\n".join(lines).strip()
     return TextExtractionResult(
         text=text,

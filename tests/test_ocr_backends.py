@@ -192,6 +192,10 @@ def tesseract(monkeypatch):
             "block_num": [1, 1, 1, 1, 1, 2],
             "par_num": [1, 1, 1, 2, 2, 1],
             "line_num": [1, 1, 1, 1, 1, 1],
+            "left": [0, 0, 0, 0, 0, 0],
+            "top": [0, 0, 0, 0, 0, 0],
+            "width": [10, 10, 10, 10, 10, 10],
+            "height": [10, 10, 10, 10, 10, 10],
         }
 
     monkeypatch.setattr(module.pytesseract, "image_to_string", fake_image_to_string)
@@ -259,6 +263,54 @@ def test_tesseract_cmd_left_alone_when_not_configured(monkeypatch):
     monkeypatch.setattr(module.pytesseract.pytesseract, "tesseract_cmd", "keep-me")
     module.TesseractBackend(tesseract_cmd=None)
     assert module.pytesseract.pytesseract.tesseract_cmd == "keep-me"
+
+
+def test_tesseract_image_to_lines_with_boxes_unites_word_bboxes(monkeypatch, image):
+    """bbox строки — объединение bbox её слов (слова слева направо)."""
+    import app.ocr.tesseract_backend as module
+
+    monkeypatch.setattr(
+        module.pytesseract,
+        "image_to_data",
+        lambda image, lang=None, config=None, output_type=None: {
+            "text": ["7744", "012347"],
+            "page_num": [1, 1],
+            "block_num": [1, 1],
+            "par_num": [1, 1],
+            "line_num": [1, 1],
+            "left": [10, 60],
+            "top": [20, 20],
+            "width": [40, 55],
+            "height": [12, 12],
+        },
+    )
+
+    backend = module.TesseractBackend()
+    result = backend.image_to_lines_with_boxes(image)
+
+    assert result == [("7744 012347", (10, 20, 115, 32))]
+
+
+def test_tesseract_recognize_region_crops_and_applies_whitelist(monkeypatch):
+    import app.ocr.tesseract_backend as module
+
+    calls = {}
+
+    def fake_image_to_string(image, lang=None, config=None):
+        calls["image"] = image
+        calls["lang"] = lang
+        calls["config"] = config
+        return " 7744012347 "
+
+    monkeypatch.setattr(module.pytesseract, "image_to_string", fake_image_to_string)
+
+    backend = module.TesseractBackend()
+    full = Image.new("L", (200, 100), color=255)
+    result = backend.recognize_region(full, (10, 20, 110, 40), "0123456789")
+
+    assert result == "7744012347"
+    assert calls["image"].size == (100, 20)
+    assert "tessedit_char_whitelist=0123456789" in calls["config"]
 
 
 # ── EasyOcrBackend: распознавание через подменённый reader ───────────────────

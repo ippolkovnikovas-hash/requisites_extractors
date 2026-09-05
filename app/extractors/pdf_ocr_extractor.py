@@ -9,6 +9,7 @@ from app.config import settings
 from app.core.exceptions import TextExtractionError
 from app.ocr.factory import get_ocr_backend
 from app.ocr.image_preprocessing import deskew
+from app.ocr.numeric_rerun import rerun_numeric_lines
 from app.schemas.extraction import TextExtractionResult
 
 
@@ -44,7 +45,7 @@ def extract_pdf_ocr(path: Path) -> TextExtractionResult:
             for page_num, image in enumerate(images, start=1):
                 try:
                     processed = _preprocess_image(image)
-                    lines = backend.image_to_lines(processed)
+                    lines = rerun_numeric_lines(backend, processed)
                     text = "\n".join(lines).strip()
                     if text:
                         pages_text.append(f"[Страница {page_num}]\n{text}")

@@ -96,8 +96,13 @@ winget install Ollama.Ollama
 ### Модель для Ollama
 
 ```bash
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:7b-instruct
 ```
+
+Быстрее, но менее точна на банке/наименованиях/адресах — `qwen2.5:3b`
+(замер 05.09.2026 на 15 реальных документах: 62.2% против 57.6% общей
+точности в пользу 7b, числовые поля не отличаются, ~63 с/документ против
+~10 с).
 
 ---
 
@@ -211,7 +216,7 @@ curl -F "file=@документ.pdf" http://127.0.0.1:5000/api/extract
 |------------|--------------|-----------|
 | `LLM_PROVIDER` | `mock` | `ollama` или `mock`. Других значений нет |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Локальный endpoint Ollama |
-| `OLLAMA_MODEL` | `qwen2.5:3b` | Имя модели |
+| `OLLAMA_MODEL` | `qwen2.5:7b-instruct` | Имя модели |
 | `PROMPT_VERSION` | `v1` | `v1`, `v2` или `v3` |
 | `LLM_TIMEOUT_SECONDS` | `120.0` | Таймаут запроса к LLM |
 | `TESSERACT_CMD` | из `PATH` | Путь к `tesseract` |

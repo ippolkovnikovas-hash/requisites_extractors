@@ -18,17 +18,16 @@ class TesseractBackend(OcrBackend):
             image, lang=lang, config=_CONFIG_SIMPLE
         ).strip()
 
-    def image_to_lines_with_boxes(
+    def image_to_lines_with_word_boxes(
         self, image: Image.Image, lang: str = "rus+eng"
-    ) -> list[tuple[str, tuple[int, int, int, int]]]:
+    ) -> list[tuple[str, list[tuple[str, tuple[int, int, int, int]]]]]:
         data = pytesseract.image_to_data(
             image,
             lang=lang,
             config=_CONFIG_STRUCTURED,
             output_type=Output.DICT,
         )
-        lines: dict[tuple, list[str]] = {}
-        boxes: dict[tuple, tuple[int, int, int, int]] = {}
+        lines: dict[tuple, list[tuple[str, tuple[int, int, int, int]]]] = {}
         n = len(data["text"])
         for i in range(n):
             word = data["text"][i].strip()
@@ -44,38 +43,30 @@ class TesseractBackend(OcrBackend):
                 data["par_num"][i],
                 data["line_num"][i],
             )
-            lines.setdefault(key, []).append(word)
             left = data["left"][i]
             top = data["top"][i]
             right = left + data["width"][i]
             bottom = top + data["height"][i]
-            if key in boxes:
-                prev = boxes[key]
-                boxes[key] = (
-                    min(prev[0], left),
-                    min(prev[1], top),
-                    max(prev[2], right),
-                    max(prev[3], bottom),
-                )
-            else:
-                boxes[key] = (left, top, right, bottom)
-        return [(" ".join(lines[key]), boxes[key]) for key in lines]
+            lines.setdefault(key, []).append((word, (left, top, right, bottom)))
+        return [
+            (" ".join(word for word, _ in words), words) for words in lines.values()
+        ]
+
+    def image_to_lines_with_boxes(
+        self, image: Image.Image, lang: str = "rus+eng"
+    ) -> list[tuple[str, tuple[int, int, int, int]]]:
+        result: list[tuple[str, tuple[int, int, int, int]]] = []
+        for text, words in self.image_to_lines_with_word_boxes(image, lang=lang):
+            boxes = [box for _, box in words]
+            left = min(b[0] for b in boxes)
+            top = min(b[1] for b in boxes)
+            right = max(b[2] for b in boxes)
+            bottom = max(b[3] for b in boxes)
+            result.append((text, (left, top, right, bottom)))
+        return result
 
     def image_to_lines(self, image: Image.Image, lang: str = "rus+eng") -> list[str]:
         return [text for text, _ in self.image_to_lines_with_boxes(image, lang=lang)]
-
-    def recognize_region(
-        self,
-        image: Image.Image,
-        bbox: tuple[int, int, int, int],
-        whitelist: str,
-        lang: str = "rus+eng",
-    ) -> str:
-        """Повторный прогон Tesseract на обрезанном регионе с `char_whitelist`."""
-        left, top, right, bottom = bbox
-        region = image.crop((left, top, right, bottom))
-        config = f"{_CONFIG_STRUCTURED} -c tessedit_char_whitelist={whitelist}"
-        return pytesseract.image_to_string(region, lang=lang, config=config).strip()
 
     def name(self) -> str:
         return "tesseract"

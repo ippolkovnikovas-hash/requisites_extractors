@@ -17,6 +17,11 @@ _INSTALL_HINT = (
     'Установите их: pip install -e ".[easyocr]"'
 )
 
+# `easyocr.Reader` дорого инициализируется (загрузка весов модели). Фабрика
+# создаёт бэкенд заново на каждый документ, поэтому Reader кешируется по
+# набору языков на уровне процесса, а не пересоздаётся каждый раз.
+_reader_cache: dict[tuple[str, ...], object] = {}
+
 
 class EasyOcrBackend(OcrBackend):
     def __init__(self, langs: list[str] | None = None) -> None:
@@ -25,7 +30,10 @@ class EasyOcrBackend(OcrBackend):
         except ImportError as e:  # pragma: no cover - зависит от окружения
             raise ImportError(_INSTALL_HINT) from e
 
-        self._reader = easyocr.Reader(langs or ["ru", "en"], gpu=False)
+        key = tuple(langs or ["ru", "en"])
+        if key not in _reader_cache:
+            _reader_cache[key] = easyocr.Reader(list(key), gpu=False)
+        self._reader = _reader_cache[key]
 
     def image_to_text(self, image: Image.Image, lang: str = "rus+eng") -> str:
         import numpy as np

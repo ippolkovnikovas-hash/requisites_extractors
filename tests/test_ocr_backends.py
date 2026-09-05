@@ -291,26 +291,82 @@ def test_tesseract_image_to_lines_with_boxes_unites_word_bboxes(monkeypatch, ima
     assert result == [("7744 012347", (10, 20, 115, 32))]
 
 
-def test_tesseract_recognize_region_crops_and_applies_whitelist(monkeypatch):
+def test_tesseract_image_to_lines_with_word_boxes_returns_per_word_geometry(
+    monkeypatch, image
+):
+    """Геометрия отдельных слов нужна, чтобы перераспознавать только цифровое
+    слово строки, не задевая соседнее слово-метку в том же bbox строки."""
     import app.ocr.tesseract_backend as module
 
-    calls = {}
-
-    def fake_image_to_string(image, lang=None, config=None):
-        calls["image"] = image
-        calls["lang"] = lang
-        calls["config"] = config
-        return " 7744012347 "
-
-    monkeypatch.setattr(module.pytesseract, "image_to_string", fake_image_to_string)
+    monkeypatch.setattr(
+        module.pytesseract,
+        "image_to_data",
+        lambda image, lang=None, config=None, output_type=None: {
+            "text": ["БИК", "банка", "040"],
+            "page_num": [1, 1, 1],
+            "block_num": [1, 1, 1],
+            "par_num": [1, 1, 1],
+            "line_num": [1, 1, 1],
+            "left": [0, 30, 90],
+            "top": [0, 0, 0],
+            "width": [25, 55, 30],
+            "height": [12, 12, 12],
+        },
+    )
 
     backend = module.TesseractBackend()
-    full = Image.new("L", (200, 100), color=255)
-    result = backend.recognize_region(full, (10, 20, 110, 40), "0123456789")
+    result = backend.image_to_lines_with_word_boxes(image)
 
-    assert result == "7744012347"
-    assert calls["image"].size == (100, 20)
-    assert "tessedit_char_whitelist=0123456789" in calls["config"]
+    assert result == [
+        (
+            "БИК банка 040",
+            [
+                ("БИК", (0, 0, 25, 12)),
+                ("банка", (30, 0, 85, 12)),
+                ("040", (90, 0, 120, 12)),
+            ],
+        )
+    ]
+
+
+def test_tesseract_lines_with_boxes_still_unites_from_word_boxes(monkeypatch, image):
+    """Рефакторинг: `image_to_lines_with_boxes` теперь строится через
+    `image_to_lines_with_word_boxes` — объединённый bbox строки не должен
+    измениться."""
+    import app.ocr.tesseract_backend as module
+
+    monkeypatch.setattr(
+        module.pytesseract,
+        "image_to_data",
+        lambda image, lang=None, config=None, output_type=None: {
+            "text": ["7744", "012347"],
+            "page_num": [1, 1],
+            "block_num": [1, 1],
+            "par_num": [1, 1],
+            "line_num": [1, 1],
+            "left": [10, 60],
+            "top": [20, 20],
+            "width": [40, 55],
+            "height": [12, 12],
+        },
+    )
+
+    backend = module.TesseractBackend()
+    result = backend.image_to_lines_with_boxes(image)
+
+    assert result == [("7744 012347", (10, 20, 115, 32))]
+
+
+def test_base_backend_word_boxes_default_empty(image):
+    """Бэкенд без переопределения (easyocr, базовая реализация) не даёт
+    геометрии слов — таргетный rerun по словам для него невозможен."""
+
+    class Minimal(OcrBackend):
+        def image_to_text(self, image, lang="rus+eng"):
+            return "ИНН 7744012347\nКПП 774401001"
+
+    result = Minimal().image_to_lines_with_word_boxes(image)
+    assert result == [("ИНН 7744012347", []), ("КПП 774401001", [])]
 
 
 # ── EasyOcrBackend: распознавание через подменённый reader ───────────────────
@@ -355,6 +411,32 @@ def test_easyocr_inherits_default_line_splitting(monkeypatch, image):
     backend._reader = FakeReader()
 
     assert backend.image_to_lines(image) == ["ИНН 7744012347", "КПП 774401001"]
+
+
+def test_easyocr_reuses_cached_reader_for_same_languages(monkeypatch):
+    """`easyocr.Reader` дорого инициализируется (загрузка весов) — фабрика
+    вызывается на каждый документ, и без кеша каждый документ платил бы за
+    повторную загрузку модели."""
+    pytest.importorskip(
+        "easyocr", reason="кеш Reader проверяем только когда пакет установлен"
+    )
+    import easyocr
+
+    import app.ocr.easyocr_backend as module
+
+    created = []
+
+    class FakeReader:
+        def __init__(self, langs, gpu=False):
+            created.append(tuple(langs))
+
+    monkeypatch.setattr(module, "_reader_cache", {})
+    monkeypatch.setattr(easyocr, "Reader", FakeReader)
+
+    module.EasyOcrBackend()
+    module.EasyOcrBackend()
+
+    assert len(created) == 1
 
 
 # ── Экстракторы берут бэкенд из фабрики ──────────────────────────────────────

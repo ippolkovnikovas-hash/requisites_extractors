@@ -37,20 +37,20 @@ class OcrBackend(ABC):
         """
         return [(line, None) for line in self.image_to_lines(image, lang=lang)]
 
-    def recognize_region(
-        self,
-        image: Image.Image,
-        bbox: tuple[int, int, int, int],
-        whitelist: str,
-        lang: str = "rus+eng",
-    ) -> str:
+    def image_to_lines_with_word_boxes(
+        self, image: Image.Image, lang: str = "rus+eng"
+    ) -> list[tuple[str, list[tuple[str, tuple[int, int, int, int]]]]]:
         """
-        Повторное распознавание обрезанного региона с `char_whitelist`.
+        Строки со словами и их прямоугольниками, в порядке появления.
 
-        Есть только у бэкендов с поддержкой геометрии и повторного прогона;
-        в базе не реализовано и вызывается лишь при `bbox is not None`.
+        Геометрия отдельных слов нужна, чтобы перераспознать только слово с
+        числом, не задев соседнее слово-метку в том же bbox строки (whitelist
+        на весь bbox строки заставляет Tesseract впихивать буквы метки в
+        цифры — источник порчи данных, найденный реальным замером
+        05.09.2026). Базовая реализация не даёт геометрии слов (пустой
+        список) — таргетный rerun для такого бэкенда невозможен.
         """
-        raise NotImplementedError
+        return [(line, []) for line in self.image_to_lines(image, lang=lang)]
 
     def name(self) -> str:
         return self.__class__.__name__

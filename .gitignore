@@ -48,3 +48,7 @@ build/
 # Real counterparty documents (contain personal data)
 requisites/
 .coverage
+
+# Синтетические тестовые фикстуры (без реальных данных)
+!tests/fixtures/*.pdf
+!tests/fixtures/*.docx

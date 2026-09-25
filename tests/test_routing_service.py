@@ -1,9 +1,9 @@
 ﻿"""Тесты сервиса маршрутизации документов."""
-import pytest
 from pathlib import Path
+
+from app.core.enums import DocumentType
 from app.schemas.document import DocumentInput
 from app.services.routing_service import detect_document_type
-from app.core.enums import DocumentType
 
 
 def make_doc(**kwargs) -> DocumentInput:

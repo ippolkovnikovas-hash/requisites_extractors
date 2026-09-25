@@ -1,9 +1,11 @@
 ﻿"""Тесты PDF text-экстрактора."""
-import pytest
 from pathlib import Path
-from app.extractors.pdf_text_extractor import extract_pdf_text
-from app.core.exceptions import TextExtractionError
+
+import pytest
+
 from app.core.enums import ExtractorType
+from app.core.exceptions import TextExtractionError
+from app.extractors.pdf_text_extractor import extract_pdf_text
 
 FIXTURE = Path("tests/fixtures/sample_requisites.pdf")
 
@@ -73,26 +75,6 @@ def test_multipage_pdf():
 
 def test_table_extraction_error_adds_warning(tmp_path, monkeypatch):
     import pdfplumber
-    original_open = pdfplumber.open
-
-    class FakePage:
-        def extract_text(self, **kw): return "ИНН: 7744012347"
-        def extract_tables(self): raise RuntimeError("table parse error")
-
-    class FakePDF:
-        pages = [FakePage()]
-        def __enter__(self): return self
-        def __exit__(self, *a): pass
-
-    monkeypatch.setattr(pdfplumber, "open", lambda *a, **kw: FakePDF())
-    result = extract_pdf_text(tmp_path / "fake.pdf")
-    assert any("table extraction failed" in w for w in result.warnings)
-    assert "7744012347" in result.text
-
-
-def test_table_extraction_error_adds_warning(tmp_path, monkeypatch):
-    import pdfplumber
-    original_open = pdfplumber.open
 
     class FakePage:
         def extract_text(self, **kw): return "ИНН: 7744012347"

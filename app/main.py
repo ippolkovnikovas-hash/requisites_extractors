@@ -34,6 +34,7 @@ def create_app() -> Flask:
 
 
     import os
+
     from flask import send_from_directory
 
     @app.route("/test")

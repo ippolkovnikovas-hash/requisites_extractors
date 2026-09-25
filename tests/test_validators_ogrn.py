@@ -1,5 +1,6 @@
 ﻿"""Unit-тесты валидатора ОГРН."""
 import pytest
+
 from app.validators.ogrn_validator import validate_ogrn
 
 

@@ -1,5 +1,6 @@
 ﻿"""Unit-тесты валидатора КПП."""
 import pytest
+
 from app.validators.kpp_validator import validate_kpp
 
 

@@ -1,7 +1,8 @@
 ﻿"""Unit-тесты валидаторов БИК и счетов."""
 import pytest
-from app.validators.bik_validator import validate_bik
+
 from app.validators.account_validator import validate_account, validate_cross_bik_corr
+from app.validators.bik_validator import validate_bik
 
 
 def test_bik_valid():

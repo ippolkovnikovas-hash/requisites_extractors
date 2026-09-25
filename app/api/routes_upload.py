@@ -2,7 +2,7 @@ import pathlib as _pl
 import tempfile
 from pathlib import Path
 
-from flask import Blueprint, jsonify, request, send_file, abort
+from flask import Blueprint, abort, jsonify, request, send_file
 from loguru import logger
 
 from app.dependencies import validate_upload

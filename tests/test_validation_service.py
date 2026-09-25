@@ -1,5 +1,4 @@
 ﻿"""Тесты сервиса валидации реквизитов."""
-import pytest
 from app.schemas.requisites import RequisitesData
 from app.services.validation_service import validate_requisites
 

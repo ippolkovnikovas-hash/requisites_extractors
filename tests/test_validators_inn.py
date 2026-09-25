@@ -1,5 +1,6 @@
 ﻿"""Unit-тесты валидатора ИНН."""
 import pytest
+
 from app.validators.inn_validator import validate_inn
 
 

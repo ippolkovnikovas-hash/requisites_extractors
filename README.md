@@ -4,7 +4,7 @@
 
 ## Что умеет проект
 
-- Обрабатывает DOCX, PDF с текстовым слоем, PDF-сканы и изображения.[file:232]
+- Обрабатывает DOCX, DOC (через LibreOffice), ODT, PDF с текстовым слоем, PDF-сканы и изображения.[file:232]
 - Использует pipeline: routing → extraction → normalization → LLM → fallback regex → validation → export.[file:232]
 - Поддерживает экспорт результата в JSON, XLSX и заполненный DOCX-шаблон.[file:232]
 - Поднимает Flask-приложение с health endpoint `/api/health`.[file:231][file:232]
@@ -19,12 +19,13 @@
 
 Основной pipeline проекта:[file:232]
 
-1. Routing документа по типу входа (DOCX / PDF-text / PDF-scan / image / unsupported).[file:232]
-2. Извлечение текста через нативные экстракторы или OCR (Tesseract + Poppler).[file:232][file:231]
+1. Routing документа по типу входа (DOCX / DOC / ODT / PDF-text / PDF-scan / image / unsupported).[file:232]
+2. Извлечение текста через нативные экстракторы или OCR (бэкенд по `OCR_BACKEND`, по умолчанию Tesseract; страницы PDF рендерит Poppler, без него — pypdfium2). Для фото и сканов делаются дополнительные проходы OCR (другие режимы сегментации) — только для поиска чисел.
 3. Нормализация текста и числовых реквизитов.[file:231][file:232]
 4. Извлечение через LLM-провайдера (`mock`, `openai`, `ollama`).[file:232]
 5. Fallback regex для критичных реквизитов (ИНН, КПП, ОГРН, БИК, счета, контакты).[file:232]
-6. Валидация и кросс-проверка реквизитов с контрольными суммами.[file:232]
+5a. Числовые реквизиты по кандидатам (`number_candidates_service`): из текста собираются все подходящие числа, остаются прошедшие контрольную сумму, выбирается стоящее у нужной метки; счета сверяются с БИК по контрольному ключу ЦБ. Значение LLM — только подсказка при равных кандидатах.
+6. Валидация и кросс-проверка реквизитов с контрольными суммами (включая ключ р/с и к/с по БИК).[file:232]
 7. Экспорт результата в JSON/XLSX/шаблон DOCX.[file:232]
 
 ## Быстрый старт (локально)
@@ -33,7 +34,8 @@
 
 - Python 3.11+[file:231][file:232]
 - Tesseract OCR (с русским языком)
-- Poppler utils для работы с PDF-сканами[file:231][file:232]
+- Poppler utils для PDF-сканов — необязательно: без него страницы рендерятся через pypdfium2[file:231][file:232]
+- LibreOffice — только для `.doc` (путь можно задать в `LIBREOFFICE_PATH`)
 
 ### Установка
 
@@ -95,7 +97,10 @@ curl http://localhost:5000/api/health
 - `LLM_PROVIDER` — `mock` / `openai` / `ollama`.
 - `OPENAI_API_KEY` — при использовании OpenAI.
 - `OLLAMA_BASE_URL` — базовый URL Ollama.
-- Настройки OCR backend’ов.
+- `OCR_BACKEND` — `tesseract` / `easyocr`.
+- `OCR_EXTRA_PASSES` — дополнительные проходы OCR для поиска чисел (`true` по умолчанию; `false` — быстрее, но хуже на фото).
+- `LIBREOFFICE_PATH` — путь к `soffice` для `.doc` (пусто — автопоиск).
+- `POPPLER_PATH`, `TESSERACT_CMD` — пути к Poppler и Tesseract на Windows.
 - Ограничения размеров входных файлов.
 
 ## Тесты
@@ -113,6 +118,22 @@ curl http://localhost:5000/api/health
 ```bash
 pytest
 ```
+
+## Замер точности
+
+`scripts/evaluate.py` прогоняет pipeline по папке документов и сравнивает результат с эталоном.
+
+```bash
+# 1. Создать/дополнить шаблон эталона FOLDER/ground_truth.json (все поля null)
+python scripts/evaluate.py requisites --init
+# 2. Заполнить эталон: строка — правильное значение, "" — поля в документе нет, null — не проверено
+# 3. Замер (по умолчанию LLM_PROVIDER из .env; --provider mock — только regex и контрольные суммы)
+python scripts/evaluate.py requisites --provider mock --label regex_only
+```
+
+Печатаются только метрики: точность по полям и по типам документов, а без эталона — доля полей, заполненных и прошедших валидацию. Значения реквизитов выводятся только с флагом `--show-errors`. Отчёт сохраняется в `exports/eval_*.json`.
+
+Папка `requisites/` с реальными документами контрагентов исключена из git (персональные данные).
 
 ## Web UI и API тесты
 

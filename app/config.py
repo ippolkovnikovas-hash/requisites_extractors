@@ -48,11 +48,13 @@ class Settings(BaseSettings):
     tesseract_cmd: str = ""              # путь к tesseract.exe, пусто = системный PATH
     ocr_backend: str = "tesseract"       # tesseract | easyocr
     ocr_min_text_chars: int = 50
+    ocr_extra_passes: bool = True        # доп. проходы OCR (psm 4, 11) для поиска чисел
 
     # ── Файлы ────────────────────────────────────────────────────────────
     max_upload_size_mb: int = 20
-    allowed_extensions: list[str] = ["pdf", "docx", "jpg", "jpeg", "png", "tiff"]
+    allowed_extensions: list[str] = ["pdf", "docx", "doc", "odt", "jpg", "jpeg", "png", "tiff"]
     poppler_path: str = ""
+    libreoffice_path: str = ""           # soffice для .doc, пусто = автопоиск
 
     # ── Папки ────────────────────────────────────────────────────────────
     upload_folder: Path = Path("uploads")

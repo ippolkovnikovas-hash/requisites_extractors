@@ -208,7 +208,7 @@ def test_pipeline_fills_docx_template(tmp_path, monkeypatch):
     shutil.copy(PDF_FIXTURE, pdf)
 
     # Копируем shablon.docx в рабочую директорию pipeline
-    monkeypatch.chdir(Path("C:/Users/Admin/Desktop/MyProjects/requisites_extractor"))
+    monkeypatch.chdir(Path(__file__).resolve().parent.parent)
 
     result = run_pipeline(pdf, "sample.pdf")
     assert result.docx_path is not None

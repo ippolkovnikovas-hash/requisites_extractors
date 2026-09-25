@@ -17,8 +17,10 @@ from loguru import logger
 
 from app.config import settings
 from app.core.constants import (
+    DOC_EXTENSION,
     DOCX_EXTENSION,
     IMAGE_EXTENSIONS,
+    ODT_EXTENSION,
     PDF_EXTENSION,
 )
 from app.core.enums import DocumentType
@@ -37,6 +39,15 @@ def detect_document_type(doc: DocumentInput) -> DocumentType:
     if ext == DOCX_EXTENSION or "wordprocessingml" in mime:
         logger.debug("Routing → DOCX", file=doc.original_filename)
         return DocumentType.DOCX
+
+    # --- Старый Word и OpenDocument ---
+    if ext == DOC_EXTENSION or mime == "application/msword":
+        logger.debug("Routing → DOC", file=doc.original_filename)
+        return DocumentType.DOC
+
+    if ext == ODT_EXTENSION or mime == "application/vnd.oasis.opendocument.text":
+        logger.debug("Routing → ODT", file=doc.original_filename)
+        return DocumentType.ODT
 
     # --- Изображения ---
     if ext in IMAGE_EXTENSIONS or mime.startswith("image/"):

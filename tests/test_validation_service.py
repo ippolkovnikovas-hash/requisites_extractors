@@ -10,7 +10,7 @@ def make_data(**kwargs) -> RequisitesData:
         kpp="774401001",
         ogrn="1027700123450",
         bik="044525225",
-        checking_account="40702810000000012345",
+        checking_account="40702810200000012345",  # ключ сходится с БИК 044525225
         correspondent_account="30101810400000000225",
     )
     defaults.update(kwargs)
@@ -99,3 +99,11 @@ def test_review_reasons_empty_on_all_none():
     report, needs_review = validate_requisites(data)
     assert needs_review
     assert all("отсутствует" in r for r in report.review_reasons)
+
+
+def test_checking_account_key_mismatch_triggers_review():
+    report, needs_review = validate_requisites(
+        make_data(checking_account="40702810000000012345")
+    )
+    assert needs_review
+    assert any("Checking account control key" in e for e in report.cross_checks)

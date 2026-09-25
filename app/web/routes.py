@@ -18,7 +18,7 @@ from app.schemas.validation import PipelineResult
 from app.services.pipeline_service import run_pipeline
 
 web_bp = Blueprint('web', __name__)
-ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.jpg', '.jpeg', '.png', '.tiff'}
+ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.doc', '.odt', '.jpg', '.jpeg', '.png', '.tiff'}
 
 
 def _allowed_file(filename: str) -> bool:

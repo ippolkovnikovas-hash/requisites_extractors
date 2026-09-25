@@ -34,6 +34,14 @@ def extract_text(doc: DocumentInput) -> TextExtractionResult:
             from app.extractors.docx_extractor import extract_docx
             return extract_docx(doc.storage_path)
 
+        case DocumentType.DOC:
+            from app.extractors.doc_extractor import extract_doc
+            return extract_doc(doc.storage_path)
+
+        case DocumentType.ODT:
+            from app.extractors.odt_extractor import extract_odt
+            return extract_odt(doc.storage_path)
+
         case DocumentType.PDF_TEXT:
             from app.extractors.pdf_text_extractor import extract_pdf_text
             return extract_pdf_text(doc.storage_path)

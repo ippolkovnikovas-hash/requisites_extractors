@@ -7,6 +7,8 @@ from enum import StrEnum
 
 class DocumentType(StrEnum):
     DOCX      = "docx"
+    DOC       = "doc"      # Word 97-2003, конвертация через LibreOffice
+    ODT       = "odt"      # OpenDocument Text
     PDF_TEXT  = "pdf_text"   # цифровой PDF с текстовым слоем
     PDF_SCAN  = "pdf_scan"   # скан PDF — нужен OCR
     IMAGE     = "image"      # JPG / PNG / TIFF
@@ -15,6 +17,8 @@ class DocumentType(StrEnum):
 
 class ExtractorType(StrEnum):
     PYTHON_DOCX = "python_docx"
+    ODF         = "odf"
+    LIBREOFFICE = "libreoffice"
     PDFPLUMBER  = "pdfplumber"
     TESSERACT   = "tesseract"
     EASYOCR     = "easyocr"

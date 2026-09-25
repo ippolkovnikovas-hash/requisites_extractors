@@ -55,3 +55,18 @@ def test_unknown_account_type():
     result = validate_account("40702810000000012345", "savings")
     assert not result.valid
     assert "unknown" in result.reason
+
+
+@pytest.mark.parametrize("bik,account,account_type,expected", [
+    ("044525225", "30101810400000000225", "correspondent", True),   # Сбербанк
+    ("044525974", "30101810145250000974", "correspondent", True),   # Т-Банк
+    ("044525225", "30101810500000000225", "correspondent", False),
+    ("044525225", "40702810200000012345", "checking", True),
+    ("044525225", "40702810000000012345", "checking", False),
+    (None, "40702810200000012345", "checking", None),
+    ("044525225", "4070281020000001234", "checking", None),
+    ("044525225", "40702810200000012345", "savings", None),
+])
+def test_account_key(bik, account, account_type, expected):
+    from app.validators.account_validator import validate_account_key
+    assert validate_account_key(bik, account, account_type) is expected

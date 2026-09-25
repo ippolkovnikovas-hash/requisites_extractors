@@ -1,6 +1,10 @@
 from app.schemas.requisites import RequisitesData
 from app.schemas.validation import ValidationReport
-from app.validators.account_validator import validate_account, validate_cross_bik_corr
+from app.validators.account_validator import (
+    validate_account,
+    validate_account_key,
+    validate_cross_bik_corr,
+)
 from app.validators.bik_validator import validate_bik
 from app.validators.inn_validator import validate_inn
 from app.validators.kpp_validator import validate_kpp
@@ -60,6 +64,17 @@ def validate_requisites(data: RequisitesData) -> tuple[ValidationReport, bool]:
         cross_checks.append(cross_err)
         errors.append(cross_err)
         review_reasons.append(f"Кросс-проверка: {cross_err}")
+
+    # --- Контрольный ключ счетов по БИК (алгоритм Банка России) ---
+    key_checks = [
+        ("checking_account", "checking", "Checking account control key mismatch with BIK"),
+        ("correspondent_account", "correspondent", "Correspondent account control key mismatch with BIK"),
+    ]
+    for field_name, account_type, message in key_checks:
+        if validate_account_key(data.bik, getattr(data, field_name), account_type) is False:
+            cross_checks.append(message)
+            errors.append(message)
+            review_reasons.append(f"Кросс-проверка: {message}")
 
     # --- Проверка отсутствующих важных полей ---
     missing_labels = [

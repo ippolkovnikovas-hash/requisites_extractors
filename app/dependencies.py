@@ -4,7 +4,7 @@ from flask import Request, abort
 
 from app.config import settings
 
-ALLOWED_EXTENSIONS = {".pdf", ".docx", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".odt", ".png", ".jpg", ".jpeg", ".tiff", ".bmp"}
 
 
 def validate_upload(request: Request) -> tuple[bytes, str]:

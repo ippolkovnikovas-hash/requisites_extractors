@@ -32,6 +32,7 @@ from app.services.fallback_regex_service import (
     extract_fallback_fields,
     merge_llm_and_fallback,
 )
+from app.services.number_candidates_service import apply_number_candidates
 from app.services.routing_service import detect_document_type
 from app.services.text_extraction_service import extract_text
 from app.services.text_normalization_service import normalize_text
@@ -76,6 +77,8 @@ def _guess_mime(path: Path) -> str:
         mapping = {
             ".pdf": "application/pdf",
             ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".doc": "application/msword",
+            ".odt": "application/vnd.oasis.opendocument.text",
             ".jpg": "image/jpeg",
             ".jpeg": "image/jpeg",
             ".png": "image/png",
@@ -183,6 +186,16 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
     fallback_data = extract_fallback_fields(norm.normalized_text)
     merged_data, extracted_by = merge_llm_and_fallback(safe_data, fallback_data)
 
+    # Числовые реквизиты: кандидаты из текста + контрольные суммы важнее ответа LLM.
+    # Основной текст идёт первым — при равенстве кандидатов выигрывает его прочтение.
+    numbers_text = "\n\n".join(
+        [norm.normalized_text]
+        + [normalize_text(alt).normalized_text for alt in extraction.alt_texts]
+    )
+    merged_data, extracted_by = apply_number_candidates(
+        merged_data, numbers_text, extracted_by
+    )
+
     requisites = RequisitesData(**merged_data)
 
     logger.debug("LLM safe_data", safe_data=safe_data)
@@ -219,6 +232,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         needs_review,
         extracted_by=extracted_by,
         processing_meta={
+            "doc_type": str(doc.doc_type),
             "extractor": extraction.extractor_used,
             "ocr_used": extraction.ocr_used,
             "llm_provider": llm_result.provider,
@@ -273,6 +287,7 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
         xlsx_path=str(xlsx_path),
         docx_path=docx_path,
         processing_meta={
+            "doc_type": str(doc.doc_type),
             "extractor": extraction.extractor_used,
             "ocr_used": extraction.ocr_used,
             "llm_provider": llm_result.provider,

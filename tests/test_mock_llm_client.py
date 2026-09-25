@@ -1,5 +1,4 @@
 ﻿"""Тесты Mock LLM клиента."""
-
 from app.llm.mock_client import MockLLMClient
 
 
@@ -20,7 +19,6 @@ def test_mock_all_fields_none():
 
 def test_mock_raw_response_is_valid_json():
     import json
-
     client = MockLLMClient()
     result = client.extract("текст")
     parsed = json.loads(result.raw_response)

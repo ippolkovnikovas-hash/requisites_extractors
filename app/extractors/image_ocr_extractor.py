@@ -2,33 +2,54 @@ from pathlib import Path
 
 from PIL import Image, ImageFilter, ImageOps
 
-from app.ocr.factory import get_ocr_backend
-from app.ocr.image_preprocessing import binarize_otsu, deskew
+from app.config import settings
+from app.ocr import get_ocr_backend
 from app.schemas.extraction import TextExtractionResult
+
+# Фото с телефона обычно крупные; мелкие сканы увеличиваем — Tesseract лучше читает
+_UPSCALE_BELOW_PX = 2500
+# Основной проход (psm 6) и дополнительные: колонки (4) и разрозненный текст (11)
+_MAIN_PSM = 6
+_EXTRA_PSMS = (4, 11)
 
 
 def _preprocess_image(image: Image.Image) -> Image.Image:
-    image = image.convert("L")
-    image = deskew(image)
+    """
+    Без жёсткой бинаризации: на фото с неравномерным светом порог
+    стирает цифры (замер: 18 → 44 найденных числовых поля из 60 на 10 фото).
+    """
+    image = ImageOps.exif_transpose(image).convert("L")
     w, h = image.size
-    image = image.resize((w * 2, h * 2), Image.Resampling.LANCZOS)
+    if max(w, h) < _UPSCALE_BELOW_PX:
+        image = image.resize((w * 2, h * 2), Image.Resampling.LANCZOS)
     image = ImageOps.autocontrast(image, cutoff=2)
-    image = image.filter(ImageFilter.MedianFilter(size=3))
-    image = image.filter(ImageFilter.SHARPEN)
-    # Порог подбирается по гистограмме самого изображения (метод Оцу), а не
-    # фиксируется заранее — на фото с неравномерным освещением фиксированный
-    # порог либо заливал часть кадра чёрным, либо не убирал шум вовсе.
-    return binarize_otsu(image)
+    return image.filter(ImageFilter.SHARPEN)
+
+
+def ocr_passes(backend, image: Image.Image) -> tuple[str, list[str]]:
+    """Основной текст и дополнительные прочтения (если включены OCR_EXTRA_PASSES)."""
+    main = "\n".join(backend.image_to_lines(image, psm=_MAIN_PSM)).strip()
+    alts: list[str] = []
+    if settings.ocr_extra_passes and backend.supports_psm:
+        for psm in _EXTRA_PSMS:
+            text = "\n".join(backend.image_to_lines(image, psm=psm)).strip()
+            if text:
+                alts.append(text)
+    return main, alts
 
 
 def extract_image_ocr(path: Path) -> TextExtractionResult:
     backend = get_ocr_backend()
-    image = _preprocess_image(Image.open(path))
-    lines = backend.image_to_lines(image)
-    text = "\n".join(lines).strip()
+    with Image.open(path) as source:
+        if backend.needs_preprocessing:
+            image = _preprocess_image(source)
+        else:
+            image = ImageOps.exif_transpose(source).convert("RGB")
+    text, alt_texts = ocr_passes(backend, image)
     return TextExtractionResult(
         text=text,
         extractor_used=backend.name(),
         ocr_used=True,
         pages=1,
+        alt_texts=alt_texts,
     )

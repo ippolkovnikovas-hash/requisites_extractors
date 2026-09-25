@@ -1,10 +1,9 @@
 ﻿"""Тесты сервиса маршрутизации документов."""
-
+import pytest
 from pathlib import Path
-
-from app.core.enums import DocumentType
 from app.schemas.document import DocumentInput
 from app.services.routing_service import detect_document_type
+from app.core.enums import DocumentType
 
 
 def make_doc(**kwargs) -> DocumentInput:
@@ -28,7 +27,6 @@ def test_pdf_text_detected():
 
 def test_pdf_scan_detected_empty_pdf(tmp_path):
     from reportlab.pdfgen import canvas
-
     empty = tmp_path / "scan.pdf"
     canvas.Canvas(str(empty)).save()
     doc = make_doc(storage_path=empty)
@@ -88,4 +86,16 @@ def test_pdf_scan_on_broken_file(tmp_path):
     broken = tmp_path / "broken.pdf"
     broken.write_bytes(b"not a real pdf")
     doc = make_doc(storage_path=broken)
+    assert detect_document_type(doc) == DocumentType.PDF_SCAN
+
+
+def test_pdf_with_tiny_text_layer_is_scan(tmp_path):
+    """Скан со штампом/колонтитулом: символов больше общего порога, но мало на страницу."""
+    from reportlab.pdfgen import canvas
+
+    pdf = tmp_path / "stamp.pdf"
+    c = canvas.Canvas(str(pdf))
+    c.drawString(50, 800, "Stamp stamp stamp stamp stamp stamp stamp stamp stamp stamp 1234567890")
+    c.save()
+    doc = make_doc(storage_path=pdf)
     assert detect_document_type(doc) == DocumentType.PDF_SCAN

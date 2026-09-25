@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+.github/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Local env files
+.env
+.env.*
+
+# Exports and temp artifacts
+exports/
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Tests / local fixtures if не нужны в контейнере
+tests/
+examples/

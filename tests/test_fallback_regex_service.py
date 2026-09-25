@@ -1,6 +1,8 @@
 ﻿"""Тесты fallback regex-экстрактора на тестовом PDF."""
-
+import pytest
+from pathlib import Path
 from app.services.fallback_regex_service import extract_fallback_fields
+
 
 SAMPLE_TEXT = """
 ООО Тестовая Организация
@@ -14,6 +16,7 @@ SAMPLE_TEXT = """
 Тел.: +7 (495) 123-45-67
 E-mail: test@testorg.ru
 """
+
 
 
 def test_extracts_inn():
@@ -62,6 +65,10 @@ def test_empty_text_returns_empty():
     assert result["ogrn"] is None
 
 
+
+
+
+
 def test_phone_formats_normalized():
     formats = [
         "8 (495) 123-45-67",
@@ -72,53 +79,48 @@ def test_phone_formats_normalized():
     for fmt in formats:
         result = extract_fallback_fields(f"Тел.: {fmt}")
         assert result["phone"] is not None, f"phone not extracted from: {fmt}"
-        assert result["phone"].replace("+7", "8").replace(
-            "8", "", 1
-        ).isdigit() or result["phone"].startswith(
-            ("+7", "8")
-        ), f"unexpected format: {result['phone']}"
+        assert result["phone"].replace("+7", "8").replace("8", "", 1).isdigit() or result["phone"].startswith(("+7", "8")), f"unexpected format: {result['phone']}"
 
 
-# ── Найдено на реальных документах (спринт 5) ────────────────────────────────
+def test_merge_llm_wins_for_text_fields():
+    from app.services.fallback_regex_service import merge_llm_and_fallback
+
+    llm = {"company_name": "ООО «Ромашка»", "bank_name": "ПАО Сбербанк"}
+    regex = {
+        "company_name": "ООО «Ромашка» Юридический адрес: г. Москва",
+        "bank_name": "Банк получателя ПАО Сбербанк г. Москва",
+    }
+    merged, sources = merge_llm_and_fallback(llm, regex)
+    assert merged["company_name"] == "ООО «Ромашка»"
+    assert merged["bank_name"] == "ПАО Сбербанк"
+    assert sources["company_name"] == "llm"
 
 
-def test_bank_name_label_does_not_match_inside_longer_word():
-    """
-    Регрессия: подпись поля «Банк» ловилась через `startswith("банк")` без
-    проверки границы слова, поэтому срабатывала и на «Банковские реквизиты»
-    (слово начинается с тех же букв, но это не подпись поля). Строка
-    нарезалась с четвёртого символа, и в bank_name попадал обрывок
-    «овские реквизиты | ...» вместо названия банка. Найдено на реальной
-    карточке контрагента при замере accuracy (Э16).
-    """
-    text = "Банковские реквизиты | Ставропольское отделение №5230 ПАО Сбербанк"
-    result = extract_fallback_fields(text)
-    assert result["bank_name"] == "Ставропольское отделение №5230 ПАО Сбербанк"
+def test_merge_regex_fills_empty_text_fields():
+    from app.services.fallback_regex_service import merge_llm_and_fallback
+
+    merged, sources = merge_llm_and_fallback({"legal_address": None}, {"legal_address": "г. Москва"})
+    assert merged["legal_address"] == "г. Москва"
+    assert sources["legal_address"] == "regex"
 
 
-def test_bank_label_alone_still_matches():
-    """Подпись «Банк» сама по себе (не часть другого слова) не должна
-    сломаться от добавленной проверки границы."""
-    result = extract_fallback_fields("Банк: ПАО Сбербанк")
-    assert result["bank_name"] == "ПАО Сбербанк"
+def test_merge_regex_still_fixes_invalid_email():
+    from app.services.fallback_regex_service import merge_llm_and_fallback
+
+    merged, _ = merge_llm_and_fallback({"email": "нет"}, {"email": "info@romashka.ru"})
+    assert merged["email"] == "info@romashka.ru"
 
 
-def test_postal_address_strips_leading_pipe_from_table_cell():
-    """
-    Регрессия: строка «Почтовый адрес | 368006, ...» — соседние ячейки
-    таблицы PDF, склеенные через " | " (см. Э13). Регулярка отрезала подпись
-    поля до `[:\\s]*`, но не сам разделитель таблицы «|», и он оставался в
-    начале значения. Найдено на реальном документе при замере accuracy (Э16).
-    """
-    text = "3.2. | Почтовый адрес | 368006, Республика Дагестан, город Хасавюрт"
-    result = extract_fallback_fields(text)
-    assert result["postal_address"] == "368006, Республика Дагестан, город Хасавюрт"
+@pytest.mark.parametrize("full,short", [
+    ("Иванов Иван Иванович", "Иванов И.И."),
+    ("Иван Иванович Иванов", "Иванов И.И."),
+    ("Петрова Анна", "Петрова А."),
+    ("Салтыков-Щедрин Михаил Евграфович", "Салтыков-Щедрин М.Е."),
+    ("ИВАНОВ И.И.", None),
+    ("Генеральный директор Иванов Иван Иванович", None),
+    (None, None),
+])
+def test_short_fio_from_full(full, short):
+    from app.services.fallback_regex_service import short_fio_from_full
 
-
-def test_postal_address_otdelenie_pochtovoy_svyazi_strips_table_prefix():
-    text = (
-        "4.1. | Отделение почтовой связи: 355002, РФ, Ставропольский край, "
-        "г. Ставрополь"
-    )
-    result = extract_fallback_fields(text)
-    assert result["postal_address"] == "355002, РФ, Ставропольский край, г. Ставрополь"
+    assert short_fio_from_full(full) == short

@@ -13,6 +13,9 @@ class TextExtractionResult(BaseModel):
     pages: int | None = None
     ocr_used: bool = False
     warnings: list[str] = []
+    # Дополнительные прочтения OCR (другие режимы сегментации) — только для поиска
+    # числовых реквизитов по контрольным суммам, в LLM не передаются
+    alt_texts: list[str] = []
 
 
 class NormalizedText(BaseModel):

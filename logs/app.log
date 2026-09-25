@@ -1,0 +1,656 @@
+2026-06-11 21:37:11 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:37:52 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:39:11 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:40:20 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:50:10 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:52:09 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:55:00 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:56:36 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:56:36 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 21:56:36 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 21:56:36 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 21:56:36 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 21:56:36 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 21:56:36 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 21:56:36 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 21:56:36 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 21:56:36 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 21:56:36 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 21:59:31 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 21:59:31 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 21:59:31 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 21:59:31 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 21:59:31 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 21:59:31 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 21:59:31 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:00:38 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:00:39 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:00:39 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:00:39 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:00:39 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:00:39 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:00:39 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:25:33 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:27:04 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:27:05 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:27:05 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 22:27:05 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:27:05 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:27:06 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:27:06 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:27:06 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:27:06 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:29:29 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:29:30 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:29:30 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:29:30 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:29:30 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:29:30 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:29:30 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:31:00 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:31:01 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:31:01 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 22:31:01 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:31:01 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:31:01 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 22:31:01 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:31:01 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:31:01 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:31:01 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:31:23 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:31:23 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:35:26 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:35:26 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:35:26 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-11 22:35:26 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:35:26 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:35:26 | DEBUG    | app.extractors.pdf_text_extractor:73 — PDF text extraction done
+2026-06-11 22:35:26 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:35:26 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:35:26 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:35:26 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-11 22:35:40 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:35:40 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:35:40 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:35:40 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:35:40 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:35:40 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:35:41 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:35:41 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:38:18 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:38:19 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:38:19 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-11 22:38:19 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:38:19 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:41:07 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:41:07 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:41:07 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-11 22:41:07 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:41:07 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:41:07 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-11 22:41:07 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:41:07 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:41:07 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:41:08 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:41:29 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:41:29 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-11 22:46:17 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:46:18 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:46:18 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-11 22:46:18 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:46:18 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:47:45 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:47:46 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:47:46 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-11 22:47:46 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:47:46 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:48:44 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-11 22:48:44 | INFO     | app.services.pipeline_service:82 — ═══ Pipeline started ═══
+2026-06-11 22:48:44 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-11 22:48:44 | INFO     | app.services.pipeline_service:109 — Step 2/9 routing done
+2026-06-11 22:48:44 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-11 22:48:45 | INFO     | app.services.pipeline_service:113 — Step 3/9 text extracted
+2026-06-11 22:48:45 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-11 22:48:45 | INFO     | app.services.pipeline_service:128 — Step 4/9 normalization done
+2026-06-11 22:48:45 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-11 22:49:07 | INFO     | app.services.pipeline_service:137 — Step 5/9 LLM done
+2026-06-11 22:49:07 | INFO     | app.services.pipeline_service:151 — Step 6/9 parsed
+2026-06-11 22:49:07 | INFO     | app.services.pipeline_service:160 — Step 7/9 validation done
+2026-06-11 22:49:07 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-11 22:49:07 | INFO     | app.services.pipeline_service:170 — Step 8/9 JSON saved
+2026-06-11 22:49:08 | INFO     | app.services.pipeline_service:173 — Step 8/9 XLSX saved
+2026-06-11 22:49:08 | INFO     | app.services.pipeline_service:184 — Step 8/9 DOCX filled
+2026-06-11 22:49:08 | INFO     | app.services.pipeline_service:218 — ═══ Pipeline completed ═══
+2026-06-14 16:07:07 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:13:39 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:13:41 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:13:41 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-14 16:13:41 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:13:41 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:13:41 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-14 16:13:41 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:13:41 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:13:41 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:17:29 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:17:29 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:17:29 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-14 16:17:29 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:17:29 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:17:29 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-14 16:17:29 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:17:29 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:17:29 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:17:29 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:21:38 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:21:39 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:21:39 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-14 16:21:39 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:21:39 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:21:39 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-14 16:21:39 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:21:39 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:21:39 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:21:39 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:22:00 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:22:00 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:22:00 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:22:00 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:22:00 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 16:25:38 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:25:38 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:25:38 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-14 16:25:38 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:25:39 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:25:39 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-14 16:25:39 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:25:39 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:25:39 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:25:39 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:25:49 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:25:49 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:25:49 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:25:49 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:25:49 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 16:28:10 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:28:11 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:28:11 | DEBUG    | app.services.routing_service:37 — Routing → DOCX
+2026-06-14 16:28:11 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:28:11 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:28:11 | DEBUG    | app.extractors.docx_extractor:69 — DOCX extraction done
+2026-06-14 16:28:11 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:28:11 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:28:11 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:28:11 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:28:21 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:28:21 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:28:21 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:28:21 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:28:21 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 16:28:49 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:28:50 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:28:50 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-14 16:28:50 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:28:50 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:28:51 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:28:51 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:28:51 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:28:52 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:29:01 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:29:01 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:29:01 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:29:01 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:29:01 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 16:29:15 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:29:16 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:29:16 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 16:29:16 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:29:16 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:29:16 | DEBUG    | app.extractors.pdf_text_extractor:73 — PDF text extraction done
+2026-06-14 16:29:16 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:29:16 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:29:16 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:29:16 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:29:30 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:29:30 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:29:30 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:29:30 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:29:30 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 16:38:24 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:38:25 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:38:25 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-14 16:38:25 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:38:25 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:38:26 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:38:26 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:38:26 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:38:26 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:38:45 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:38:45 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:38:45 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:38:45 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:38:45 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 16:44:06 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 16:44:06 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 16:44:06 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-14 16:44:06 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 16:44:06 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 16:44:07 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 16:44:07 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 16:44:07 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 16:44:07 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 16:44:29 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 16:44:29 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 16:44:29 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 16:44:29 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 16:44:29 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:01:33 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:02:02 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:02:03 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:02:03 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:02:03 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:02:03 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:02:03 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:02:10 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:02:11 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:02:11 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:02:11 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:02:11 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:02:11 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:04:38 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:04:38 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:04:38 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:04:38 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:04:38 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:04:38 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:04:43 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:04:43 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:04:43 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:04:43 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:04:43 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:05:03 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:05:03 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:05:03 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:05:03 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:05:03 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:08:43 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:08:44 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:08:44 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:08:44 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:08:44 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:08:44 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:08:49 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:08:49 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:08:49 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:08:49 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:08:49 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:08:58 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:08:58 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:08:58 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:08:58 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:08:58 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:11:27 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:11:27 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:11:27 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:11:27 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:11:27 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:11:27 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:11:32 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:11:32 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:11:32 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:11:32 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:11:32 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:11:42 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:11:42 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:11:42 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:11:42 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:11:42 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:16:48 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:16:48 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:16:48 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:16:48 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:16:48 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:16:48 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:16:53 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:16:53 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:16:53 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:16:53 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:16:53 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:17:13 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:17:13 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:17:13 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:17:13 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:17:13 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:19:06 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:19:07 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:19:07 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:19:07 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:19:07 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:19:07 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:19:12 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:19:12 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:19:12 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:19:12 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:19:12 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:19:21 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:19:21 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:19:21 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:19:21 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:19:21 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:22:08 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:22:08 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:22:08 | DEBUG    | app.services.routing_service:42 — Routing → IMAGE
+2026-06-14 17:22:08 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:22:08 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:22:09 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:22:09 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:22:09 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:22:09 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:22:21 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:22:21 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:22:21 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:22:21 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:22:21 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:24:03 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:24:04 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:24:04 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:24:04 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:24:04 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:24:04 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:24:09 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:24:09 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:24:09 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:24:09 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:24:09 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:24:20 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:24:20 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:24:20 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:24:20 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:24:20 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:35:36 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:35:36 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:35:36 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:35:36 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:35:36 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:35:36 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:35:41 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:35:41 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:35:41 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:35:41 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:35:41 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:36:00 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:36:00 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:36:00 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:36:00 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:36:00 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:45:24 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:45:24 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:45:24 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:45:24 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:45:24 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:45:24 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:45:29 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:45:29 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:45:29 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:45:29 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:45:29 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:45:48 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:45:48 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:45:48 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:45:48 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:45:48 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:45:48 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:45:48 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:45:48 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:45:48 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:45:49 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:45:49 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:53:11 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:53:11 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:53:11 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:53:11 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:53:11 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:53:11 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:53:17 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:53:17 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:53:17 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:53:17 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:53:17 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:53:37 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:53:37 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:53:37 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:53:37 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:53:37 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 17:57:14 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 17:57:15 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 17:57:15 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 17:57:15 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 17:57:15 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 17:57:15 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 17:57:20 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 17:57:20 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 17:57:20 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 17:57:20 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 17:57:20 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 17:57:30 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 17:57:30 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 17:57:30 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 17:57:30 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 17:57:30 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 18:02:28 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 18:02:29 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 18:02:29 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 18:02:29 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 18:02:29 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 18:02:29 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 18:02:34 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 18:02:34 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 18:02:34 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 18:02:34 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 18:02:34 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 18:02:53 | DEBUG    | app.services.pipeline_service:188 — LLM safe_data
+2026-06-14 18:02:53 | DEBUG    | app.services.pipeline_service:189 — Fallback data
+2026-06-14 18:02:53 | DEBUG    | app.services.pipeline_service:190 — Merged data
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:192 — Step 6/9 parsed
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:205 — Step 7/9 validation done
+2026-06-14 18:02:53 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:215 — Step 8/9 JSON saved
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:218 — Step 8/9 XLSX saved
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:229 — Step 8/9 DOCX filled
+2026-06-14 18:02:53 | INFO     | app.services.pipeline_service:271 — ═══ Pipeline completed ═══
+2026-06-14 18:08:35 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 18:08:36 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 18:08:36 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 18:08:36 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 18:08:36 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 18:08:36 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 18:08:41 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 18:08:41 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 18:08:41 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 18:08:41 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 18:08:41 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 18:09:01 | DEBUG    | app.services.pipeline_service:220 — LLM safe_data
+2026-06-14 18:09:01 | DEBUG    | app.services.pipeline_service:221 — Fallback data
+2026-06-14 18:09:01 | DEBUG    | app.services.pipeline_service:222 — Merged data
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:224 — Step 6/9 parsed
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:256 — Step 7/9 validation done
+2026-06-14 18:09:01 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:266 — Step 8/9 JSON saved
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:269 — Step 8/9 XLSX saved
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:280 — Step 8/9 DOCX filled
+2026-06-14 18:09:01 | INFO     | app.services.pipeline_service:322 — ═══ Pipeline completed ═══
+2026-06-14 18:27:20 | DEBUG    | app.logging_config:49 — Logging initialized
+2026-06-14 18:27:20 | INFO     | app.services.pipeline_service:111 — ═══ Pipeline started ═══
+2026-06-14 18:27:20 | DEBUG    | app.services.routing_service:75 — PDF detected as scan
+2026-06-14 18:27:20 | DEBUG    | app.services.routing_service:48 — Routing → PDF
+2026-06-14 18:27:20 | INFO     | app.services.pipeline_service:138 — Step 2/9 routing done
+2026-06-14 18:27:20 | INFO     | app.services.text_extraction_service:24 — Extracting text
+2026-06-14 18:27:25 | INFO     | app.extractors.pdf_ocr_extractor:79 — PDF OCR extraction done
+2026-06-14 18:27:25 | INFO     | app.services.pipeline_service:142 — Step 3/9 text extracted
+2026-06-14 18:27:25 | DEBUG    | app.services.text_normalization_service:77 — Text normalization done
+2026-06-14 18:27:25 | INFO     | app.services.pipeline_service:156 — Step 4/9 normalization done
+2026-06-14 18:27:25 | DEBUG    | app.llm.ollama_client:17 — Sending to Ollama
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:169 — Step 5/9 LLM done
+2026-06-14 18:27:46 | DEBUG    | app.services.pipeline_service:220 — LLM safe_data
+2026-06-14 18:27:46 | DEBUG    | app.services.pipeline_service:221 — Fallback data
+2026-06-14 18:27:46 | DEBUG    | app.services.pipeline_service:222 — Merged data
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:224 — Step 6/9 parsed
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:256 — Step 7/9 validation done
+2026-06-14 18:27:46 | INFO     | app.exporters.json_exporter:55 — JSON exported
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:266 — Step 8/9 JSON saved
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:269 — Step 8/9 XLSX saved
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:280 — Step 8/9 DOCX filled
+2026-06-14 18:27:46 | INFO     | app.services.pipeline_service:322 — ═══ Pipeline completed ═══

@@ -1,7 +1,9 @@
+import logging
 import re
 from typing import Any
 
-from loguru import logger
+logger = logging.getLogger(__name__)
+
 
 EMAIL_RE = re.compile(
     r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}",
@@ -50,44 +52,23 @@ BANK_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Хвост подписи поля: необязательное уточнение в скобках плюс разделитель —
-# либо перевод строки, если значение стоит следующей строкой. Ключевое отличие
-# от прежнего `[^\n]{0,30}`: сюда не может попасть начало значения, потому что
-# разделитель обязателен, когда метка и значение стоят в одной строке. Раньше
-# жадный квантификатор съедал тридцать символов самого значения.
-_LABEL_TAIL = r"(?:\s*\([^)\n]{0,40}\))?[ \t]*(?:[:|—–\-]+[ \t]*|\n[ \t]*)"
-
 COMPANY_FULL_RE = re.compile(
-    r"(?:Полное\s+наименование(?:\s+организации)?|наименование\s+контрагента)"
-    + _LABEL_TAIL
-    + r"(.{10,200})",
+    r"(?:Полное\s+наименование|наименование\s+контрагента|Полное\s+наименование\s+организации)[^\n]{0,30}\n?\s*(.{10,200})",
     re.IGNORECASE,
 )
 
 SHORT_NAME_RE = re.compile(
-    r"(?:Краткое|Сокращ[её]нное)\s+наименование(?:\s+организации)?"
-    + _LABEL_TAIL
-    + r"(.{3,150})",
+    r"(?:Краткое\s+наименование|Сокращ[её]нное\s+наименование)[^\n]{0,30}\n?\s*(.{3,150})",
     re.IGNORECASE,
 )
 
 LEGAL_ADDRESS_RE = re.compile(
-    r"(?:Юридический\s+адрес)" + _LABEL_TAIL + r"(.{10,250})",
+    r"(?:Юридический\s+адрес)[^\n]{0,10}\n?\s*(.{10,250})",
     re.IGNORECASE,
 )
 
 POSTAL_ADDRESS_RE = re.compile(
-    r"(?:Почтовый\s+адрес)" + _LABEL_TAIL + r"(.{10,250})",
-    re.IGNORECASE,
-)
-
-# Подпись поля перед названием банка — только на самом старте строки:
-# `_extract_bank_name()` уже отобрал строку по признаку «упоминает банк», это
-# просто снимает подпись, если она там есть. Без якоря `^` риск нет — строка
-# на входе всегда одна, а не весь текст.
-BANK_LABEL_RE = re.compile(
-    r"^(?:наименование\s+(?:полное\s+)?(?:учреждения\s+)?банка|"
-    r"банковские\s+реквизиты|банк)" + _LABEL_TAIL,
+    r"(?:Почтовый\s+адрес)[^\n]{0,10}\n?\s*(.{10,250})",
     re.IGNORECASE,
 )
 
@@ -110,27 +91,6 @@ CEO_FULL_NAME_RE = re.compile(
 )
 
 _PATRONYMIC_SUFFIXES = ("ич", "на", "вна", "евна", "овна", "евич", "ович")
-
-# Символы, которыми в документах отделяют подпись поля от значения. Вертикальная
-# черта и табуляция сюда входят обязательно: в распознанных таблицах строка
-# выглядит как «Директор | Иванов И.И.», и без них разделитель уезжал в значение.
-_LABEL_SEPARATORS = " :;-—–|\t"
-
-
-def _starts_with_label(lowered: str, label: str) -> bool:
-    """
-    `startswith`, но с проверкой границы слова.
-
-    Без неё `label="банк"` совпадал бы и внутри «банковские реквизиты» —
-    слово начинается с тех же букв, но это не подпись поля. Сразу после
-    подписи должен идти разделитель или конец строки, иначе значение
-    нарежется с середины слова. Найдено на реальном документе при замере
-    accuracy (Э16): «Банковские реквизиты | ...» превращалось в bank_name
-    «овские реквизиты | ...».
-    """
-    if not lowered.startswith(label):
-        return False
-    return len(lowered) == len(label) or lowered[len(label)] in _LABEL_SEPARATORS
 
 
 def _make_short_fio(full_fio: str) -> str | None:
@@ -155,7 +115,9 @@ def _normalize_fio_order(parts: list[str]) -> str:
     if len(parts) != 3:
         return " ".join(parts)
 
-    patronymic_idx = next((i for i, p in enumerate(parts) if _is_patronymic(p)), None)
+    patronymic_idx = next(
+        (i for i, p in enumerate(parts) if _is_patronymic(p)), None
+    )
 
     if patronymic_idx is None:
         return " ".join(parts)
@@ -170,6 +132,23 @@ def _normalize_fio_order(parts: list[str]) -> str:
 
     # Нестандартный порядок — не трогаем
     return " ".join(parts)
+
+
+_FIO_WORD_RE = re.compile(r"^[А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?$")
+
+
+def short_fio_from_full(full_fio: str | None) -> str | None:
+    """
+    «Иванов Иван Иванович» → «Иванов И.И.»; порядок «Иван Иванович Иванов» исправляется.
+    None — если строка не похожа на ФИО (не 2–3 слова с заглавной буквы).
+    """
+    if not full_fio:
+        return None
+    parts = full_fio.split()
+    if len(parts) not in (2, 3) or not all(_FIO_WORD_RE.match(p) for p in parts):
+        return None
+    ordered = _normalize_fio_order(parts).split()
+    return _make_short_fio(" ".join(ordered))
 
 
 def _extract_ceo(text: str) -> tuple[str | None, str | None, str | None]:
@@ -275,19 +254,10 @@ def _extract_postal_address(text: str) -> str | None:
             continue
         lowered = line.lower()
         if "почтовый адрес" in lowered:
-            # `[:\s]*` снимал только пробел и двоеточие после подписи, но не
-            # «|» — разделитель соседних ячеек PDF-таблицы (Э13). В значении
-            # оставался осиротевший «|» в начале. Найдено на реальном
-            # документе при замере accuracy (Э16).
-            value = re.sub(r"(?i)^.*почтовый\s+адрес", "", line).strip(
-                _LABEL_SEPARATORS + ","
-            )
+            value = re.sub(r"(?i)^.*почтовый\s+адрес[:\s]*", "", line).strip(" ,;:")
             return value or None
         if "отделение почтовой связи" in lowered:
-            value = re.sub(r"(?i)^.*отделение\s+почтовой\s+связи", "", line).strip(
-                _LABEL_SEPARATORS + ","
-            )
-            return value or line
+            return line
 
     match = POSTAL_ADDRESS_RE.search(text)
     if match:
@@ -427,12 +397,7 @@ def _extract_bank_name(text: str) -> str | None:
         ):
             cleaned = _clean_spaces(line)
             if cleaned and len(cleaned) >= 5:
-                # Строка вида «Банковские реквизиты | ПАО Сбербанк» —
-                # склеенные через " | " ячейки таблицы (Э13). Отрезаем
-                # распознанную подпись поля, если она есть; если нет —
-                # строка и так была просто названием банка без подписи.
-                value = BANK_LABEL_RE.sub("", cleaned, count=1).strip()
-                return value if len(value) >= 5 else cleaned
+                return cleaned
 
     match = BANK_LINE_RE.search(text)
     if match:
@@ -484,7 +449,7 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
         # Сначала проверяем строгие инлайн-поля
         matched_inline = False
         for label, (field, pattern) in strict_inline_fields.items():
-            if _starts_with_label(lowered, label):
+            if lowered.startswith(label):
                 match = re.search(pattern, line, flags=re.IGNORECASE)
                 if match:
                     result[field] = match.group(1).strip()
@@ -496,23 +461,15 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
 
         # Затем текстовые поля
         for label, field in text_fields.items():
-            if _starts_with_label(lowered, label):
-                tail = line[len(label) :].strip(_LABEL_SEPARATORS)
-                value = (
-                    tail if tail else (lines[idx + 1] if idx + 1 < len(lines) else None)
-                )
+            if lowered.startswith(label):
+                tail = line[len(label):].strip(" :;-—")
+                value = tail if tail else (lines[idx + 1] if idx + 1 < len(lines) else None)
                 if value:
                     result[field] = value.strip()
                 break
 
     # Постобработка
-    for field in (
-        "company_name",
-        "short_name",
-        "legal_address",
-        "postal_address",
-        "bank_name",
-    ):
+    for field in ("company_name", "short_name", "legal_address", "postal_address", "bank_name"):
         if result.get(field):
             result[field] = _clean_spaces(result[field])
 
@@ -523,40 +480,23 @@ def _extract_from_partner_card(text: str) -> dict[str, Any]:
     if result.get("email"):
         result["email"] = _extract_email(result["email"])
 
-    for field in (
-        "inn",
-        "kpp",
-        "ogrn",
-        "bik",
-        "checking_account",
-        "correspondent_account",
-    ):
+    for field in ("inn", "kpp", "ogrn", "bik", "checking_account", "correspondent_account"):
         if result.get(field):
             result[field] = _digits_only(result[field])
 
     if result.get("ceo_fio_full"):
-        fio_full = re.sub(
+        result["ceo_fio_full"] = re.sub(
             r"\s+Действует\s+на\s+основании\s+Устава.*$",
             "",
             result["ceo_fio_full"],
             flags=re.IGNORECASE,
         ).strip()
 
-        # Порядок слов приводим здесь же. Раньше этого не делалось, и результат
-        # карточки перекрывал корректно переставленное ФИО из _extract_ceo():
-        # «Иван Иванович Петров» так и уходил в документ.
-        parts = fio_full.split()
-        if len(parts) == 3:
-            fio_full = _normalize_fio_order(parts)
-
-        result["ceo_fio_full"] = fio_full
-
         # Не перезаписываем позицию если уже установлена
         result.setdefault("ceo_position", "Директор")
 
-        # Краткую форму пересобираем всегда: если порядок изменился, ранее
-        # найденная краткая форма относится к другой фамилии.
-        result["ceo_fio"] = _make_short_fio(fio_full) or result.get("ceo_fio")
+        if not result.get("ceo_fio"):
+            result["ceo_fio"] = _make_short_fio(result["ceo_fio_full"])
 
     return result
 
@@ -569,27 +509,17 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
     checking_account = _extract_rs(text)
     correspondent_account = _extract_ks(text)
 
-    # Только имена найденных полей, без значений. Прежние строки печатали
-    # четыре тысячи символов документа и все реквизиты целиком; пока модуль
-    # писал в неподключённый stdlib-логгер, это никуда не уходило, но после
-    # перехода на loguru попало бы прямиком в logs/app.log (CLAUDE.md).
-    logger.debug(
-        "fallback scan",
-        chars=len(text),
-        card_fields=sorted(k for k, v in partner_card_data.items() if v),
-        found=sorted(
-            name
-            for name, value in (
-                ("inn", inn),
-                ("kpp", kpp),
-                ("ogrn", ogrn),
-                ("bik", bik),
-                ("checking_account", checking_account),
-                ("correspondent_account", correspondent_account),
-            )
-            if value
-        ),
-    )
+    logger.debug("=== fallback debug start ===")
+    logger.debug("RAW TEXT PREVIEW:\n%s", text[:4000])
+    logger.debug("partner_card_data=%s", partner_card_data)
+    logger.debug("regex inn=%s", inn)
+    logger.debug("regex kpp=%s", kpp)
+    logger.debug("regex ogrn=%s", ogrn)
+    logger.debug("regex bik=%s", bik)
+    logger.debug("regex checking_account=%s", checking_account)
+    logger.debug("regex correspondent_account=%s", correspondent_account)
+    logger.debug("regex email=%s", _extract_email(text))
+    logger.debug("=== fallback debug end ===")
 
     if inn:
         inn_digits = re.sub(r"\D", "", inn)
@@ -612,21 +542,16 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
     ceo_position, ceo_fio_full, ceo_fio = _extract_ceo(text)
 
     result = {
-        "company_name": partner_card_data.get("company_name")
-        or _extract_company_name(text),
+        "company_name": partner_card_data.get("company_name") or _extract_company_name(text),
         "short_name": partner_card_data.get("short_name") or _extract_short_name(text),
-        "legal_address": partner_card_data.get("legal_address")
-        or _extract_legal_address(text),
-        "postal_address": partner_card_data.get("postal_address")
-        or _extract_postal_address(text),
+        "legal_address": partner_card_data.get("legal_address") or _extract_legal_address(text),
+        "postal_address": partner_card_data.get("postal_address") or _extract_postal_address(text),
         "inn": partner_card_data.get("inn") or inn,
         "kpp": partner_card_data.get("kpp") or kpp,
         "ogrn": partner_card_data.get("ogrn") or ogrn,
         "bik": partner_card_data.get("bik") or bik,
-        "checking_account": partner_card_data.get("checking_account")
-        or checking_account,
-        "correspondent_account": partner_card_data.get("correspondent_account")
-        or correspondent_account,
+        "checking_account": partner_card_data.get("checking_account") or checking_account,
+        "correspondent_account": partner_card_data.get("correspondent_account") or correspondent_account,
         "bank_name": partner_card_data.get("bank_name") or _extract_bank_name(text),
         "email": partner_card_data.get("email") or _extract_email(text),
         "phone": partner_card_data.get("phone") or phone_value,
@@ -635,35 +560,24 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
         "ceo_fio": partner_card_data.get("ceo_fio") or ceo_fio,
     }
 
-    logger.debug("fallback result", fields=sorted(k for k, v in result.items() if v))
+    logger.debug("fallback result=%s", result)
     return result
+
+
+_LLM_PRIORITY_FIELDS = frozenset({
+    "company_name",
+    "short_name",
+    "legal_address",
+    "postal_address",
+    "bank_name",
+    "ceo_position",
+    "ceo_fio_full",
+    "ceo_fio",
+})
 
 
 def _is_empty(value: Any) -> bool:
     return value is None or value == ""
-
-
-# Метки чужих полей. Если они оказались внутри наименования или адреса — это
-# не значение, а склейка двух строк документа в одну.
-_FOREIGN_LABEL_RE = re.compile(
-    r"\b(ИНН|КПП|ОГРН|ОГРНИП|БИК|Р/с|К/с|расч[её]тн|корреспондентск"
-    r"|телефон|e-?mail|директор)\b|сч[её]т",
-    re.IGNORECASE,
-)
-
-# Организационно-правовая форма — признак того, что в значении действительно
-# наименование организации, а не обрывок соседней строки.
-_OPF_RE = re.compile(
-    r"(\bООО\b|\bОАО\b|\bЗАО\b|\bПАО\b|\bАО\b|\bНАО\b|\bИП\b|\bАНО\b"
-    r"|\bГУП\b|\bМУП\b|Обществ\w*\s+с\s+ограниченной|Акционерн\w*\s+обществ\w*"
-    r"|Индивидуальн\w*\s+предпринимател\w*)",
-    re.IGNORECASE,
-)
-
-
-def _looks_contaminated(value: str) -> bool:
-    """Внутри значения метка чужого поля или длинное число — признак склейки."""
-    return bool(_FOREIGN_LABEL_RE.search(value)) or bool(re.search(r"\d{9,}", value))
 
 
 def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool:
@@ -679,28 +593,11 @@ def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool
     llm_digits = _digits_only(llm_str)
     regex_digits = _digits_only(regex_str)
 
-    if field == "company_name":
-        # Прежнее правило «длиннее — значит лучше» работало обратно
-        # задуманному: чем больше регекс перехватил соседних строк, тем
-        # увереннее он побеждал корректное значение LLM.
-        if _looks_contaminated(regex_str):
-            return False
-        return bool(_OPF_RE.search(regex_str)) and not _OPF_RE.search(llm_str)
-
-    if field == "short_name":
-        if _looks_contaminated(regex_str):
-            return False
-        return len(regex_str) <= len(llm_str) and bool(_OPF_RE.search(regex_str))
-
-    if field == "legal_address":
-        if _looks_contaminated(regex_str):
-            return False
-        return len(regex_str) > len(llm_str)
-
-    if field == "postal_address":
-        if _looks_contaminated(regex_str):
-            return False
-        return len(regex_str) > len(llm_str) or regex_str != llm_str
+    # Текстовые поля (наименования, адреса, банк, руководитель): главная — модель,
+    # regex только заполняет пустые. Замер: эвристики «длиннее — лучше» подменяли
+    # верный ответ модели строкой с лишним текстом.
+    if field in _LLM_PRIORITY_FIELDS:
+        return False
 
     if field == "email":
         return "@" in regex_str and "@" not in llm_str
@@ -729,10 +626,8 @@ def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool
 
     if field == "bik":
         if llm_digits and regex_digits:
-            if (
-                len(regex_digits) == 9
-                and regex_digits.startswith("04")
-                and (len(llm_digits) != 9 or not llm_digits.startswith("04"))
+            if len(regex_digits) == 9 and regex_digits.startswith("04") and (
+                len(llm_digits) != 9 or not llm_digits.startswith("04")
             ):
                 return True
 
@@ -757,11 +652,9 @@ def merge_llm_and_fallback(
     llm_data: dict[str, Any],
     fallback_data: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, str]]:
-    logger.debug(
-        "merge start",
-        llm_fields=sorted(k for k, v in llm_data.items() if not _is_empty(v)),
-        regex_fields=sorted(k for k, v in fallback_data.items() if not _is_empty(v)),
-    )
+    logger.debug("=== merge debug start ===")
+    logger.debug("llm_data=%s", llm_data)
+    logger.debug("fallback_data=%s", fallback_data)
 
     merged = dict(llm_data)
     extracted_by: dict[str, str] = {}
@@ -782,15 +675,8 @@ def merge_llm_and_fallback(
             merged[key] = fallback_value
             extracted_by[key] = "regex"
 
-    # `_normalize_phone()` до сих пор применялась только внутри regex-слоя
-    # (`_extract_phones`). Когда телефон побеждал от LLM, в результате
-    # оставалось исходное форматирование документа — промпт не просит
-    # нормализовать телефон, в отличие от ИНН/КПП/счетов. Функция
-    # идемпотентна на уже нормализованном значении, поэтому применяем её
-    # здесь один раз, независимо от источника.
-    if not _is_empty(merged.get("phone")):
-        merged["phone"] = _normalize_phone(merged["phone"])
-
-    logger.debug("merge done", extracted_by=extracted_by)
+    logger.debug("merged=%s", merged)
+    logger.debug("extracted_by=%s", extracted_by)
+    logger.debug("=== merge debug end ===")
 
     return merged, extracted_by

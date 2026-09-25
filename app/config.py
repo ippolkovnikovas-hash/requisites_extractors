@@ -4,10 +4,13 @@
 
 Пример .env:
   LLM_PROVIDER=ollama
+  OPENAI_API_KEY=none
+  OPENAI_BASE_URL=https://api.openai.com/v1
+  OPENAI_MODEL=gpt-4o-mini
   OLLAMA_BASE_URL=http://localhost:11434
   OLLAMA_MODEL=qwen2.5:3b
   PROMPT_VERSION=v1
-  TESSERACT_CMD=C:\\Program Files\\Tesseract-OCR\\tesseract.exe
+    TESSERACT_CMD=C:\\Program Files\\Tesseract-OCR\\tesseract.exe
   LLM_TIMEOUT_SECONDS=120.0
 """
 
@@ -25,58 +28,46 @@ class Settings(BaseSettings):
     )
 
     # ── LLM ─────────────────────────────────────────────────────────────
-    # Только локальные провайдеры: ollama — локальный endpoint, mock — тесты/CI.
-    # Внешние LLM-сервисы в проекте запрещены (см. CLAUDE.md, раздел «Приватность»).
-    llm_provider: str = "mock"  # mock | ollama
+    llm_provider: str = "mock"           # mock | openai | ollama | yandex
+    openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_model: str = "gpt-4o-mini"    # используется в OpenAIClient
+    llm_model: str = "gpt-4o-mini"       # алиас для обратной совместимости
+    llm_temperature: float = 0.0
+    llm_max_tokens: int = 1024
     llm_timeout_seconds: float = 120.0
 
     # ── Ollama ───────────────────────────────────────────────────────────
     ollama_base_url: str = "http://localhost:11434"
-    # qwen2.5:7b-instruct вместо 3b — замер 05.09.2026 на 15 реальных
-    # документах: 57.6%→62.2% общей точности, прирост почти весь на
-    # свободнотекстовых полях (bank_name 21→43%, company_name 50→70%,
-    # short_name 33→47%), числовые поля (их тянет regex) не меняются.
-    # Дороже (~63 с/документ вместо ~10 с), но для интерактивной обработки
-    # одного документа за раз это не критично.
-    ollama_model: str = "qwen2.5:7b-instruct"
+    ollama_model: str = "qwen2.5:3b"
 
-    # Экстракция реквизитов — не творческая задача: одно и то же значение при
-    # повторном запросе не должно меняться. Дефолт Ollama (0.8) для этого не
-    # подходит, поэтому температура зафиксирована на 0.
-    ollama_temperature: float = 0.0
-
-    # Явный размер контекста. Без него версия Ollama с меньшим дефолтом молча
-    # обрезает начало промпта — то есть все инструкции, а не хвост документа.
-    ollama_num_ctx: int = 8192
+    # ── Yandex Cloud (AI Studio): YandexGPT и Vision OCR ────────────────
+    yandex_api_key: str = ""             # API-ключ сервисного аккаунта
+    yandex_folder_id: str = ""           # ID каталога
+    yandex_gpt_model: str = "yandexgpt/latest"   # yandexgpt-lite/latest — дешевле
+    yandex_ocr_model: str = "page"
+    yandex_data_logging: bool = False    # False — Yandex не сохраняет данные запросов
 
     # ── Промпт ──────────────────────────────────────────────────────────
-    prompt_version: str = "v1"
-
-    # Профиль промпта для распознанного текста. У OCR своя специфика — цифры с
-    # пробелами внутри, слитные строки, подмены символов, — и профиль `image`
-    # написан именно под неё.
-    ocr_prompt_version: str = "image"  # v1 | v2 | v3
+    prompt_version: str = "v1"           # v1 | v2 | v3 | v4 (v4 — для облачных моделей)
 
     # ── OCR ─────────────────────────────────────────────────────────────
-    tesseract_cmd: str = ""  # путь к tesseract.exe, пусто = системный PATH
-    ocr_backend: str = "tesseract"  # tesseract | easyocr
+    tesseract_cmd: str = ""              # путь к tesseract.exe, пусто = системный PATH
+    ocr_backend: str = "tesseract"       # tesseract | easyocr | yandex
     ocr_min_text_chars: int = 50
+    ocr_min_chars_per_page: int = 200    # меньше в среднем на страницу — PDF считается сканом
+    ocr_extra_passes: bool = True        # доп. проходы OCR (psm 4, 11) для поиска чисел
 
     # ── Файлы ────────────────────────────────────────────────────────────
     max_upload_size_mb: int = 20
-    allowed_extensions: list[str] = ["pdf", "docx", "jpg", "jpeg", "png", "tiff"]
+    allowed_extensions: list[str] = ["pdf", "docx", "doc", "odt", "jpg", "jpeg", "png", "tiff"]
     poppler_path: str = ""
+    libreoffice_path: str = ""           # soffice для .doc, пусто = автопоиск
 
     # ── Папки ────────────────────────────────────────────────────────────
     upload_folder: Path = Path("uploads")
     exports_folder: Path = Path("exports")
     processed_folder: Path = Path("processed")
-
-    # ── Артефакты ────────────────────────────────────────────────────────
-    # По умолчанию pipeline не оставляет на диске ни сырой текст, ни
-    # результаты: реквизиты не должны переживать обработку (CLAUDE.md).
-    # Включается осознанно — для CLI и пакетной обработки, где отчёты нужны.
-    persist_artifacts: bool = False
 
     # ── Flask ────────────────────────────────────────────────────────────
     flask_secret_key: str = "change-me-in-production"

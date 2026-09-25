@@ -1,43 +1,15 @@
-"""
-OCR-бэкенд на EasyOCR.
-
-Зависимость опциональная: `easyocr` тянет за собой torch (~500 МБ), а нужен он
-далеко не всем — по умолчанию используется Tesseract. Поэтому пакет вынесен в
-extra `easyocr`, а импорты сделаны ленивыми: модуль можно импортировать и без
-установленного easyocr, ошибка возникнет только при попытке создать бэкенд, и
-будет она понятной.
-"""
-
 from PIL import Image
+import numpy as np
 
 from app.ocr.base import OcrBackend
-
-_INSTALL_HINT = (
-    "Бэкенд easyocr требует дополнительных зависимостей. "
-    'Установите их: pip install -e ".[easyocr]"'
-)
-
-# `easyocr.Reader` дорого инициализируется (загрузка весов модели). Фабрика
-# создаёт бэкенд заново на каждый документ, поэтому Reader кешируется по
-# набору языков на уровне процесса, а не пересоздаётся каждый раз.
-_reader_cache: dict[tuple[str, ...], object] = {}
 
 
 class EasyOcrBackend(OcrBackend):
     def __init__(self, langs: list[str] | None = None) -> None:
-        try:
-            import easyocr
-        except ImportError as e:  # pragma: no cover - зависит от окружения
-            raise ImportError(_INSTALL_HINT) from e
-
-        key = tuple(langs or ["ru", "en"])
-        if key not in _reader_cache:
-            _reader_cache[key] = easyocr.Reader(list(key), gpu=False)
-        self._reader = _reader_cache[key]
+        import easyocr
+        self._reader = easyocr.Reader(langs or ["ru", "en"], gpu=False)
 
     def image_to_text(self, image: Image.Image, lang: str = "rus+eng") -> str:
-        import numpy as np
-
         img_array = np.array(image)
         results = self._reader.readtext(img_array, detail=0, paragraph=True)
         return "\n".join(results)

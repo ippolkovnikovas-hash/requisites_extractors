@@ -5,12 +5,6 @@
         self.details = details or {}
 
 
-class ConfigError(AppException):
-    """Неверная настройка приложения — например, неизвестный LLM-провайдер."""
-
-    pass
-
-
 class UnsupportedFileTypeError(AppException):
     pass
 

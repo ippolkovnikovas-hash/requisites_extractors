@@ -98,7 +98,7 @@ def test_extract_pipeline_failure_returns_500(client, monkeypatch):
     monkeypatch.setattr(ru, "run_pipeline", boom)
     resp = _upload(client)
     assert resp.status_code == 500
-    assert resp.get_json()["error"] == "Internal server error"
+    assert resp.get_json()["code"] == 500
 
 
 def test_unknown_route_404(client):

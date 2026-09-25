@@ -116,7 +116,7 @@ def export_xlsx(
         fv = getattr(validation, fname, None)
         if fv:
             fill = _GREEN if fv.valid else _RED
-            row = [fname, "Да" if fv.valid else "Нет", fv.value or "", fv.reason or ""]
+            row = [fname, "Да" if fv.valid else "Нет", fv.raw_value or "", fv.reason or ""]
             ws2.append(row)
             for c in ws2[ws2.max_row]:
                 c.border = _THIN

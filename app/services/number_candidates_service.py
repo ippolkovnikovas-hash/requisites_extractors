@@ -162,7 +162,13 @@ def _owning_label(
 
 
 def _is_valid(field: str, value: str) -> bool:
+    """
+    Строже валидаторов формы: нетипичный префикс там — лишь предупреждение,
+    а при поиске среди случайных чисел текста он отсекает мусор.
+    """
     if len(value) not in _FIELD_LENGTHS[field]:
+        return False
+    if field in _STRICT_PREFIX and not value.startswith(_STRICT_PREFIX[field]):
         return False
     match field:
         case "inn":
@@ -178,6 +184,9 @@ def _is_valid(field: str, value: str) -> bool:
         case "correspondent_account":
             return validate_account(value, "correspondent").valid
     return False
+
+
+_STRICT_PREFIX = {"bik": "04", "checking_account": "40", "correspondent_account": "30"}
 
 
 @dataclass(frozen=True)

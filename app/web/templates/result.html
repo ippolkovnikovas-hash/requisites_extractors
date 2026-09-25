@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-4">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <h2 class="h5 mb-2">Проверьте распознанные реквизиты</h2>
+                <p class="text-muted mb-2">
+                    Значения можно править прямо в форме. В документ попадёт то,
+                    что вы видите здесь.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if document_id %}
+                        <span class="badge bg-secondary">doc_id: {{ document_id }}</span>
+                    {% endif %}
+                    {% if original_filename %}
+                        <span class="badge bg-light text-dark">{{ original_filename }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if fill_rate is not none %}
+            <div class="text-end">
+                <div class="meta-label">Заполнено</div>
+                <div class="meta-value">{{ (fill_rate * 100)|round(0)|int }}%</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if warnings %}
+        <div class="alert alert-warning">
+            <div class="fw-semibold mb-1">Стоит проверить</div>
+            <ul class="mb-0">
+                {% for warning in warnings %}<li>{{ warning }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('web.generate') }}">
+            <input type="hidden" name="document_id" value="{{ document_id or '' }}">
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 26%">Поле</th>
+                            <th>Значение</th>
+                            <th style="width: 10%">Источник</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>
+                                <label class="form-label mb-0" for="field-{{ row.key }}">
+                                    {{ row.label }}
+                                </label>
+                            </td>
+                            <td>
+                                <input
+                                    class="form-control {% if row.error %}is-invalid{% endif %}"
+                                    type="text"
+                                    id="field-{{ row.key }}"
+                                    name="{{ row.key }}"
+                                    value="{{ row.value }}">
+
+                                {% if row.error %}
+                                <div class="invalid-feedback d-block">{{ row.error }}</div>
+                                {% endif %}
+
+                                {% if row.warning %}
+                                <div class="form-text text-warning-emphasis">
+                                    {{ row.warning }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.source %}
+                                    <span class="badge bg-light text-dark">{{ row.source }}</span>
+                                {% else %}
+                                    <span class="field-empty">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if confirm_required %}
+            <div class="alert alert-danger">
+                <div class="fw-semibold mb-2">
+                    Некоторые значения не прошли проверку
+                </div>
+                <p class="mb-2">
+                    Исправьте отмеченные поля или подтвердите, что хотите
+                    сформировать документ с ними как есть.
+                </p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox"
+                           id="confirm_invalid" name="confirm_invalid" value="on">
+                    <label class="form-check-label" for="confirm_invalid">
+                        Сформировать документ несмотря на ошибки
+                    </label>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Сформировать DOCX
+                </button>
+                <a href="{{ url_for('web.index') }}" class="btn btn-outline-secondary btn-lg">
+                    Загрузить другой документ
+                </a>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

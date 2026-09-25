@@ -1,8 +1,11 @@
 ﻿"""Интеграционные тесты pipeline_service через MockLLMClient."""
-import pytest
 from pathlib import Path
-from app.services.pipeline_service import run_pipeline
+from unittest.mock import patch
+
+import pytest
+
 from app.core.exceptions import UnsupportedFileTypeError
+from app.services.pipeline_service import _build_llm_client, run_pipeline
 
 PDF_FIXTURE = Path("tests/fixtures/sample_requisites.pdf")
 DOCX_FIXTURE = Path("tests/fixtures/sample_requisites.docx")
@@ -10,8 +13,8 @@ DOCX_FIXTURE = Path("tests/fixtures/sample_requisites.docx")
 
 @pytest.fixture(autouse=True)
 def use_mock_llm(monkeypatch):
-    from app.llm.mock_client import MockLLMClient
     import app.services.pipeline_service as ps
+    from app.llm.mock_client import MockLLMClient
     monkeypatch.setattr(ps, "_build_llm_client", lambda: MockLLMClient())
 
 
@@ -82,11 +85,9 @@ def test_pipeline_processing_meta(tmp_path):
     assert meta["llm_provider"] == "mock"
     assert meta["ocr_used"] is False
     assert "sha256" in meta
-"""Тесты вспомогательных функций pipeline_service."""
-import pytest
-from unittest.mock import patch
-from app.services.pipeline_service import _build_llm_client, _guess_mime
-from pathlib import Path
+
+
+# ── Вспомогательные функции pipeline_service ─────────────────────────────────
 
 
 def test_build_llm_mock():
@@ -136,8 +137,9 @@ def test_guess_mime_uses_extension_fallback(tmp_path, monkeypatch):
 
 def test_guess_mime_magic_fails_falls_back(tmp_path, monkeypatch):
     """Если magic бросает исключение — возвращаем маппинг по расширению."""
-    import app.services.pipeline_service as ps
     import builtins
+
+    import app.services.pipeline_service as ps
     real_import = builtins.__import__
 
     def mock_import(name, *args, **kwargs):
@@ -172,9 +174,10 @@ def test_build_llm_openai_with_key(monkeypatch):
 
 
 def test_pipeline_warnings_truncation(tmp_path, monkeypatch):
-    import shutil, app.services.pipeline_service as ps
+    import shutil
+
+    import app.services.pipeline_service as ps
     from app.llm.mock_client import MockLLMClient
-    from app.core.constants import NORMALIZE_MAX_CHARS
     monkeypatch.setattr(ps, "_build_llm_client", lambda: MockLLMClient())
 
     # Текст длиннее порога нормализации
@@ -183,15 +186,14 @@ def test_pipeline_warnings_truncation(tmp_path, monkeypatch):
 
     with patch("app.services.pipeline_service.NORMALIZE_MAX_CHARS", 10):
         result = run_pipeline(long_text_pdf, "long.pdf")
-    truncation_warnings = [w for w in result.warnings if "truncated" in w.lower() or "Text" in w]
     # Проверяем что пайплайн завершился (truncation может не сработать на маленьком файле)
     assert result.document_id
 
 
 def test_build_review_warnings_missing_fields():
-    from app.services.pipeline_service import _build_review_warnings
     from app.schemas.requisites import RequisitesData
     from app.schemas.validation import ValidationReport
+    from app.services.pipeline_service import _build_review_warnings
 
     empty = RequisitesData()
     report = ValidationReport(errors=[])
@@ -200,7 +202,9 @@ def test_build_review_warnings_missing_fields():
 
 
 def test_pipeline_fills_docx_template(tmp_path, monkeypatch):
-    import shutil, app.services.pipeline_service as ps
+    import shutil
+
+    import app.services.pipeline_service as ps
     from app.llm.mock_client import MockLLMClient
     monkeypatch.setattr(ps, "_build_llm_client", lambda: MockLLMClient())
 

@@ -1,5 +1,5 @@
-from PIL import Image
 import pytesseract
+from PIL import Image
 from pytesseract import Output
 
 from app.ocr.base import OcrBackend

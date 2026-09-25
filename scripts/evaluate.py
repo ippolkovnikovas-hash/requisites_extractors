@@ -7,6 +7,7 @@
   # 2. Прогнать pipeline и посчитать точность по полям и типам документов
   python scripts/evaluate.py requisites
   python scripts/evaluate.py requisites --provider ollama --label qwen7b
+  python scripts/evaluate.py requisites --provider yandex --ocr yandex --label yandex
 
 По умолчанию печатаются только метрики, без значений реквизитов.
 --show-errors выводит ожидаемое/полученное значение по каждой ошибке (персональные данные!).
@@ -57,10 +58,13 @@ def _pct(rate: float | None) -> str:
 @click.option("--truth", type=click.Path(dir_okay=False, path_type=Path), default=None,
               help=f"Файл эталона (по умолчанию FOLDER/{GROUND_TRUTH_NAME})")
 @click.option("--init", "init_mode", is_flag=True, help="Создать/дополнить шаблон эталона и выйти")
-@click.option("--provider", default=None, help="Переопределить LLM_PROVIDER (mock/ollama/openai)")
+@click.option("--provider", default=None, help="Переопределить LLM_PROVIDER (mock/ollama/openai/yandex)")
+@click.option("--ocr", default=None, help="Переопределить OCR_BACKEND (tesseract/easyocr/yandex)")
+@click.option("--prompt", "prompt_version", default=None, help="Переопределить PROMPT_VERSION (v1..v4)")
 @click.option("--label", default=None, help="Метка прогона для имени отчёта")
 @click.option("--show-errors", is_flag=True, help="Показать значения по ошибкам (персональные данные)")
-def main(folder: Path, truth: Path | None, init_mode: bool, provider: str | None,
+def main(folder: Path, truth: Path | None, init_mode: bool, provider: str | None, ocr: str | None,
+         prompt_version: str | None,
          label: str | None, show_errors: bool) -> None:
     truth_path = truth or folder / GROUND_TRUTH_NAME
     files = _document_files(folder)
@@ -74,6 +78,10 @@ def main(folder: Path, truth: Path | None, init_mode: bool, provider: str | None
     settings.ensure_dirs()
     if provider:
         settings.llm_provider = provider
+    if ocr:
+        settings.ocr_backend = ocr
+    if prompt_version:
+        settings.prompt_version = prompt_version
 
     ground_truth = load_ground_truth(truth_path) if truth_path.exists() else {}
 
@@ -149,6 +157,8 @@ def main(folder: Path, truth: Path | None, init_mode: bool, provider: str | None
     }
     report["meta"] = {
         "provider": settings.llm_provider,
+        "ocr_backend": settings.ocr_backend,
+        "prompt_version": settings.prompt_version,
         "label": label,
         "folder": str(folder),
         "created_at": datetime.now().isoformat(timespec="seconds"),

@@ -87,3 +87,15 @@ def test_pdf_scan_on_broken_file(tmp_path):
     broken.write_bytes(b"not a real pdf")
     doc = make_doc(storage_path=broken)
     assert detect_document_type(doc) == DocumentType.PDF_SCAN
+
+
+def test_pdf_with_tiny_text_layer_is_scan(tmp_path):
+    """Скан со штампом/колонтитулом: символов больше общего порога, но мало на страницу."""
+    from reportlab.pdfgen import canvas
+
+    pdf = tmp_path / "stamp.pdf"
+    c = canvas.Canvas(str(pdf))
+    c.drawString(50, 800, "Stamp stamp stamp stamp stamp stamp stamp stamp stamp stamp 1234567890")
+    c.save()
+    doc = make_doc(storage_path=pdf)
+    assert detect_document_type(doc) == DocumentType.PDF_SCAN

@@ -22,7 +22,7 @@ from loguru import logger
 from app.config import settings
 from app.core.constants import NORMALIZE_MAX_CHARS
 from app.core.enums import DocumentType, LLMProvider
-from app.core.exceptions import UnsupportedFileTypeError
+from app.core.exceptions import LLMError, LLMParseError, UnsupportedFileTypeError
 from app.exporters.json_exporter import export_json
 from app.exporters.xlsx_exporter import export_xlsx
 from app.schemas.document import DocumentInput
@@ -31,6 +31,7 @@ from app.schemas.validation import PipelineResult
 from app.services.fallback_regex_service import (
     extract_fallback_fields,
     merge_llm_and_fallback,
+    short_fio_from_full,
 )
 from app.services.number_candidates_service import apply_number_candidates
 from app.services.routing_service import detect_document_type
@@ -59,6 +60,16 @@ def _build_llm_client():
             return MockLLMClient()
         from app.llm.openai_client import OpenAIClient
         return OpenAIClient()
+
+    if provider == LLMProvider.YANDEX:
+        if not settings.yandex_api_key or not settings.yandex_folder_id:
+            logger.warning(
+                "LLM_PROVIDER=yandex but YANDEX_API_KEY/YANDEX_FOLDER_ID missing — falling back to mock"
+            )
+            from app.llm.mock_client import MockLLMClient
+            return MockLLMClient()
+        from app.llm.yandex_client import YandexGPTClient
+        return YandexGPTClient()
 
     if provider == LLMProvider.MOCK:
         from app.llm.mock_client import MockLLMClient
@@ -168,7 +179,14 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
 
     # ── 5. LLM extraction ────────────────────────────────────────────────
     llm_client = _build_llm_client()
-    llm_result = llm_client.extract(norm.normalized_text, settings.prompt_version)
+    try:
+        llm_result = llm_client.extract(norm.normalized_text, settings.prompt_version)
+    except (LLMError, LLMParseError) as e:
+        # Сбой облачной модели не должен ронять документ: остаются regex и контрольные суммы
+        logger.warning("LLM failed, continuing with regex/checksum only", reason=e.message)
+        extraction.warnings.append(f"LLM unavailable: {e.message}")
+        from app.llm.mock_client import MockLLMClient
+        llm_result = MockLLMClient().extract(norm.normalized_text, settings.prompt_version)
     logger.info(
         "Step 5/9 LLM done",
         provider=llm_result.provider,
@@ -212,6 +230,11 @@ def run_pipeline(file_path: Path, original_filename: str) -> PipelineResult:
 
     if not requisites.company_name and requisites.short_name:
         requisites.company_name = requisites.short_name
+
+    # Краткое ФИО строим из полного по правилу «Фамилия И.О.» — надёжнее ответа модели
+    short_fio = short_fio_from_full(requisites.ceo_fio_full)
+    if short_fio:
+        requisites.ceo_fio = short_fio
 
     # ── 7. Validation ────────────────────────────────────────────────────
     validation_report, needs_review = validate_requisites(requisites)

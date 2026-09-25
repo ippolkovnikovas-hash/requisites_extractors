@@ -22,9 +22,10 @@
 1. Routing документа по типу входа (DOCX / DOC / ODT / PDF-text / PDF-scan / image / unsupported).[file:232]
 2. Извлечение текста через нативные экстракторы или OCR (бэкенд по `OCR_BACKEND`, по умолчанию Tesseract; страницы PDF рендерит Poppler, без него — pypdfium2). Для фото и сканов делаются дополнительные проходы OCR (другие режимы сегментации) — только для поиска чисел.
 3. Нормализация текста и числовых реквизитов.[file:231][file:232]
-4. Извлечение через LLM-провайдера (`mock`, `openai`, `ollama`).[file:232]
+4. Извлечение через LLM-провайдера (`mock`, `openai`, `ollama`, `yandex`). Сбой LLM не останавливает обработку — остаются regex и контрольные суммы.[file:232]
 5. Fallback regex для критичных реквизитов (ИНН, КПП, ОГРН, БИК, счета, контакты).[file:232]
-5a. Числовые реквизиты по кандидатам (`number_candidates_service`): из текста собираются все подходящие числа, остаются прошедшие контрольную сумму, выбирается стоящее у нужной метки; счета сверяются с БИК по контрольному ключу ЦБ. Значение LLM — только подсказка при равных кандидатах.
+5a. Текстовые поля (наименования, адреса, банк, руководитель) берутся из ответа LLM; regex только заполняет пустые. Краткое ФИО строится программой из полного.
+5b. Числовые реквизиты по кандидатам (`number_candidates_service`): из текста собираются все подходящие числа, остаются прошедшие контрольную сумму, выбирается стоящее у нужной метки; счета сверяются с БИК по контрольному ключу ЦБ. Значение LLM — только подсказка при равных кандидатах.
 6. Валидация и кросс-проверка реквизитов с контрольными суммами (включая ключ р/с и к/с по БИК).[file:232]
 7. Экспорт результата в JSON/XLSX/шаблон DOCX.[file:232]
 
@@ -94,12 +95,15 @@ curl http://localhost:5000/api/health
 Минимальный набор задаётся в `.env` (см. `.env.example`):[file:231][file:232]
 
 - `FLASK_ENV` — режим работы Flask.
-- `LLM_PROVIDER` — `mock` / `openai` / `ollama`.
+- `LLM_PROVIDER` — `mock` / `openai` / `ollama` / `yandex`.
 - `OPENAI_API_KEY` — при использовании OpenAI.
 - `OLLAMA_BASE_URL` — базовый URL Ollama.
-- `OCR_BACKEND` — `tesseract` / `easyocr`.
+- `OCR_BACKEND` — `tesseract` / `easyocr` / `yandex` (Yandex Vision OCR; при сбое — Tesseract).
+- `YANDEX_API_KEY`, `YANDEX_FOLDER_ID` — доступ к Yandex AI Studio (YandexGPT и Vision OCR); `YANDEX_GPT_MODEL` (по умолчанию `yandexgpt/latest`), `YANDEX_DATA_LOGGING=false` — запросы не сохраняются на стороне Yandex.
 - `OCR_EXTRA_PASSES` — дополнительные проходы OCR для поиска чисел (`true` по умолчанию; `false` — быстрее, но хуже на фото).
 - `LIBREOFFICE_PATH` — путь к `soffice` для `.doc` (пусто — автопоиск).
+- `PROMPT_VERSION` — `v1` для локальных моделей, `v4` для облачных (дословное копирование текстовых полей).
+- `OCR_MIN_CHARS_PER_PAGE` — PDF с меньшим числом символов на страницу считается сканом (по умолчанию 200).
 - `POPPLER_PATH`, `TESSERACT_CMD` — пути к Poppler и Tesseract на Windows.
 - Ограничения размеров входных файлов.
 
@@ -129,6 +133,8 @@ python scripts/evaluate.py requisites --init
 # 2. Заполнить эталон: строка — правильное значение, "" — поля в документе нет, null — не проверено
 # 3. Замер (по умолчанию LLM_PROVIDER из .env; --provider mock — только regex и контрольные суммы)
 python scripts/evaluate.py requisites --provider mock --label regex_only
+# облако: YandexGPT + Yandex Vision OCR
+python scripts/evaluate.py requisites --provider yandex --ocr yandex --label yandex
 ```
 
 Печатаются только метрики: точность по полям и по типам документов, а без эталона — доля полей, заполненных и прошедших валидацию. Значения реквизитов выводятся только с флагом `--show-errors`. Отчёт сохраняется в `exports/eval_*.json`.

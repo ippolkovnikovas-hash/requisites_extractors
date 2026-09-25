@@ -6,6 +6,8 @@ from PIL import Image
 class OcrBackend(ABC):
     # Поддерживает ли бэкенд режимы сегментации Tesseract (psm) — нужны для доп. проходов
     supports_psm: bool = False
+    # Нужна ли предобработка под Tesseract (серый, контраст, резкость); облачным — нет
+    needs_preprocessing: bool = True
 
     @abstractmethod
     def image_to_text(self, image: Image.Image, lang: str = "rus+eng") -> str:

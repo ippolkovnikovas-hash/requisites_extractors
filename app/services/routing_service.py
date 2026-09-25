@@ -72,7 +72,9 @@ def detect_document_type(doc: DocumentInput) -> DocumentType:
 def _detect_pdf_type(file_path: Path) -> DocumentType:
     """
     Открывает PDF и считает символы на первых 3 страницах.
-    Если меньше порога — скан.
+    Если меньше порога — скан. Порог двойной: всего символов и в среднем на страницу —
+    у сканов бывает крошечный текстовый слой (штамп, колонтитул), и по одному
+    общему порогу такой PDF ошибочно уходит в «текстовые» без OCR.
     """
     try:
         with pdfplumber.open(str(file_path)) as pdf:
@@ -82,12 +84,15 @@ def _detect_pdf_type(file_path: Path) -> DocumentType:
                 text = page.extract_text()
                 if text:
                     total_chars += len(text.strip())
+            per_page = total_chars / max(len(sample_pages), 1)
 
-        if total_chars < settings.ocr_min_text_chars:
+        if total_chars < settings.ocr_min_text_chars or per_page < settings.ocr_min_chars_per_page:
             logger.debug(
                 "PDF detected as scan",
                 chars=total_chars,
+                per_page=round(per_page),
                 threshold=settings.ocr_min_text_chars,
+                threshold_per_page=settings.ocr_min_chars_per_page,
             )
             return DocumentType.PDF_SCAN
 

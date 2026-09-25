@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     )
 
     # ── LLM ─────────────────────────────────────────────────────────────
-    llm_provider: str = "mock"           # mock | openai | ollama
+    llm_provider: str = "mock"           # mock | openai | ollama | yandex
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     openai_model: str = "gpt-4o-mini"    # используется в OpenAIClient
@@ -41,13 +41,21 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:3b"
 
+    # ── Yandex Cloud (AI Studio): YandexGPT и Vision OCR ────────────────
+    yandex_api_key: str = ""             # API-ключ сервисного аккаунта
+    yandex_folder_id: str = ""           # ID каталога
+    yandex_gpt_model: str = "yandexgpt/latest"   # yandexgpt-lite/latest — дешевле
+    yandex_ocr_model: str = "page"
+    yandex_data_logging: bool = False    # False — Yandex не сохраняет данные запросов
+
     # ── Промпт ──────────────────────────────────────────────────────────
-    prompt_version: str = "v1"           # v1 | v2 | v3
+    prompt_version: str = "v1"           # v1 | v2 | v3 | v4 (v4 — для облачных моделей)
 
     # ── OCR ─────────────────────────────────────────────────────────────
     tesseract_cmd: str = ""              # путь к tesseract.exe, пусто = системный PATH
-    ocr_backend: str = "tesseract"       # tesseract | easyocr
+    ocr_backend: str = "tesseract"       # tesseract | easyocr | yandex
     ocr_min_text_chars: int = 50
+    ocr_min_chars_per_page: int = 200    # меньше в среднем на страницу — PDF считается сканом
     ocr_extra_passes: bool = True        # доп. проходы OCR (psm 4, 11) для поиска чисел
 
     # ── Файлы ────────────────────────────────────────────────────────────

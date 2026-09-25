@@ -60,7 +60,7 @@ def extract_pdf_ocr(path: Path) -> TextExtractionResult:
 
             for page_num, image in enumerate(images, start=1):
                 try:
-                    processed = _preprocess_image(image)
+                    processed = _preprocess_image(image) if backend.needs_preprocessing else image
                     text, alts = ocr_passes(backend, processed)
                     for idx, alt in enumerate(alts):
                         if len(alt_pages) <= idx:

@@ -23,6 +23,7 @@ NUMERIC_FIELDS = frozenset(
     {"inn", "kpp", "ogrn", "bik", "checking_account", "correspondent_account"}
 )
 _QUOTES_RE = re.compile(r"[«»\"'“”„`]")
+_PUNCT_RE = re.compile(r"[.,;:()\[\]/\\№#–—-]")
 
 
 def normalize_value(field_name: str, value) -> str:
@@ -50,10 +51,11 @@ def normalize_value(field_name: str, value) -> str:
 
     text = text.lower().replace("ё", "е")
     text = _QUOTES_RE.sub("", text)
+    # Пунктуация не считается ошибкой: «г.Москва» = «г. Москва», «д.1,» = «д. 1»
+    text = _PUNCT_RE.sub(" ", text)
     if field_name == "ceo_fio":
         text = text.replace(" ", "")
-    text = re.sub(r"\s+", " ", text)
-    return text.strip(" .,;:")
+    return re.sub(r"\s+", " ", text).strip()
 
 
 def values_match(field_name: str, expected, actual) -> bool:

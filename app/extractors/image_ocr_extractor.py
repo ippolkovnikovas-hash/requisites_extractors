@@ -41,7 +41,10 @@ def ocr_passes(backend, image: Image.Image) -> tuple[str, list[str]]:
 def extract_image_ocr(path: Path) -> TextExtractionResult:
     backend = get_ocr_backend()
     with Image.open(path) as source:
-        image = _preprocess_image(source)
+        if backend.needs_preprocessing:
+            image = _preprocess_image(source)
+        else:
+            image = ImageOps.exif_transpose(source).convert("RGB")
     text, alt_texts = ocr_passes(backend, image)
     return TextExtractionResult(
         text=text,

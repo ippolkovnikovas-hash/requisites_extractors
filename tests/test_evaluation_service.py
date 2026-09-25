@@ -68,3 +68,16 @@ def test_init_ground_truth_keeps_existing_values(tmp_path):
     assert data["a.pdf"]["inn"] == "7707083893"
     assert set(data["b.docx"]) == set(FIELDS)
     assert "_readme" not in data
+
+
+def test_text_fields_ignore_punctuation():
+    assert values_match("legal_address", "г.Москва, ул.Ленина, д.1", "г. Москва ул. Ленина д. 1")
+    assert not values_match("legal_address", "г. Москва, ул. Ленина, д. 1", "г. Москва, ул. Ленина, д. 2")
+
+
+def test_prompt_v4_registered():
+    from app.llm.prompts import get_prompt
+
+    prompt = get_prompt("v4", "ТЕКСТ")
+    assert "ДОСЛОВНО" in prompt
+    assert "ТЕКСТ" in prompt

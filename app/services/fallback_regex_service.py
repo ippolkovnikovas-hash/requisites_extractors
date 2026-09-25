@@ -134,6 +134,23 @@ def _normalize_fio_order(parts: list[str]) -> str:
     return " ".join(parts)
 
 
+_FIO_WORD_RE = re.compile(r"^[А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?$")
+
+
+def short_fio_from_full(full_fio: str | None) -> str | None:
+    """
+    «Иванов Иван Иванович» → «Иванов И.И.»; порядок «Иван Иванович Иванов» исправляется.
+    None — если строка не похожа на ФИО (не 2–3 слова с заглавной буквы).
+    """
+    if not full_fio:
+        return None
+    parts = full_fio.split()
+    if len(parts) not in (2, 3) or not all(_FIO_WORD_RE.match(p) for p in parts):
+        return None
+    ordered = _normalize_fio_order(parts).split()
+    return _make_short_fio(" ".join(ordered))
+
+
 def _extract_ceo(text: str) -> tuple[str | None, str | None, str | None]:
     match = CEO_ROW_RE.search(text)
     if match:
@@ -547,6 +564,18 @@ def extract_fallback_fields(text: str) -> dict[str, Any]:
     return result
 
 
+_LLM_PRIORITY_FIELDS = frozenset({
+    "company_name",
+    "short_name",
+    "legal_address",
+    "postal_address",
+    "bank_name",
+    "ceo_position",
+    "ceo_fio_full",
+    "ceo_fio",
+})
+
+
 def _is_empty(value: Any) -> bool:
     return value is None or value == ""
 
@@ -564,19 +593,11 @@ def _is_better_regex_value(field: str, llm_value: Any, regex_value: Any) -> bool
     llm_digits = _digits_only(llm_str)
     regex_digits = _digits_only(regex_str)
 
-    if field == "company_name":
-        return len(regex_str) > len(llm_str)
-
-    if field == "short_name":
-        return len(regex_str) <= len(llm_str) and any(
-            x in regex_str.upper() for x in ("ООО", "АО", "ИП", "ПАО")
-        )
-
-    if field == "legal_address":
-        return len(regex_str) > len(llm_str)
-
-    if field == "postal_address":
-        return len(regex_str) > len(llm_str) or regex_str != llm_str
+    # Текстовые поля (наименования, адреса, банк, руководитель): главная — модель,
+    # regex только заполняет пустые. Замер: эвристики «длиннее — лучше» подменяли
+    # верный ответ модели строкой с лишним текстом.
+    if field in _LLM_PRIORITY_FIELDS:
+        return False
 
     if field == "email":
         return "@" in regex_str and "@" not in llm_str

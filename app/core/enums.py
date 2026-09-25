@@ -22,12 +22,14 @@ class ExtractorType(StrEnum):
     PDFPLUMBER  = "pdfplumber"
     TESSERACT   = "tesseract"
     EASYOCR     = "easyocr"
+    YANDEX_VISION = "yandex_vision"
 
 
 class LLMProvider(StrEnum):
     MOCK   = "mock"
     OPENAI = "openai"
     OLLAMA = "ollama"
+    YANDEX = "yandex"
 
 
 class ExportFormat(StrEnum):

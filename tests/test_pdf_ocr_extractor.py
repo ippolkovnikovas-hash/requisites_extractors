@@ -8,6 +8,7 @@ PDF_FIXTURE = Path(__file__).parent / "fixtures" / "sample_two_pages.pdf"
 
 class _FakeBackend:
     supports_psm = False
+    needs_preprocessing = True
 
     def __init__(self, *args, **kwargs):
         pass

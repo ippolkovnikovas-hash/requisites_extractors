@@ -80,3 +80,47 @@ def test_phone_formats_normalized():
         result = extract_fallback_fields(f"Тел.: {fmt}")
         assert result["phone"] is not None, f"phone not extracted from: {fmt}"
         assert result["phone"].replace("+7", "8").replace("8", "", 1).isdigit() or result["phone"].startswith(("+7", "8")), f"unexpected format: {result['phone']}"
+
+
+def test_merge_llm_wins_for_text_fields():
+    from app.services.fallback_regex_service import merge_llm_and_fallback
+
+    llm = {"company_name": "ООО «Ромашка»", "bank_name": "ПАО Сбербанк"}
+    regex = {
+        "company_name": "ООО «Ромашка» Юридический адрес: г. Москва",
+        "bank_name": "Банк получателя ПАО Сбербанк г. Москва",
+    }
+    merged, sources = merge_llm_and_fallback(llm, regex)
+    assert merged["company_name"] == "ООО «Ромашка»"
+    assert merged["bank_name"] == "ПАО Сбербанк"
+    assert sources["company_name"] == "llm"
+
+
+def test_merge_regex_fills_empty_text_fields():
+    from app.services.fallback_regex_service import merge_llm_and_fallback
+
+    merged, sources = merge_llm_and_fallback({"legal_address": None}, {"legal_address": "г. Москва"})
+    assert merged["legal_address"] == "г. Москва"
+    assert sources["legal_address"] == "regex"
+
+
+def test_merge_regex_still_fixes_invalid_email():
+    from app.services.fallback_regex_service import merge_llm_and_fallback
+
+    merged, _ = merge_llm_and_fallback({"email": "нет"}, {"email": "info@romashka.ru"})
+    assert merged["email"] == "info@romashka.ru"
+
+
+@pytest.mark.parametrize("full,short", [
+    ("Иванов Иван Иванович", "Иванов И.И."),
+    ("Иван Иванович Иванов", "Иванов И.И."),
+    ("Петрова Анна", "Петрова А."),
+    ("Салтыков-Щедрин Михаил Евграфович", "Салтыков-Щедрин М.Е."),
+    ("ИВАНОВ И.И.", None),
+    ("Генеральный директор Иванов Иван Иванович", None),
+    (None, None),
+])
+def test_short_fio_from_full(full, short):
+    from app.services.fallback_regex_service import short_fio_from_full
+
+    assert short_fio_from_full(full) == short
